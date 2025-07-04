@@ -3,12 +3,12 @@ using System.Device.Gpio;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TriloBot;
+namespace TriloBot.Motor;
 
 /// <summary>
 /// Provides software-based PWM control for GPIO pins
 /// </summary>
-public class SoftPwmChannel : IDisposable
+internal class SoftPwmChannel : IDisposable
 {
     private readonly GpioController _gpio;
     private readonly int _pin;

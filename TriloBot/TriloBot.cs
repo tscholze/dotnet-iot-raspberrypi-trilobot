@@ -1,44 +1,13 @@
-using System;
 using System.Device.Gpio;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Diagnostics;
+using TriloBot.Configuration;
+using TriloBot.Light;
+using TriloBot.Motor;
 
 namespace TriloBot;
 
 public class TriloBot : IDisposable
 {
-    // Constants for buttons
-    public const int ButtonA = 0;
-    public const int ButtonB = 1;
-    public const int ButtonX = 2;
-    public const int ButtonY = 3;
-    public const int NumButtons = 4;
-
-    // Underlighting LED locations
-    public const int LightFrontRight = 0;
-    public const int LightFrontLeft = 1;
-    public const int LightMiddleLeft = 2;
-    public const int LightRearLeft = 3;
-    public const int LightRearRight = 4;
-    public const int LightMiddleRight = 5;
-    public const int NumUnderlights = 6;
-
-    // Useful underlighting groups
-    public static readonly int[] LightsLeft = { LightFrontLeft, LightMiddleLeft, LightRearLeft };
-    public static readonly int[] LightsRight = { LightFrontRight, LightMiddleRight, LightRearRight };
-    public static readonly int[] LightsFront = { LightFrontLeft, LightFrontRight };
-    public static readonly int[] LightsMiddle = { LightMiddleLeft, LightMiddleRight };
-    public static readonly int[] LightsRear = { LightRearLeft, LightRearRight };
-    public static readonly int[] LightsLeftDiagonal = { LightFrontLeft, LightRearRight };
-    public static readonly int[] LightsRightDiagonal = { LightFrontRight, LightRearLeft };
-
-    // Motor names
-    public const int MotorLeft = 0;
-    public const int MotorRight = 1;
-    public const int NumMotors = 2;
-
     // Pin definitions
     private const int ButtonAPin = 5;
     private const int ButtonBPin = 6;
@@ -60,8 +29,6 @@ public class TriloBot : IDisposable
     private const int UltraEchoPin = 25;
 
     private const int ServoPin = 12;
-
-    private const int UnderlightingEnPin = 7;
 
     // Speed of sound in cm/ns
     private const double SpeedOfSoundCmNs = 343 * 100.0 / 1E9; // 0.0000343 cm/ns
@@ -136,7 +103,7 @@ public class TriloBot : IDisposable
 
     public bool ReadButton(int button)
     {
-        if (button < 0 || button >= NumButtons)
+        if (button < 0 || button >= ButtonConfigurations.NumberOfButtons)
             throw new ArgumentOutOfRangeException(nameof(button), "Button must be 0-3");
 
         return _gpio.Read(_buttons[button]) == PinValue.Low;
@@ -144,7 +111,7 @@ public class TriloBot : IDisposable
 
     public void SetButtonLed(int buttonLed, double value)
     {
-        if (buttonLed < 0 || buttonLed >= NumButtons)
+        if (buttonLed < 0 || buttonLed >= ButtonConfigurations.NumberOfButtons)
             throw new ArgumentOutOfRangeException(nameof(buttonLed), "Button LED must be 0-3");
 
         if (value < 0.0 || value > 1.0)
@@ -155,7 +122,7 @@ public class TriloBot : IDisposable
 
     public void SetMotorSpeed(int motor, double speed)
     {
-        if (motor < 0 || motor >= NumMotors)
+        if (motor < 0 || motor >= MotorConfigurations.NumMotors)
             throw new ArgumentOutOfRangeException(nameof(motor), "Motor must be 0 or 1");
 
         // Clamp speed to valid range
@@ -195,8 +162,8 @@ public class TriloBot : IDisposable
 
     public void SetMotorSpeeds(double leftSpeed, double rightSpeed)
     {
-        SetMotorSpeed(MotorLeft, leftSpeed);
-        SetMotorSpeed(MotorRight, rightSpeed);
+        SetMotorSpeed(MotorConfigurations.MotorLeft, leftSpeed);
+        SetMotorSpeed(MotorConfigurations.MotorRight, rightSpeed);
     }
 
     public void DisableMotors()
@@ -269,9 +236,9 @@ public class TriloBot : IDisposable
         _sn3218.Disable();
     }
 
-    public void SetUnderlight(int light, byte r, byte g, byte b, bool show = true)
+    public void SetUnderlight(int light, byte r, byte g, byte b, bool show = true)  
     {
-        if (light < 0 || light >= NumUnderlights)
+        if (light < 0 || light >= LightsConfigurations.NumberOfLights)
             throw new ArgumentOutOfRangeException(nameof(light), "Light must be 0-5");
 
         _underlight[light * 3] = r;
@@ -293,7 +260,7 @@ public class TriloBot : IDisposable
 
     public void FillUnderlighting(byte r, byte g, byte b, bool show = true)
     {
-        for (int i = 0; i < NumUnderlights; i++)
+        for (int i = 0; i < LightsConfigurations.NumberOfLights; i++)
         {
             SetUnderlight(i, r, g, b, false);
         }
