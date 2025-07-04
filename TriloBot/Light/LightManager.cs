@@ -95,8 +95,16 @@ namespace TriloBot.Light
         /// </summary>
         public void ShowUnderlighting()
         {
-            _sn3218.Enable();
-            _sn3218.Output(_underlight);
+            try
+            {
+                _sn3218.Enable();
+                _sn3218.Output(_underlight);
+            }
+            catch (System.IO.IOException ex)
+            {
+                Console.WriteLine($"Error initializing SN3218 LED driver: {ex.Message}");
+                Console.WriteLine("Please check I2C connections and address");
+            }
         }
 
         /// <summary>
