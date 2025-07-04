@@ -210,10 +210,8 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Reads the distance using the ultrasonic sensor.
     /// </summary>
-    /// <param name="timeout">Timeout in milliseconds for each sample.</param>
-    /// <param name="samples">Number of samples to average.</param>
     /// <returns>Distance in centimeters, or 0 if no valid reading.</returns>
-    public double ReadDistance(int timeout = 50, int samples = 3)
+    public double ReadDistance()
         => _ultrasoundManager.ReadDistance();
 
     #endregion

@@ -24,18 +24,20 @@ public class Program
                 {
                     // Clear previous state
                     robot.ClearUnderlighting();
-                    
+
                     // Set red lights (rotating left to right)
                     int redPos = i;
                     robot.SetUnderlight(redPos, 255, 0, 0, false);
                     robot.SetUnderlight((redPos + 1) % 6, 128, 0, 0, false);
-                    
+
                     // Set blue lights (rotating right to left)
                     int bluePos = (12 - i) % 6;
                     robot.SetUnderlight(bluePos, 0, 0, 255, false);
                     robot.SetUnderlight((bluePos + 1) % 6, 0, 0, 128);  // Show on last update
-                    
+
                     Thread.Sleep(100);  // Adjust speed of rotation
+
+                    Console.WriteLine($"Distance {robot.ReadDistance()} cm");
                 }
             }
         }
