@@ -46,7 +46,7 @@ internal class SN3218 : IDisposable
     /// </summary>
     public SN3218()
     {
-        _device = I2cDevice.Create(new I2cConnectionSettings(0x54, 1));
+        _device = I2cDevice.Create(new I2cConnectionSettings(1, 0x54));
 
         // Generate default gamma table
         var defaultGammaTable = new byte[256];
