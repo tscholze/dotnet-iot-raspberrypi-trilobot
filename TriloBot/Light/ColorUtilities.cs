@@ -1,5 +1,3 @@
-using System;
-
 namespace TriloBot.Light;
 
 /// <summary>
@@ -18,7 +16,7 @@ public static class ColorUtilities
     {
         if (s <= 0.0)
         {
-            return new[] { v, v, v };
+            return [v, v, v];
         }
 
         double hh = h * 6.0;
@@ -35,12 +33,12 @@ public static class ColorUtilities
 
         return i switch
         {
-            0 => new[] { v, t, p },
-            1 => new[] { q, v, p },
-            2 => new[] { p, v, t },
-            3 => new[] { p, q, v },
-            4 => new[] { t, p, v },
-            _ => new[] { v, p, q }
+            0 => [v, t, p],
+            1 => [q, v, p],
+            2 => [p, v, t],
+            3 => [p, q, v],
+            4 => [t, p, v],
+            _ => [v, p, q]
         };
     }
 }
