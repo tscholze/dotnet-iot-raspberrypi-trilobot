@@ -1,4 +1,5 @@
 using System.Device.Gpio;
+using System.Runtime.InteropServices;
 using Iot.Device.BrickPi3.Sensors;
 using TriloBot.Light;
 using TriloBot.Light.Modes;
@@ -13,6 +14,15 @@ namespace TriloBot;
 public class TriloBot : IDisposable
 {
     #region Private Fields
+
+    /// <summary>
+    /// Cancellation token for managing asynchronous operations.
+    /// This allows for graceful shutdown of effects and operations.
+    /// It can be used to cancel ongoing tasks like light effects or motor operations.
+    /// This is particularly useful for effects that run in a loop or for long-running operations.
+    /// The cancellation token can be passed to methods that support cancellation, allowing them to stop gracefully.
+    /// </summary>
+    private CancellationToken _cancellationToken;
 
     /// <summary>
     /// The GPIO controller used for all hardware operations.
@@ -46,8 +56,17 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="TriloBot"/> class and sets up all subsystems.
     /// </summary>
-    public TriloBot()
+    public TriloBot(CancellationToken cancellationToken = default)
     {
+        // Check if the current platform is supported
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == false)
+        {
+            throw new PlatformNotSupportedException("TriloBot is only supported on Raspberry Pi platforms.");
+        }
+
+        // Set the cancellation token for this instance
+        _cancellationToken = cancellationToken;
+
         // Initialize GPIO controller
         // This is the main controller for all GPIO operations
         // It manages the pins used for buttons, lights, motors, and ultrasound sensors
@@ -66,6 +85,17 @@ public class TriloBot : IDisposable
 
         // Setup ultrasound manager
         _ultrasoundManager = new UltrasoundManager(_gpio);
+
+        // Register cancellation token to handle graceful shutdown
+        // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
+        // It ensures that any ongoing effects or operations are properly terminated
+        _cancellationToken.Register(() =>
+        {
+            // Cancel any ongoing effects or operations
+            DisableUnderlighting();
+            DisableMotors();
+            Dispose();
+        });
 
         // Log successful initialization
         Console.WriteLine("Successfully initialized TrilBot manager");
@@ -222,11 +252,9 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Reads the distance using the ultrasonic sensor.
     /// </summary>
-    /// <returns>Distance in centimeters, or 0 if no valid reading.</returns>
-    public double ReadDistance()
-        => _ultrasoundManager.ReadDistance();
-
-    #endregion
+    /// <param name="timeout">Timeout in milliseconds for each sample.</param>
+    /// <param name="samples">Number of samples to average.</param>
+    /// <returns>Distance
 
     #region Effect methods
 
@@ -242,6 +270,10 @@ public class TriloBot : IDisposable
     {
         LightModesExtensions.PoliceLightsEffect(_lightManager, cancellationToken);
     }
+
+    #endregion in centimeters, or 0 if no valid reading.</returns>
+    public double ReadDistance(int timeout = 50, int samples = 3)
+        => _ultrasoundManager.ReadDistance();
 
     #endregion
 

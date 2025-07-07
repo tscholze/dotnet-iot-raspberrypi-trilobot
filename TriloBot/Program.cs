@@ -11,7 +11,7 @@ public class Program
 
         var cancellationTokenSource = new CancellationTokenSource();
 
-        using var robot = new TriloBot();
+        using var robot = new TriloBot(cancellationTokenSource.Token);
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();
