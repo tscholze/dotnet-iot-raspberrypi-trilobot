@@ -312,23 +312,25 @@ public class TriloBot : IDisposable
     /// <param name="delay">Delay between distance checks in milliseconds.</param>
     public void StartDistanceMonitoring(double threshold = 1, int delay = 1_000)
     {
+        // Start a background task to monitor distance
         _distanceMonitoringTask = Task.Run(async () =>
         {
-            double distance = ReadDistance();
-            Console.WriteLine($"Ultrasound: Current distance: {distance:F2} cm");
-            if (Math.Abs(distance - _lastKnownDistance) > threshold)
+            while (!_cancellationToken.IsCancellationRequested)
             {
-                _lastKnownDistance = distance; // Update last known distance
-                System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
-            }
-            else
-            {
-                System.Console.WriteLine($"Ultrasound: Distance unchanged: {distance:F2} cm");
-            }
+                double distance = ReadDistance();
+                Console.WriteLine($"Ultrasound: Current distance: {distance:F2} cm");
 
-            _distanceSubject.OnNext(distance);
-            await Task.Delay(delay);
-        });
+                // Only push updates if the distance exceeds the threshold
+                if (Math.Abs(distance - _lastKnownDistance) > threshold)
+                {
+                    _lastKnownDistance = distance;
+                    _distanceSubject.OnNext(distance);
+                }
+
+                await Task.Delay(delay, _cancellationToken);
+            }
+        }, _cancellationToken);
+        Console.WriteLine("Distance monitoring started.");
     }
 
     /// <summary>
@@ -336,8 +338,7 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StopDistanceMonitoring()
     {
-        _distanceMonitoringTask?.Dispose();
-        _distanceMonitoringTask = null;
+
     }
 
     #endregion
