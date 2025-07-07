@@ -318,6 +318,7 @@ public class TriloBot : IDisposable
 
         Task.Run(async () =>
         {
+            Console.WriteLine("Starting background distance monitoring...");
             while (!_backgroundCancellationToken.IsCancellationRequested)
             {
                 double distance = ReadDistance();
@@ -326,7 +327,8 @@ public class TriloBot : IDisposable
                 {
                     _lastKnownDistance = distance; // Update last known distance
                     System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
-                } else
+                }
+                else
                 {
                     System.Console.WriteLine($"Ultrasound: Distance unchanged: {distance:F2} cm");
                 }

@@ -17,7 +17,8 @@ public class Program
             cancellationTokenSource.Cancel();
         };
 
-        robot.PlayPoliceEffect(cancellationTokenSource.Token);
+        // robot.PlayPoliceEffect(cancellationTokenSource.Token);
+        robot.StartDistanceMonitoring();
 
         robot.DistanceObservable.Subscribe(distance =>
         {
@@ -34,7 +35,5 @@ public class Program
                 robot.FillUnderlighting(0, 255, 0, true); // Set underlighting to red
             }
         });
-
-        robot.StartDistanceMonitoring();
     }
 }
