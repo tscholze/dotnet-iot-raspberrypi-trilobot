@@ -1,5 +1,9 @@
+using System;
 using System.Device.Gpio;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Reactive.Subjects;
 
 namespace TriloBot.Ultrasound;
 
@@ -89,15 +93,8 @@ public class UltrasoundManager : IDisposable
         double distance = (pulseDuration * 34300) / 2.0;
 
         // 6. Return the measured distance in centimeters, or 0 if invalid
-        if (distance > 2 && distance < 400) // Typical HC-SR04 range
-        {
-            return distance;
-        }
-        else
-        {
-            System.Console.WriteLine($"Ultrasound: Out of range or invalid reading: {distance:F2} cm");
-            return 0;
-        }
+        // Check if the distance is within a reasonable  HC-SR04 range
+        return (distance > 2 && distance < 400) ? distance : 0;
     }
 
     #endregion

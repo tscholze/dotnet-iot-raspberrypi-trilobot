@@ -1,6 +1,6 @@
 using System.Device.Gpio;
+using System.Reactive.Subjects;
 using System.Runtime.InteropServices;
-using Iot.Device.BrickPi3.Sensors;
 using TriloBot.Light;
 using TriloBot.Light.Modes;
 using TriloBot.Motor;
@@ -23,6 +23,22 @@ public class TriloBot : IDisposable
     /// The cancellation token can be passed to methods that support cancellation, allowing them to stop gracefully.
     /// </summary>
     private CancellationToken _cancellationToken;
+
+    /// <summary>
+    /// Subject for observable distance updates.
+    /// </summary>
+    private readonly BehaviorSubject<double> _distanceSubject = new(0);
+
+    /// <summary>
+    /// Last known distance measured by the ultrasonic sensor.
+    /// This is used to avoid unnecessary updates if the distance hasn't changed significantly.
+    /// </summary>
+    private double _lastKnownDistance = 0;
+
+    /// <summary>
+    /// Cancellation token source for background distance monitoring.
+    /// </summary>
+    private CancellationTokenSource? _backgroundCancellationToken;
 
     /// <summary>
     /// The GPIO controller used for all hardware operations.
@@ -48,6 +64,15 @@ public class TriloBot : IDisposable
     /// Manages ultrasound distance measurement operations.
     /// </summary>
     private readonly UltrasoundManager _ultrasoundManager = null!;
+
+    #endregion
+
+    #region Public Properties
+
+    /// <summary>
+    /// Gets an observable sequence of distance values (in centimeters).
+    /// </summary>
+    public IObservable<double> DistanceObservable => _distanceSubject;
 
     #endregion
 
@@ -271,9 +296,51 @@ public class TriloBot : IDisposable
         LightModesExtensions.PoliceLightsEffect(_lightManager, cancellationToken);
     }
 
-    #endregion in centimeters, or 0 if no valid reading.</returns>
-    public double ReadDistance(int timeout = 50, int samples = 3)
+    #endregion
+
+    /// <summary>
+    /// Reads the distance from the ultrasonic sensor.
+    /// </summary>
+    /// <returns>Distance in centimeters</returns>
+    public double ReadDistance()
         => _ultrasoundManager.ReadDistance();
+
+    /// <summary>
+    /// Starts monitoring the distance in the background and pushes updates to the observable if the value exceeds the threshold.
+    /// </summary>
+    /// <param name="threshold">The minimum distance (in cm) to trigger an update.</param>
+    /// <param name="delay">Delay between distance checks in milliseconds.</param>
+    /// <param name="cancellationToken">A cancellation token to stop monitoring.</param>
+    public void StartDistanceMonitoring(double threshold = 1, int delay = 1_000, CancellationToken cancellationToken = default)
+    {
+        _backgroundCancellationToken?.Cancel();
+        _backgroundCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        Task.Run(async () =>
+        {
+            while (!_backgroundCancellationToken.IsCancellationRequested)
+            {
+                double distance = ReadDistance();
+                if (Math.Abs(distance - _lastKnownDistance) > threshold)
+                {
+                    _lastKnownDistance = distance; // Update last known distance
+                    System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
+                }
+
+                _distanceSubject.OnNext(distance);
+                await Task.Delay(delay, _backgroundCancellationToken.Token);
+            }
+        }, _backgroundCancellationToken.Token);
+    }
+
+    /// <summary>
+    /// Stops the background distance monitoring.
+    /// </summary>
+    public void StopDistanceMonitoring()
+    {
+        _backgroundCancellationToken?.Cancel();
+        _backgroundCancellationToken = null;
+    }
 
     #endregion
 
@@ -286,11 +353,15 @@ public class TriloBot : IDisposable
     {
         DisableUnderlighting();
         DisableMotors();
+        StopDistanceMonitoring();
 
+        _distanceSubject.Dispose();
         _motorManager?.Dispose();
         _buttonManager?.Dispose();
         _lightManager?.Dispose();
+        _ultrasoundManager?.Dispose();
         _gpio.Dispose();
+        
         GC.SuppressFinalize(this);
     }
 

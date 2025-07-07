@@ -18,5 +18,23 @@ public class Program
         };
 
         robot.PlayPoliceEffect(cancellationTokenSource.Token);
+
+        robot.DistanceObservable.Subscribe(distance =>
+        {
+            Console.WriteLine($"Distance: {distance} cm");
+
+            if (distance < 10)
+            {
+                Console.WriteLine("Obstacle detected! Stopping robot.");
+                robot.Stop();
+                robot.FillUnderlighting(255, 0, 0, true); // Set underlighting to red
+            }
+            else
+            {
+                robot.FillUnderlighting(0, 255, 0, true); // Set underlighting to red
+            }
+        });
+
+        robot.StartDistanceMonitoring();
     }
 }
