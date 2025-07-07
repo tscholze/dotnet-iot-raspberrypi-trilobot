@@ -321,10 +321,14 @@ public class TriloBot : IDisposable
             while (!_backgroundCancellationToken.IsCancellationRequested)
             {
                 double distance = ReadDistance();
+                Console.WriteLine($"Ultrasound: Current distance: {distance:F2} cm");
                 if (Math.Abs(distance - _lastKnownDistance) > threshold)
                 {
                     _lastKnownDistance = distance; // Update last known distance
                     System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
+                } else
+                {
+                    System.Console.WriteLine($"Ultrasound: Distance unchanged: {distance:F2} cm");
                 }
 
                 _distanceSubject.OnNext(distance);
