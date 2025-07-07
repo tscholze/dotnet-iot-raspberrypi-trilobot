@@ -34,13 +34,9 @@ public static class LightModesExtensions
                 lightManager.SetUnderlight((bluePos + 1) % 6, 0, 0, 128);  // Show on last update
 
                 Thread.Sleep(100);  // Adjust speed of rotation
-
-                if (readDistance != null)
-                {
-                    Console.WriteLine($"Distance {readDistance()} cm");
-                }
             }
         }
+        // Clear all lights when effect ends
         lightManager.ClearUnderlighting();
     }
 }

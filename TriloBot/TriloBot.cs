@@ -243,6 +243,8 @@ public class TriloBot : IDisposable
         LightModesExtensions.PoliceLightsEffect(_lightManager, cancellationToken);
     }
 
+    #endregion
+
     #region IDisposable Support
 
     /// <summary>
