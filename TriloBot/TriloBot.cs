@@ -36,11 +36,6 @@ public class TriloBot : IDisposable
     private double _lastKnownDistance = 0;
 
     /// <summary>
-    /// Cancellation token source for background distance monitoring.
-    /// </summary>
-    private CancellationTokenSource? _backgroundCancellationToken;
-
-    /// <summary>
     /// The GPIO controller used for all hardware operations.
     /// </summary>
     private readonly GpioController _gpio;
@@ -73,6 +68,11 @@ public class TriloBot : IDisposable
     /// Gets an observable sequence of distance values (in centimeters).
     /// </summary>
     public IObservable<double> DistanceObservable => _distanceSubject;
+
+    /// <summary>
+    /// Indicates whether distance monitoring is currently active.
+    /// </summary>
+    private Task? _distanceMonitoringTask = null;
 
     #endregion
 
@@ -310,33 +310,25 @@ public class TriloBot : IDisposable
     /// </summary>
     /// <param name="threshold">The minimum distance (in cm) to trigger an update.</param>
     /// <param name="delay">Delay between distance checks in milliseconds.</param>
-    /// <param name="cancellationToken">A cancellation token to stop monitoring.</param>
-    public void StartDistanceMonitoring(double threshold = 1, int delay = 1_000, CancellationToken cancellationToken = default)
+    public void StartDistanceMonitoring(double threshold = 1, int delay = 1_000)
     {
-        _backgroundCancellationToken?.Cancel();
-        _backgroundCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-        Task.Run(async () =>
+        _distanceMonitoringTask = Task.Run(async () =>
         {
-            Console.WriteLine("Starting background distance monitoring...");
-            while (!_backgroundCancellationToken.IsCancellationRequested)
+            double distance = ReadDistance();
+            Console.WriteLine($"Ultrasound: Current distance: {distance:F2} cm");
+            if (Math.Abs(distance - _lastKnownDistance) > threshold)
             {
-                double distance = ReadDistance();
-                Console.WriteLine($"Ultrasound: Current distance: {distance:F2} cm");
-                if (Math.Abs(distance - _lastKnownDistance) > threshold)
-                {
-                    _lastKnownDistance = distance; // Update last known distance
-                    System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
-                }
-                else
-                {
-                    System.Console.WriteLine($"Ultrasound: Distance unchanged: {distance:F2} cm");
-                }
-
-                _distanceSubject.OnNext(distance);
-                await Task.Delay(delay, _backgroundCancellationToken.Token);
+                _lastKnownDistance = distance; // Update last known distance
+                System.Console.WriteLine($"Ultrasound: Distance updated: {distance:F2} cm");
             }
-        }, _backgroundCancellationToken.Token);
+            else
+            {
+                System.Console.WriteLine($"Ultrasound: Distance unchanged: {distance:F2} cm");
+            }
+
+            _distanceSubject.OnNext(distance);
+            await Task.Delay(delay);
+        });
     }
 
     /// <summary>
@@ -344,8 +336,8 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StopDistanceMonitoring()
     {
-        _backgroundCancellationToken?.Cancel();
-        _backgroundCancellationToken = null;
+        _distanceMonitoringTask?.Dispose();
+        _distanceMonitoringTask = null;
     }
 
     #endregion
@@ -367,7 +359,7 @@ public class TriloBot : IDisposable
         _lightManager?.Dispose();
         _ultrasoundManager?.Dispose();
         _gpio.Dispose();
-        
+
         GC.SuppressFinalize(this);
     }
 
