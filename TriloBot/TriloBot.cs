@@ -1,5 +1,7 @@
 using System.Device.Gpio;
+using Iot.Device.BrickPi3.Sensors;
 using TriloBot.Light;
+using TriloBot.Light.Modes;
 using TriloBot.Motor;
 using TriloBot.Ultrasound;
 
@@ -65,15 +67,13 @@ public class TriloBot : IDisposable
         // Setup ultrasound manager
         _ultrasoundManager = new UltrasoundManager(_gpio);
 
-        // Initialize SN3218 LED driver
-        ShowUnderlighting();
-
+        // Log successful initialization
         Console.WriteLine("Successfully initialized TrilBot manager");
     }
 
     #endregion
 
-    #region Public Methods
+    #region Button methods
 
     /// <summary>
     /// Reads the state of a button.
@@ -89,12 +89,16 @@ public class TriloBot : IDisposable
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
     public void SetButtonLed(int buttonLed, double value) => _lightManager.SetButtonLed(buttonLed, value);
 
+    #endregion
+
+    #region Motor methods
+
     // Motor control methods are now delegated to MotorManager
     /// <summary>Sets the speed and direction of a single motor.</summary>
     /// <param name="motor">The motor index (0 for left, 1 for right).</param>
     /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
     public void SetMotorSpeed(int motor, double speed) => _motorManager.SetMotorSpeed(motor, speed);
-   
+
     /// <summary>Sets the speed and direction of both motors.</summary>
     /// <param name="leftSpeed">Speed for the left motor (-1.0 to 1.0).</param>
     /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
@@ -102,7 +106,7 @@ public class TriloBot : IDisposable
 
     /// <summary>Disables both motors and sets their PWM to 0.</summary>
     public void DisableMotors() => _motorManager.DisableMotors();
-   
+
     /// <summary>Drives both motors forward at the specified speed.</summary>
     /// <param name="speed">Speed value (default 1.0).</param>
     public void Forward(double speed = 1.0) => _motorManager.Forward(speed);
@@ -110,15 +114,15 @@ public class TriloBot : IDisposable
     /// <summary>Drives both motors backward at the specified speed.</summary>
     /// <param name="speed">Speed value (default 1.0).</param>
     public void Backward(double speed = 1.0) => _motorManager.Backward(speed);
-  
+
     /// <summary>Turns the robot left in place at the specified speed.</summary>
     /// <param name="speed">Speed value (default 1.0).</param>
     public void TurnLeft(double speed = 1.0) => _motorManager.TurnLeft(speed);
-   
+
     /// <summary>Turns the robot right in place at the specified speed.</summary>
     /// <param name="speed">Speed value (default 1.0).</param>
     public void TurnRight(double speed = 1.0) => _motorManager.TurnRight(speed);
-   
+
     /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
     /// <param name="speed">Speed value (default 1.0).</param>
     public void CurveForwardLeft(double speed = 1.0) => _motorManager.CurveForwardLeft(speed);
@@ -141,12 +145,16 @@ public class TriloBot : IDisposable
     /// <summary>Disables both motors (coast mode).</summary>
     public void Coast() => _motorManager.Coast();
 
+    #endregion
+
+    #region Light methods
+
     /// <summary>Enables and displays the current underlighting values.</summary>
     public void ShowUnderlighting() => _lightManager.ShowUnderlighting();
 
     /// <summary>Disables the underlighting.</summary>
     public void DisableUnderlighting() => _lightManager.DisableUnderlighting();
-   
+
     /// <summary>Sets the RGB value of a single underlight.</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
     /// <param name="r">Red value (0-255).</param>
@@ -154,7 +162,7 @@ public class TriloBot : IDisposable
     /// <param name="b">Blue value (0-255).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void SetUnderlight(int light, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlight(light, r, g, b, show);
-   
+
     /// <summary>Sets the HSV value of a single underlight.</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
     /// <param name="h">Hue value.</param>
@@ -162,26 +170,26 @@ public class TriloBot : IDisposable
     /// <param name="v">Value (brightness).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void SetUnderlightHsv(int light, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightHsv(light, h, s, v, show);
-   
+
     /// <summary>Fills all underlights with the specified RGB color.</summary>
     /// <param name="r">Red value (0-255).</param>
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void FillUnderlighting(byte r, byte g, byte b, bool show = true) => _lightManager.FillUnderlighting(r, g, b, show);
-   
+
     /// <summary>Fills all underlights with the specified HSV color.</summary>
     /// <param name="h">Hue value.</param>
     /// <param name="s">Saturation value.</param>
     /// <param name="v">Value (brightness).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void FillUnderlightingHsv(double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.FillUnderlightingHsv(h, s, v, show);
-   
+
     /// <summary>Clears a single underlight (sets it to off).</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void ClearUnderlight(int light, bool show = true) => _lightManager.ClearUnderlight(light, show);
-   
+
     /// <summary>Clears all underlights (sets them to off).</summary>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void ClearUnderlighting(bool show = true) => _lightManager.ClearUnderlighting(show);
@@ -193,7 +201,7 @@ public class TriloBot : IDisposable
     /// <param name="b">Blue value (0-255).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void SetUnderlights(int[] lights, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlights(lights, r, g, b, show);
-   
+
     /// <summary>Sets the HSV value for multiple underlights.</summary>
     /// <param name="lights">Array of underlight indices.</param>
     /// <param name="h">Hue value.</param>
@@ -201,11 +209,15 @@ public class TriloBot : IDisposable
     /// <param name="v">Value (brightness).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void SetUnderlightsHsv(int[] lights, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightsHsv(lights, h, s, v, show);
-   
+
     /// <summary>Clears multiple underlights (sets them to off).</summary>
     /// <param name="lights">Array of underlight indices.</param>
     /// <param name="show">Whether to immediately update the lights.</param>
     public void ClearUnderlights(int[] lights, bool show = true) => _lightManager.ClearUnderlights(lights, show);
+
+    #endregion
+
+    #region Ultrasound methods
 
     /// <summary>
     /// Reads the distance using the ultrasonic sensor.
@@ -215,6 +227,21 @@ public class TriloBot : IDisposable
         => _ultrasoundManager.ReadDistance();
 
     #endregion
+
+    #region Effect methods
+
+    /// <summary>
+    /// Plays the police lights effect on the underlighting.
+    /// This effect alternates red and blue lights in a rotating pattern.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to stop the effect.</param>
+    /// <remarks>
+    /// The effect is cancelable using a cancellation token.
+    /// </remarks>
+    public void PlayPoliceEffect(CancellationToken cancellationToken = default)
+    {
+        LightModesExtensions.PoliceLightsEffect(_lightManager, cancellationToken);
+    }
 
     #region IDisposable Support
 

@@ -7,7 +7,7 @@ namespace TriloBot.Light
     /// <summary>
     /// Manages all LED and underlighting operations for the TriloBot.
     /// </summary>
-    public class LightManager : IDisposable
+    public partial class LightManager : IDisposable
     {
         #region Private Fields
 
