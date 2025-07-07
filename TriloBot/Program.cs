@@ -1,6 +1,5 @@
 namespace TriloBot;
 
-using Robot = TriloBot;
 
 public class Program
 {
@@ -12,7 +11,7 @@ public class Program
 
         var cancellationTokenSource = new CancellationTokenSource();
 
-        using var robot = new Robot();
+        using var robot = new TriloBot();
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();
