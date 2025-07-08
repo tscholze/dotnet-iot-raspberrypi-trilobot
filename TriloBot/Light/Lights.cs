@@ -71,6 +71,23 @@ public static class LightsExtensions
     }
 
     /// <summary>
+    /// Checks if the underlight position is pinable (i.e., corresponds to a button LED).
+    /// </summary>
+    /// <param name="light"></param>
+    /// <returns>True if light requires GPIO Pin access</returns>
+    public static bool IsPinable(this Lights light)
+    {
+        return light switch
+        {
+            Lights.LIGHT_LED_A or
+            Lights.LIGHT_LED_B or
+            Lights.LIGHT_LED_X or
+            Lights.LIGHT_LED_Y => true,
+            _ => false
+        };
+    }
+
+    /// <summary>
     /// Gets all left-side underlights.
     /// </summary>
     public static Lights[] LightsLeft => new[]

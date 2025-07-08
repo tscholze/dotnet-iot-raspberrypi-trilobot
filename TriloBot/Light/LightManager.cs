@@ -44,7 +44,7 @@ namespace TriloBot.Light
             _gpio = gpio;
 
             // Open LED pins for PWM control
-            foreach (var pin in Enum.GetValues(typeof(Lights)).Cast<Lights>().Select(light => light.ToPinNumber()))
+            foreach (var pin in Enum.GetValues(typeof(Lights)).Cast<Lights>().Where(light => light.IsPinable()).Select(light => light.ToPinNumber()))
             {
                 _gpio.OpenPin(pin, PinMode.Output);
                 _ledPwmMapping[pin] = new SoftPwmChannel(_gpio, pin, 2000);
