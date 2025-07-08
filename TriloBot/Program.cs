@@ -1,3 +1,5 @@
+using TriloBot.Button;
+
 namespace TriloBot;
 
 
@@ -33,12 +35,40 @@ public class Program
             }
         });
 
-        robot.Forward(); // Start moving forward
+        var buttonListenerSubscription = robot.ButtonPressedObservable.Subscribe(button =>
+        {
+            Console.WriteLine($"Button pressed: {button}");
 
+            switch (button)
+            {
+                case Buttons.ButtonA:
+                    robot.FillUnderlighting(255, 255, 0); // Yellow
+                    break;
+                case Buttons.ButtonB:
+                    robot.FillUnderlighting(255, 165, 0); // Orange
+
+                    break;
+                case Buttons.ButtonX:
+                    robot.FillUnderlighting(0, 0, 5); // Blue
+
+                    break;
+                case Buttons.ButtonY:
+                    robot.FillUnderlighting(255, 192, 203); // Pink
+
+                    break;
+                default:
+                    robot.FillUnderlighting(255, 255, 255); // white
+
+                    break;
+            }
+        });
+        
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();
             tooNearSubscription.Dispose();
+            buttonListenerSubscription.Dispose();
+            robot.Dispose();
         };
 
         // Keep the program running until cancellation is requested

@@ -1,3 +1,4 @@
+
 using System.Device.Gpio;
 using System.Runtime.InteropServices;
 using System.Reactive.Subjects;
@@ -16,15 +17,6 @@ namespace TriloBot;
 public class TriloBot : IDisposable
 {
     /// <summary>
-    /// Observable that indicates if an object is too near (distance below 10).
-    /// </summary>
-    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
-    /// <summary>
-    /// Observable for the latest distance readings.
-    /// </summary>
-    private readonly BehaviorSubject<double> _distanceObserver = new(0.0);
-
-    /// <summary>
     /// Exposes the distance observer as an IObservable (read-only).
     /// </summary>
     public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
@@ -33,6 +25,22 @@ public class TriloBot : IDisposable
     /// Exposes the object-too-near observer as an IObservable (read-only).
     /// </summary>
     public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
+
+    /// <summary>
+    /// Exposes the button pressed observer as an IObservable (read-only).
+    /// Emits the Buttons enum value when a button is pressed, or null if none.
+    /// </summary>
+    public IObservable<Buttons?> ButtonPressedObservable => _buttonPressedObserver.AsObservable();
+
+    /// <summary>
+    /// Task for background button monitoring.
+    /// </summary>
+    private Task? _buttonMonitoringTask;
+
+    /// <summary>
+    /// CancellationTokenSource for button monitoring.
+    /// </summary>
+    private CancellationTokenSource? _buttonMonitoringCts;
 
     /// <summary>
     /// Tracks whether the object has been disposed.
@@ -84,6 +92,22 @@ public class TriloBot : IDisposable
     /// Manages ultrasound distance measurement operations.
     /// </summary>
     private readonly UltrasoundManager _ultrasoundManager = null!;
+
+    /// <summary>
+    /// Observable that indicates if an object is too near (distance below 10).
+    /// </summary>
+    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
+
+
+    /// <summary>
+    /// Observable for the latest button press events.
+    /// </summary>
+    private readonly BehaviorSubject<Buttons?> _buttonPressedObserver = new(null);
+
+    /// <summary>
+    /// Observable for the latest distance readings.
+    /// </summary>
+    private readonly BehaviorSubject<double> _distanceObserver = new(0.0);
 
     #endregion
 
@@ -214,6 +238,76 @@ public class TriloBot : IDisposable
     /// <param name="button">The button whose LED to set.</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
     public void SetButtonLed(Buttons button, double value) => _lightManager.SetButtonLed(button, value);
+
+    /// <summary>
+    /// Starts non-blocking background monitoring of button presses every 100ms.
+    /// Emits the Buttons enum value to ButtonPressedObservable when a button is pressed.
+    /// </summary>
+    public void StartButtonMonitoring()
+    {
+        // If already running, do nothing
+        if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
+            return;
+
+        _buttonMonitoringCts = new CancellationTokenSource();
+        var token = _buttonMonitoringCts.Token;
+
+        _buttonMonitoringTask = Task.Run(async () =>
+        {
+            var lastPressed = (Buttons?)null;
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    foreach (Buttons button in Enum.GetValues(typeof(Buttons)))
+                    {
+                        if (_buttonManager.ReadButton(button))
+                        {
+                            if (lastPressed != button)
+                            {
+                                _buttonPressedObserver.OnNext(button);
+                                lastPressed = button;
+                            }
+                            break;
+                        }
+                    }
+                    // If no button is pressed, reset lastPressed
+                    if (!Enum.GetValues(typeof(Buttons)).Cast<Buttons>().Any(b => _buttonManager.ReadButton(b)))
+                    {
+                        lastPressed = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Button monitoring error: {ex.Message}");
+                }
+                await Task.Delay(100, token).ConfigureAwait(false);
+            }
+        }, token);
+    }
+
+    /// <summary>
+    /// Stops the background button monitoring task if running.
+    /// </summary>
+    public void StopButtonMonitoring()
+    {
+        if (_buttonMonitoringCts != null)
+        {
+            _buttonMonitoringCts.Cancel();
+            try
+            {
+                _buttonMonitoringTask?.Wait(1000);
+            }
+            catch (AggregateException) { }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                _buttonMonitoringCts.Dispose();
+                _buttonMonitoringCts = null;
+                _buttonMonitoringTask = null;
+            }
+        }
+    }
 
     #endregion
 
@@ -394,6 +488,7 @@ public class TriloBot : IDisposable
         try
         {
             StopDistanceMonitoring();
+            StopButtonMonitoring();
             DisableUnderlighting();
             DisableMotors();
             _motorManager?.Dispose();
@@ -403,6 +498,7 @@ public class TriloBot : IDisposable
             _gpio.Dispose();
             _distanceObserver?.Dispose();
             _objectTooNearObserver?.Dispose();
+            _buttonPressedObserver?.Dispose();
         }
         catch (Exception ex)
         {
