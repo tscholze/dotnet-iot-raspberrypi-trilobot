@@ -9,15 +9,16 @@ public class Program
         Console.WriteLine("Press Ctrl+C to exit");
 
         var cancellationTokenSource = new CancellationTokenSource();
-
         using var robot = new TriloBot(cancellationTokenSource.Token);
 
         // Start distance monitoring
         robot.StartDistanceMonitoring();
 
         // Subscribe to objectTooNearObserver
-        var tooNearSubscription = robot.objectTooNearObserver.Subscribe(tooNear =>
+        var tooNearSubscription = robot.ObjectTooNearObservable.Subscribe(tooNear =>
         {
+            Console.WriteLine($"Object too near: {tooNear}");
+
             if (tooNear)
             {
                 // Set underlight to red
@@ -33,7 +34,7 @@ public class Program
         });
 
         robot.Forward(); // Start moving forward
-        
+
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();

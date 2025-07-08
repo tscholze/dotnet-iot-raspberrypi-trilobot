@@ -1,9 +1,5 @@
-using System;
 using System.Device.Gpio;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Reactive.Subjects;
 
 namespace TriloBot.Ultrasound;
 
@@ -90,7 +86,7 @@ public class UltrasoundManager : IDisposable
 
         // 5. Calculate the distance based on the duration
         double pulseDuration = (echoEnd - echoStart) / (double)Stopwatch.Frequency;
-        double distance = (pulseDuration * 34300) / 2.0;
+        double distance = pulseDuration * 34300 / 2.0;
 
         // 6. Return the measured distance in centimeters, or 0 if invalid
         // Check if the distance is within a reasonable  HC-SR04 range

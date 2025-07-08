@@ -24,49 +24,6 @@ internal static class LightsConfigurations
 
     #endregion
 
-    #region Underlights
-
-    /// <summary>Index for the front right underlight.</summary>
-    internal const int LightFrontRight = 0;
-   
-    /// <summary>Index for the front left underlight.</summary>
-    internal const int LightFrontLeft = 1;
-   
-    /// <summary>Index for the middle left underlight.</summary>
-    internal const int LightMiddleLeft = 2;
-   
-    /// <summary>Index for the rear left underlight.</summary>
-    internal const int LightRearLeft = 3;
-   
-    /// <summary>Index for the rear right underlight.</summary>
-    internal const int LightRearRight = 4;
-   
-    /// <summary>Index for the middle right underlight.</summary>
-    internal const int LightMiddleRight = 5;
-   
-    /// <summary>Total number of underlights.</summary>
-    internal const int NumberOfLights = 6;
-
-    /// <summary>Indices for all left-side underlights.</summary>
-    internal static readonly int[] LightsLeft = [LightFrontLeft, LightMiddleLeft, LightRearLeft];
-   
-    /// <summary>Indices for all right-side underlights.</summary>
-    internal static readonly int[] LightsRight = [LightFrontRight, LightMiddleRight, LightRearRight];
-   
-    /// <summary>Indices for all front underlights.</summary>
-    internal static readonly int[] LightsFront = [LightFrontLeft, LightFrontRight];
-   
-    /// <summary>Indices for all middle underlights.</summary>
-    internal static readonly int[] LightsMiddle = [LightMiddleLeft, LightMiddleRight];
-
-    /// <summary>Indices for all rear underlights.</summary>
-    internal static readonly int[] LightsRear = [LightRearLeft, LightRearRight];
-
-    /// <summary>Indices for left diagonal underlights.</summary>
-    internal static readonly int[] LightsLeftDiagonal = [LightFrontLeft, LightRearRight];
-
-    /// <summary>Indices for right diagonal underlights.</summary>
-    internal static readonly int[] LightsRightDiagonal = [LightFrontRight, LightRearLeft];
 
     #endregion
 }

@@ -1,7 +1,3 @@
-using System;
-using System.Threading;
-using TriloBot.Light;
-
 namespace TriloBot.Light.Modes;
 
 /// <summary>
@@ -24,14 +20,14 @@ public static class LightModesExtensions
                 lightManager.ClearUnderlighting();
 
                 // Set red lights (rotating left to right)
-                int redPos = i;
+                var redPos = (Lights)i;
                 lightManager.SetUnderlight(redPos, 255, 0, 0, false);
-                lightManager.SetUnderlight((redPos + 1) % 6, 128, 0, 0, false);
+                lightManager.SetUnderlight((Lights)((i + 1) % 6), 128, 0, 0, false);
 
                 // Set blue lights (rotating right to left)
-                int bluePos = (12 - i) % 6;
+                var bluePos = (Lights)((12 - i) % 6);
                 lightManager.SetUnderlight(bluePos, 0, 0, 255, false);
-                lightManager.SetUnderlight((bluePos + 1) % 6, 0, 0, 128);  // Show on last update
+                lightManager.SetUnderlight((Lights)((12 - i + 1) % 6), 0, 0, 128);  // Show on last update
 
                 Thread.Sleep(100);  // Adjust speed of rotation
             }

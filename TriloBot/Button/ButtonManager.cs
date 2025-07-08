@@ -26,9 +26,10 @@ namespace TriloBot.Button
         {
             _gpio = gpio;
 
-            foreach (var pin in ButtonConfigurations.ButtonPins)
+            // Open all button pins using the Buttons enum and ToPinNumber extension
+            foreach (Buttons button in Enum.GetValues(typeof(Buttons)))
             {
-                _gpio.OpenPin(pin, PinMode.InputPullUp);
+                _gpio.OpenPin(button.ToPinNumber(), PinMode.InputPullUp);
             }
         }
 
@@ -42,14 +43,9 @@ namespace TriloBot.Button
         /// <param name="button">The index of the button (0-3).</param>
         /// <returns>True if the button is pressed, otherwise false.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if button index is out of range.</exception>
-        public bool ReadButton(int button)
+        public bool ReadButton(Buttons button)
         {
-            if (button < 0 || button >= ButtonConfigurations.NumberOfButtons)
-            {
-                throw new ArgumentOutOfRangeException(nameof(button), "Button must be 0-3");
-            }
-
-            return _gpio.Read(ButtonConfigurations.ButtonPins[button]) == PinValue.Low;
+            return _gpio.Read(button.ToPinNumber()) == PinValue.Low;
         }
 
         #endregion
@@ -61,9 +57,10 @@ namespace TriloBot.Button
         /// </summary>
         public void Dispose()
         {
-            foreach (var pin in ButtonConfigurations.ButtonPins)
+            // Close all button pins using the Buttons enum and ToPinNumber extension
+            foreach (Buttons button in Enum.GetValues(typeof(Buttons)))
             {
-                _gpio.ClosePin(pin);
+                _gpio.ClosePin(button.ToPinNumber());
             }
 
             GC.SuppressFinalize(this);

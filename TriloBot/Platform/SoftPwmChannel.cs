@@ -5,7 +5,7 @@ namespace TriloBot.Platform;
 /// <summary>
 /// Provides software-based PWM control for GPIO pins.
 /// </summary>
-public class SoftPwmChannel : IDisposable
+internal class SoftPwmChannel : IDisposable
 {
     #region Private Fields
 

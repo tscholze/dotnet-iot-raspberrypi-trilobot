@@ -32,19 +32,20 @@ namespace TriloBot.Motor
         {
             _gpio = gpio;
 
-            // Setup motor pins
-            _gpio.OpenPin(MotorConfigurations.MotorEnPin, PinMode.Output);
-            _gpio.OpenPin(MotorConfigurations.MotorLeftP, PinMode.Output);
-            _gpio.OpenPin(MotorConfigurations.MotorLeftN, PinMode.Output);
-            _gpio.OpenPin(MotorConfigurations.MotorRightP, PinMode.Output);
-            _gpio.OpenPin(MotorConfigurations.MotorRightN, PinMode.Output);
+            // Setup motor pins using Motor enum and extensions
+            _gpio.OpenPin(MotorExtensions.GetEnablePin(), PinMode.Output);
+            foreach (Motor motor in (Motor[])Enum.GetValues(typeof(Motor)))
+            {
+                _gpio.OpenPin(motor.GetPositivePin(), PinMode.Output);
+                _gpio.OpenPin(motor.GetNegativePin(), PinMode.Output);
+            }
 
             _motorPwmMapping = new Dictionary<int, SoftPwmChannel>
             {
-                [MotorConfigurations.MotorLeftP] = new SoftPwmChannel(_gpio, MotorConfigurations.MotorLeftP, 100),
-                [MotorConfigurations.MotorLeftN] = new SoftPwmChannel(_gpio, MotorConfigurations.MotorLeftN, 100),
-                [MotorConfigurations.MotorRightP] = new SoftPwmChannel(_gpio, MotorConfigurations.MotorRightP, 100),
-                [MotorConfigurations.MotorRightN] = new SoftPwmChannel(_gpio, MotorConfigurations.MotorRightN, 100)
+                [Motor.MotorLeft.GetPositivePin()] = new SoftPwmChannel(_gpio, Motor.MotorLeft.GetPositivePin(), 100),
+                [Motor.MotorLeft.GetNegativePin()] = new SoftPwmChannel(_gpio, Motor.MotorLeft.GetNegativePin(), 100),
+                [Motor.MotorRight.GetPositivePin()] = new SoftPwmChannel(_gpio, Motor.MotorRight.GetPositivePin(), 100),
+                [Motor.MotorRight.GetNegativePin()] = new SoftPwmChannel(_gpio, Motor.MotorRight.GetNegativePin(), 100)
             };
         }
 
@@ -60,28 +61,20 @@ namespace TriloBot.Motor
         /// <exception cref="ArgumentOutOfRangeException">Thrown if motor index is out of range.</exception>
         public void SetMotorSpeed(int motor, double speed)
         {
-            if (motor < 0 || motor >= MotorConfigurations.NumMotors)
+            if (!Enum.IsDefined(typeof(Motor), motor))
             {
-                throw new ArgumentOutOfRangeException(nameof(motor), "Motor must be 0 or 1");
+                throw new ArgumentOutOfRangeException(nameof(motor), "Motor must be MotorLeft or MotorRight");
             }
 
             // Clamp speed to valid range
             speed = Math.Clamp(speed, -1.0, 1.0);
 
-            _gpio.Write(MotorConfigurations.MotorEnPin, PinValue.High);
+            _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
-            SoftPwmChannel pwmP, pwmN;
-            if (motor == 0)
-            {
-                // Left motor inverted so positive speed drives forward
-                pwmP = _motorPwmMapping[MotorConfigurations.MotorLeftN];
-                pwmN = _motorPwmMapping[MotorConfigurations.MotorLeftP];
-            }
-            else
-            {
-                pwmP = _motorPwmMapping[MotorConfigurations.MotorRightP];
-                pwmN = _motorPwmMapping[MotorConfigurations.MotorRightN];
-            }
+            var motorEnum = (Motor)motor;
+            // Left motor inverted so positive speed drives forward
+            SoftPwmChannel pwmP = _motorPwmMapping[motorEnum.GetNegativePin()];
+            SoftPwmChannel pwmN = _motorPwmMapping[motorEnum.GetPositivePin()];
 
             if (speed > 0.0)
             {
@@ -107,8 +100,8 @@ namespace TriloBot.Motor
         /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
         public void SetMotorSpeeds(double leftSpeed, double rightSpeed)
         {
-            SetMotorSpeed(MotorConfigurations.MotorLeft, leftSpeed);
-            SetMotorSpeed(MotorConfigurations.MotorRight, rightSpeed);
+            SetMotorSpeed((int)Motor.MotorLeft, leftSpeed);
+            SetMotorSpeed((int)Motor.MotorRight, rightSpeed);
         }
 
         /// <summary>
@@ -116,11 +109,12 @@ namespace TriloBot.Motor
         /// </summary>
         public void DisableMotors()
         {
-            _gpio.Write(MotorConfigurations.MotorEnPin, PinValue.Low);
-            _motorPwmMapping[MotorConfigurations.MotorLeftP].ChangeDutyCycle(0);
-            _motorPwmMapping[MotorConfigurations.MotorLeftN].ChangeDutyCycle(0);
-            _motorPwmMapping[MotorConfigurations.MotorRightP].ChangeDutyCycle(0);
-            _motorPwmMapping[MotorConfigurations.MotorRightN].ChangeDutyCycle(0);
+            _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.Low);
+            foreach (Motor motor in (Motor[])Enum.GetValues(typeof(Motor)))
+            {
+                _motorPwmMapping[motor.GetPositivePin()].ChangeDutyCycle(0);
+                _motorPwmMapping[motor.GetNegativePin()].ChangeDutyCycle(0);
+            }
         }
 
         /// <summary>Drives both motors forward at the specified speed.</summary>
@@ -130,34 +124,34 @@ namespace TriloBot.Motor
         /// <summary>Drives both motors backward at the specified speed.</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void Backward(double speed = 1.0) => SetMotorSpeeds(-speed, -speed);
-       
+
         /// <summary>Turns the robot left in place at the specified speed.</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void TurnLeft(double speed = 1.0) => SetMotorSpeeds(-speed, speed);
-       
+
         /// <summary>Turns the robot right in place at the specified speed.</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void TurnRight(double speed = 1.0) => SetMotorSpeeds(speed, -speed);
-       
+
         /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void CurveForwardLeft(double speed = 1.0) => SetMotorSpeeds(0.0, speed);
-       
+
         /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void CurveForwardRight(double speed = 1.0) => SetMotorSpeeds(speed, 0.0);
-       
+
         /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void CurveBackwardLeft(double speed = 1.0) => SetMotorSpeeds(0.0, -speed);
-       
+
         /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
         /// <param name="speed">Speed value (default 1.0).</param>
         public void CurveBackwardRight(double speed = 1.0) => SetMotorSpeeds(-speed, 0.0);
-       
+
         /// <summary>Stops both motors (brake mode).</summary>
         public void Stop() => SetMotorSpeeds(0.0, 0.0);
-       
+
         /// <summary>Disables both motors (coast mode).</summary>
         public void Coast() => DisableMotors();
 
@@ -177,7 +171,7 @@ namespace TriloBot.Motor
             }
             GC.SuppressFinalize(this);
         }
-        
+
         #endregion
     }
 }

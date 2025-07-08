@@ -6,6 +6,7 @@ using TriloBot.Light;
 using TriloBot.Light.Modes;
 using TriloBot.Motor;
 using TriloBot.Ultrasound;
+using TriloBot.Button;
 
 namespace TriloBot;
 
@@ -32,7 +33,7 @@ public class TriloBot : IDisposable
     /// Exposes the object-too-near observer as an IObservable (read-only).
     /// </summary>
     public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
-    
+
     /// <summary>
     /// Tracks whether the object has been disposed.
     /// </summary>
@@ -67,7 +68,7 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Manages button input operations.
     /// </summary>
-    private readonly Button.ButtonManager _buttonManager = null!;
+    private readonly ButtonManager _buttonManager = null!;
 
     /// <summary>
     /// Manages LED and underlighting operations.
@@ -128,7 +129,7 @@ public class TriloBot : IDisposable
         if (_distanceMonitoringCts != null)
         {
             _distanceMonitoringCts.Cancel();
-            
+
             try
             {
                 _distanceMonitoringTask?.Wait(1000);
@@ -170,7 +171,7 @@ public class TriloBot : IDisposable
         _gpio = new GpioController();
 
         // Setup button manager
-        _buttonManager = new Button.ButtonManager(_gpio);
+        _buttonManager = new ButtonManager(_gpio);
 
         // Setup light manager
         _lightManager = new LightManager(_gpio);
@@ -203,16 +204,16 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Reads the state of a button.
     /// </summary>
-    /// <param name="button">The index of the button (0-3).</param>
+    /// <param name="button">The button enum value.</param>
     /// <returns>True if the button is pressed, otherwise false.</returns>
-    public bool ReadButton(int button) => _buttonManager.ReadButton(button);
+    public bool ReadButton(Buttons button) => _buttonManager.ReadButton(button);
 
     /// <summary>
     /// Sets the brightness of a button LED.
     /// </summary>
-    /// <param name="buttonLed">The index of the button LED (0-3).</param>
+    /// <param name="button">The button whose LED to set.</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
-    public void SetButtonLed(int buttonLed, double value) => _lightManager.SetButtonLed(buttonLed, value);
+    public void SetButtonLed(Buttons button, double value) => _lightManager.SetButtonLed(button, value);
 
     #endregion
 
@@ -289,7 +290,7 @@ public class TriloBot : IDisposable
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void SetUnderlight(int light, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlight(light, r, g, b, show);
+    public void SetUnderlight(Lights light, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlight(light, r, g, b, show);
 
     /// <summary>Sets the HSV value of a single underlight.</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
@@ -297,7 +298,7 @@ public class TriloBot : IDisposable
     /// <param name="s">Saturation value.</param>
     /// <param name="v">Value (brightness).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void SetUnderlightHsv(int light, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightHsv(light, h, s, v, show);
+    public void SetUnderlightHsv(Lights light, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightHsv(light, h, s, v, show);
 
     /// <summary>Fills all underlights with the specified RGB color.</summary>
     /// <param name="r">Red value (0-255).</param>
@@ -316,7 +317,7 @@ public class TriloBot : IDisposable
     /// <summary>Clears a single underlight (sets it to off).</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void ClearUnderlight(int light, bool show = true) => _lightManager.ClearUnderlight(light, show);
+    public void ClearUnderlight(Lights light, bool show = true) => _lightManager.ClearUnderlight(light, show);
 
     /// <summary>Clears all underlights (sets them to off).</summary>
     /// <param name="show">Whether to immediately update the lights.</param>
@@ -328,7 +329,7 @@ public class TriloBot : IDisposable
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void SetUnderlights(int[] lights, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlights(lights, r, g, b, show);
+    public void SetUnderlights(Lights[] lights, byte r, byte g, byte b, bool show = true) => _lightManager.SetUnderlights(lights, r, g, b, show);
 
     /// <summary>Sets the HSV value for multiple underlights.</summary>
     /// <param name="lights">Array of underlight indices.</param>
@@ -336,12 +337,12 @@ public class TriloBot : IDisposable
     /// <param name="s">Saturation value.</param>
     /// <param name="v">Value (brightness).</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void SetUnderlightsHsv(int[] lights, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightsHsv(lights, h, s, v, show);
+    public void SetUnderlightsHsv(Lights[] lights, double h, double s = 1.0, double v = 1.0, bool show = true) => _lightManager.SetUnderlightsHsv(lights, h, s, v, show);
 
     /// <summary>Clears multiple underlights (sets them to off).</summary>
     /// <param name="lights">Array of underlight indices.</param>
     /// <param name="show">Whether to immediately update the lights.</param>
-    public void ClearUnderlights(int[] lights, bool show = true) => _lightManager.ClearUnderlights(lights, show);
+    public void ClearUnderlights(Lights[] lights, bool show = true) => _lightManager.ClearUnderlights(lights, show);
 
     #endregion
 
@@ -390,20 +391,28 @@ public class TriloBot : IDisposable
         if (_disposed) return;
         System.Console.WriteLine("Disposing TriloBot...");
 
-
-        try { DisableUnderlighting(); } catch { }
-        try { DisableMotors(); } catch { }
-        try { StopDistanceMonitoring(); } catch { }
-        try { _motorManager?.Dispose(); } catch { }
-        try { _buttonManager?.Dispose(); } catch { }
-        try { _lightManager?.Dispose(); } catch { }
-        try { _ultrasoundManager?.Dispose(); } catch { }
-        try { _gpio.Dispose(); } catch { }
-        try { _distanceObserver?.Dispose(); } catch { }
-        try { _objectTooNearObserver?.Dispose(); } catch { }
-
-        _disposed = true;
-        GC.SuppressFinalize(this);
+        try
+        {
+            StopDistanceMonitoring();
+            DisableUnderlighting();
+            DisableMotors();
+            _motorManager?.Dispose();
+            _buttonManager?.Dispose();
+            _lightManager?.Dispose();
+            _ultrasoundManager?.Dispose();
+            _gpio.Dispose();
+            _distanceObserver?.Dispose();
+            _objectTooNearObserver?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error stopping distance monitoring: {ex.Message}");
+        }
+        finally
+        {
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
     }
 
     #endregion

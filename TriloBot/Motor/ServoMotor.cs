@@ -6,7 +6,7 @@ namespace TriloBot.Motor;
 /// <summary>
 /// Controls a servo motor using software PWM.
 /// </summary>
-public class ServoMotor : IDisposable
+internal class ServoMotor : IDisposable
 {
     #region Private Fields
 
