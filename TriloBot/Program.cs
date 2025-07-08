@@ -8,7 +8,6 @@ public class Program
         Console.WriteLine("Trilobot Police Lights Effect");
         Console.WriteLine("Press Ctrl+C to exit");
 
-
         var cancellationTokenSource = new CancellationTokenSource();
 
         using var robot = new TriloBot(cancellationTokenSource.Token);
@@ -16,25 +15,29 @@ public class Program
         // Start distance monitoring
         robot.StartDistanceMonitoring();
 
-        // Subscribe to distanceObserver
-        var distanceSubscription = robot.distanceObserver.Subscribe(distance =>
+        // Subscribe to objectTooNearObserver
+        var tooNearSubscription = robot.objectTooNearObserver.Subscribe(tooNear =>
         {
-            if (distance < 10)
+            if (tooNear)
             {
                 // Set underlight to red
                 robot.FillUnderlighting(255, 0, 0);
+                robot.CurveForwardRight();
             }
             else
             {
                 // Set underlight to green
                 robot.FillUnderlighting(0, 255, 0);
+                robot.Forward();
             }
         });
+
+        robot.Forward(); // Start moving forward
         
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();
-            distanceSubscription.Dispose();
+            tooNearSubscription.Dispose();
         };
 
         // Keep the program running until cancellation is requested

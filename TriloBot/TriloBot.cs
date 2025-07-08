@@ -14,10 +14,18 @@ namespace TriloBot;
 public class TriloBot : IDisposable
 {
     /// <summary>
+    /// Observable that indicates if an object is too near (distance below 10).
+    /// </summary>
+    public BehaviorSubject<bool> objectTooNearObserver = new(false);
+    /// <summary>
+    /// Tracks whether the object has been disposed.
+    /// </summary>
+    private bool _disposed = false;
+    /// <summary>
     /// Observable for the latest distance readings.
     /// </summary>
     public BehaviorSubject<double> distanceObserver = new(0.0);
-    
+
     /// <summary>
     /// Task for background distance monitoring.
     /// </summary>
@@ -89,6 +97,8 @@ public class TriloBot : IDisposable
                     // Read and publish distance
                     var distance = _ultrasoundManager.ReadDistance();
                     distanceObserver.OnNext(distance);
+                    // Publish object too near state
+                    objectTooNearObserver.OnNext(distance < 10);
                 }
                 catch (Exception ex)
                 {
@@ -169,7 +179,7 @@ public class TriloBot : IDisposable
             // Cancel any ongoing effects or operations
             DisableUnderlighting();
             DisableMotors();
-            Dispose();
+            // Do not call Dispose() here; handled by using statement
         });
 
         // Log successful initialization
@@ -364,19 +374,19 @@ public class TriloBot : IDisposable
     /// </summary>
     public void Dispose()
     {
+        if (_disposed) return;
         System.Console.WriteLine("Disposing TriloBot...");
 
+        try { DisableUnderlighting(); } catch { }
+        try { DisableMotors(); } catch { }
+        try { StopDistanceMonitoring(); } catch { }
+        try { _motorManager?.Dispose(); } catch { }
+        try { _buttonManager?.Dispose(); } catch { }
+        try { _lightManager?.Dispose(); } catch { }
+        try { _ultrasoundManager?.Dispose(); } catch { }
+        try { _gpio.Dispose(); } catch { }
 
-        DisableUnderlighting();
-        DisableMotors();
-        StopDistanceMonitoring();
-
-        _motorManager?.Dispose();
-        _buttonManager?.Dispose();
-        _lightManager?.Dispose();
-        _ultrasoundManager?.Dispose();
-        _gpio.Dispose();
-
+        _disposed = true;
         GC.SuppressFinalize(this);
     }
 
