@@ -3,10 +3,13 @@
 A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a modern, modular, and idiomatic C# API for all Trilobot features.
 
 
-<img src="https://shop.pimoroni.com/cdn/shop/products/Trilobot_1_1200x1200.jpg" alt="Trilobot" width="300" />
+<center>
+   <img src="_docs/image.png" height="200" alt="Image of the project" />
+</center>
 
 
-## 🎯 Features
+
+## 🚀 What Does It Do?
 
 This library provides easy-to-use manager classes for all major Trilobot hardware components:
 
