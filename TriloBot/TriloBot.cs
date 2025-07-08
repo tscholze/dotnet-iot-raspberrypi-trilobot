@@ -1,6 +1,7 @@
 using System.Device.Gpio;
 using System.Runtime.InteropServices;
 using System.Reactive.Subjects;
+using System.Reactive.Linq;
 using TriloBot.Light;
 using TriloBot.Light.Modes;
 using TriloBot.Motor;
@@ -16,15 +17,26 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Observable that indicates if an object is too near (distance below 10).
     /// </summary>
-    public BehaviorSubject<bool> objectTooNearObserver = new(false);
+    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
+    /// <summary>
+    /// Observable for the latest distance readings.
+    /// </summary>
+    private readonly BehaviorSubject<double> _distanceObserver = new(0.0);
+
+    /// <summary>
+    /// Exposes the distance observer as an IObservable (read-only).
+    /// </summary>
+    public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
+
+    /// <summary>
+    /// Exposes the object-too-near observer as an IObservable (read-only).
+    /// </summary>
+    public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
+    
     /// <summary>
     /// Tracks whether the object has been disposed.
     /// </summary>
     private bool _disposed = false;
-    /// <summary>
-    /// Observable for the latest distance readings.
-    /// </summary>
-    public BehaviorSubject<double> distanceObserver = new(0.0);
 
     /// <summary>
     /// Task for background distance monitoring.
@@ -96,14 +108,14 @@ public class TriloBot : IDisposable
                 {
                     // Read and publish distance
                     var distance = _ultrasoundManager.ReadDistance();
-                    distanceObserver.OnNext(distance);
-                    objectTooNearObserver.OnNext(distance < minDistance);
+                    _distanceObserver.OnNext(distance);
+                    _objectTooNearObserver.OnNext(distance < minDistance);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Distance monitoring error: {ex.Message}");
                 }
-                await Task.Delay(500, token);
+                await Task.Delay(500, token).ConfigureAwait(false);
             }
         }, token);
     }
@@ -133,8 +145,6 @@ public class TriloBot : IDisposable
     }
 
     #endregion
-
-
 
     #region  Constructor
 
@@ -380,6 +390,7 @@ public class TriloBot : IDisposable
         if (_disposed) return;
         System.Console.WriteLine("Disposing TriloBot...");
 
+
         try { DisableUnderlighting(); } catch { }
         try { DisableMotors(); } catch { }
         try { StopDistanceMonitoring(); } catch { }
@@ -388,6 +399,8 @@ public class TriloBot : IDisposable
         try { _lightManager?.Dispose(); } catch { }
         try { _ultrasoundManager?.Dispose(); } catch { }
         try { _gpio.Dispose(); } catch { }
+        try { _distanceObserver?.Dispose(); } catch { }
+        try { _objectTooNearObserver?.Dispose(); } catch { }
 
         _disposed = true;
         GC.SuppressFinalize(this);
