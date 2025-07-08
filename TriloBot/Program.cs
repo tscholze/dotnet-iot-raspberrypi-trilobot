@@ -25,13 +25,11 @@ public class Program
             {
                 // Set underlight to red
                 robot.FillUnderlighting(255, 0, 0);
-                robot.CurveForwardRight();
             }
             else
             {
                 // Set underlight to green
                 robot.FillUnderlighting(0, 255, 0);
-                robot.Forward();
             }
         });
 

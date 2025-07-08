@@ -245,7 +245,6 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StartButtonMonitoring()
     {
-        // If already running, do nothing
         if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
             return;
 
@@ -259,20 +258,17 @@ public class TriloBot : IDisposable
             {
                 try
                 {
-                    foreach (Buttons button in Enum.GetValues(typeof(Buttons)))
+                    var pressed = Enum.GetValues(typeof(Buttons))
+                    .Cast<Buttons?>()
+                    .FirstOrDefault(b => b.HasValue && _buttonManager.ReadButton(b.Value));
+
+                    Console.WriteLine($"Button pressed: {pressed}");
+                    if (pressed != null && lastPressed != pressed)
                     {
-                        if (_buttonManager.ReadButton(button))
-                        {
-                            if (lastPressed != button)
-                            {
-                                _buttonPressedObserver.OnNext(button);
-                                lastPressed = button;
-                            }
-                            break;
-                        }
+                        _buttonPressedObserver.OnNext(pressed);
+                        lastPressed = pressed;
                     }
-                    // If no button is pressed, reset lastPressed
-                    if (!Enum.GetValues(typeof(Buttons)).Cast<Buttons>().Any(b => _buttonManager.ReadButton(b)))
+                    else if (pressed == null)
                     {
                         lastPressed = null;
                     }
