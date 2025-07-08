@@ -12,28 +12,35 @@ public class Program
         var cancellationTokenSource = new CancellationTokenSource();
 
         using var robot = new TriloBot(cancellationTokenSource.Token);
-        Console.CancelKeyPress += (s, e) =>
-        {
-            cancellationTokenSource.Cancel();
-        };
 
-        // robot.PlayPoliceEffect(cancellationTokenSource.Token);
+        // Start distance monitoring
         robot.StartDistanceMonitoring();
 
-        robot.DistanceObservable.Subscribe(distance =>
+        // Subscribe to distanceObserver
+        var distanceSubscription = robot.distanceObserver.Subscribe(distance =>
         {
-            Console.WriteLine($"Distance: {distance} cm");
-
             if (distance < 10)
             {
-                Console.WriteLine("Obstacle detected! Stopping robot.");
-                robot.Stop();
-                robot.FillUnderlighting(255, 0, 0, true); // Set underlighting to red
+                // Set underlight to red
+                robot.FillUnderlighting(255, 0, 0);
             }
             else
             {
-                robot.FillUnderlighting(0, 255, 0, true); // Set underlighting to red
+                // Set underlight to green
+                robot.FillUnderlighting(0, 255, 0);
             }
         });
+        
+        Console.CancelKeyPress += (s, e) =>
+        {
+            cancellationTokenSource.Cancel();
+            distanceSubscription.Dispose();
+        };
+
+        // Keep the program running until cancellation is requested
+        while (!cancellationTokenSource.IsCancellationRequested)
+        {
+            Thread.Sleep(100);
+        }
     }
 }
