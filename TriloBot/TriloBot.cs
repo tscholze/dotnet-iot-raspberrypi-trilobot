@@ -8,6 +8,7 @@ using TriloBot.Light.Modes;
 using TriloBot.Motor;
 using TriloBot.Ultrasound;
 using TriloBot.Button;
+using TriloBot.Camera;
 
 namespace TriloBot;
 
@@ -92,6 +93,11 @@ public class TriloBot : IDisposable
     /// Manages ultrasound distance measurement operations.
     /// </summary>
     private readonly UltrasoundManager _ultrasoundManager = null!;
+
+    /// <summary>
+    /// Manages camera operations.
+    /// </summary>
+    private readonly CameraManager _cameraManager = null!;
 
     /// <summary>
     /// Observable that indicates if an object is too near (distance below 10).
@@ -468,6 +474,45 @@ public class TriloBot : IDisposable
     /// <returns>Distance in centimeters</returns>
     public double ReadDistance()
         => _ultrasoundManager.ReadDistance();
+
+    #endregion
+
+    #region Camera
+
+    /// <summary>
+    /// Gets the URL for the live stream from the camera.
+    /// </summary>
+    /// <returns>URL string for the live stream.</returns>
+    /// <remarks>
+    /// This method retrieves the URL for the live stream from the camera's SignalR hub.
+    /// It is used to access the live video feed from the camera.
+    /// </remarks>
+    public string GetLiveStreamUrl()
+    {
+        return _cameraManager.GetLiveStreamSignalRHubUrl();
+    }
+
+    /// <summary>
+    /// Takes a photo using the camera and saves it to the specified filename.
+    /// This method blocks until the photo is taken.
+    /// It returns the full path to the saved photo.
+    /// If an error occurs, it returns an empty string.
+    /// The filename should include the full path and file extension (e.g., "photos/photo.jpg
+    /// </summary>
+    /// <param name="filename"></param>
+    /// <returns>Image data</returns>
+    public Task<string> TakePhotoAsync(string filename)
+    {
+        try
+        {
+            return _cameraManager.TakePhotoAsync(filename);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error taking photo: {ex.Message}");
+            return Task.FromResult(string.Empty);
+        }
+    }
 
     #endregion
 

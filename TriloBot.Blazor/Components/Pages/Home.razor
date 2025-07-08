@@ -1,5 +1,40 @@
 ﻿@page "/"
 
+@inject TriloBot Robot
+
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
+
+<button @onclick="TakePhoto">Take Photo</button>
+@if (!string.IsNullOrEmpty(photoPath))
+{
+    <img src="@photoPath" alt="Photo" style="max-width:400px;" />
+}
+
+<h2>Live Stream</h2>
+@if (!string.IsNullOrEmpty(streamUrl))
+{
+    <img src="@streamUrl" alt="Live Stream" style="max-width:400px;" />
+}
+
+@code {
+    private string? photoPath;
+    private string? streamUrl;
+
+    protected override void OnInitialized()
+    {
+        streamUrl = Robot.GetLiveStreamUrl();
+    }
+
+    private async Task TakePhoto()
+    {
+        // Save to wwwroot/photos or another accessible folder
+        var savePath = Path.Combine("wwwroot", "photos");
+        Directory.CreateDirectory(savePath);
+        var file = await Robot.TakePhotoAsync(savePath);
+        // For Blazor, the path should be relative to wwwroot
+        photoPath = "/photos/" + Path.GetFileName(file);
+        StateHasChanged();
+    }
+}
