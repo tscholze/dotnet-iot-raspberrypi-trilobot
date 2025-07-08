@@ -79,7 +79,7 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Starts non-blocking background monitoring of the distance sensor every 500ms.
     /// </summary>
-    public void StartDistanceMonitoring()
+    public void StartDistanceMonitoring(double minDistance = 30.0)
     {
         // If already running, do nothing
         if (_distanceMonitoringTask != null && !_distanceMonitoringTask.IsCompleted)
@@ -97,8 +97,7 @@ public class TriloBot : IDisposable
                     // Read and publish distance
                     var distance = _ultrasoundManager.ReadDistance();
                     distanceObserver.OnNext(distance);
-                    // Publish object too near state
-                    objectTooNearObserver.OnNext(distance < 10);
+                    objectTooNearObserver.OnNext(distance < minDistance);
                 }
                 catch (Exception ex)
                 {
@@ -117,6 +116,7 @@ public class TriloBot : IDisposable
         if (_distanceMonitoringCts != null)
         {
             _distanceMonitoringCts.Cancel();
+            
             try
             {
                 _distanceMonitoringTask?.Wait(1000);
@@ -209,7 +209,10 @@ public class TriloBot : IDisposable
     #region Motor methods
 
     // Motor control methods are now delegated to MotorManager
-    /// <summary>Sets the speed and direction of a single motor.</summary>
+
+    /// <summary>
+    /// Sets the speed and direction of a single motor.
+    /// </summary>
     /// <param name="motor">The motor index (0 for left, 1 for right).</param>
     /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
     public void SetMotorSpeed(int motor, double speed) => _motorManager.SetMotorSpeed(motor, speed);
@@ -223,36 +226,36 @@ public class TriloBot : IDisposable
     public void DisableMotors() => _motorManager.DisableMotors();
 
     /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void Forward(double speed = 1.0) => _motorManager.Forward(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void Forward(double speed = 0.25) => _motorManager.Forward(speed);
 
     /// <summary>Drives both motors backward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void Backward(double speed = 1.0) => _motorManager.Backward(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void Backward(double speed = 0.25) => _motorManager.Backward(speed);
 
     /// <summary>Turns the robot left in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void TurnLeft(double speed = 1.0) => _motorManager.TurnLeft(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void TurnLeft(double speed = 0.25) => _motorManager.TurnLeft(speed);
 
     /// <summary>Turns the robot right in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void TurnRight(double speed = 1.0) => _motorManager.TurnRight(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void TurnRight(double speed = 0.25) => _motorManager.TurnRight(speed);
 
     /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void CurveForwardLeft(double speed = 1.0) => _motorManager.CurveForwardLeft(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void CurveForwardLeft(double speed = 0.25) => _motorManager.CurveForwardLeft(speed);
 
     /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void CurveForwardRight(double speed = 1.0) => _motorManager.CurveForwardRight(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void CurveForwardRight(double speed = 0.25) => _motorManager.CurveForwardRight(speed);
 
     /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void CurveBackwardLeft(double speed = 1.0) => _motorManager.CurveBackwardLeft(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void CurveBackwardLeft(double speed = 0.25) => _motorManager.CurveBackwardLeft(speed);
 
     /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-    /// <param name="speed">Speed value (default 1.0).</param>
-    public void CurveBackwardRight(double speed = 1.0) => _motorManager.CurveBackwardRight(speed);
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void CurveBackwardRight(double speed = 0.25) => _motorManager.CurveBackwardRight(speed);
 
     /// <summary>Stops both motors (brake mode).</summary>
     public void Stop() => _motorManager.Stop();
