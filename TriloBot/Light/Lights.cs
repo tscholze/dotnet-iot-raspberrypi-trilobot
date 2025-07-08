@@ -21,7 +21,12 @@ public enum Lights
     LIGHT_REAR_RIGHT = 4,
 
     /// <summary>Middle right underlight (index 5).</summary>
-    LIGHT_MIDDLE_RIGHT = 5
+    LIGHT_MIDDLE_RIGHT = 5,
+
+    LIGHT_LED_A = 6,
+    LIGHT_LED_B = 7,
+    LIGHT_LED_X = 8,
+    LIGHT_LED_Y = 9
 }
 
 /// <summary>
@@ -38,10 +43,10 @@ public static class LightsExtensions
     {
         return light switch
         {
-            Lights.LIGHT_FRONT_RIGHT => 23, // LedAPin
-            Lights.LIGHT_FRONT_LEFT => 22,  // LedBPin
-            Lights.LIGHT_MIDDLE_LEFT => 17, // LedXPin
-            Lights.LIGHT_REAR_LEFT => 27,   // LedYPin
+            Lights.LIGHT_LED_A => 23, // LedAPin
+            Lights.LIGHT_LED_B => 22,  // LedBPin
+            Lights.LIGHT_LED_X => 17, // LedXPin
+            Lights.LIGHT_LED_Y => 27,   // LedYPin
             _ => throw new ArgumentOutOfRangeException(nameof(light), light, null)
         };
     }
