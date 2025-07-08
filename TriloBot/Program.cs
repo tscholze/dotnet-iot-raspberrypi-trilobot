@@ -33,6 +33,8 @@ public class Program
             }
         });
 
+        robot.StartButtonMonitoring();
+
         var buttonListenerSubscription = robot.ButtonPressedObservable.Subscribe(button =>
         {
             Console.WriteLine($"Button pressed: {button}");
