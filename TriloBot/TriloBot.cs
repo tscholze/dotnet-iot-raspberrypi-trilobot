@@ -27,11 +27,17 @@ public class TriloBot : IDisposable
     /// </summary>
     public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
 
+
     /// <summary>
     /// Exposes the button pressed observer as an IObservable (read-only).
     /// Emits the Buttons enum value when a button is pressed, or null if none.
     /// </summary>
     public IObservable<Buttons?> ButtonPressedObservable => _buttonPressedObserver.AsObservable();
+
+    /// <summary>
+    /// Exposes the live video feed URL as an observable. Emits a new value when the stream URL changes.
+    /// </summary>
+    public IObservable<string> LiveVideoFeedObservable => _liveVideoFeedSubject.AsObservable();
 
     /// <summary>
     /// Task for background button monitoring.
@@ -94,10 +100,16 @@ public class TriloBot : IDisposable
     /// </summary>
     private readonly UltrasoundManager _ultrasoundManager = null!;
 
+
     /// <summary>
     /// Manages camera operations.
     /// </summary>
     private readonly CameraManager _cameraManager = null!;
+
+    /// <summary>
+    /// Subject for live video feed URL changes.
+    /// </summary>
+    private readonly BehaviorSubject<string> _liveVideoFeedSubject = new("");
 
     /// <summary>
     /// Observable that indicates if an object is too near (distance below 10).
@@ -487,9 +499,28 @@ public class TriloBot : IDisposable
     /// This method retrieves the URL for the live stream from the camera's SignalR hub.
     /// It is used to access the live video feed from the camera.
     /// </remarks>
+
     public string GetLiveStreamUrl()
     {
-        return _cameraManager.GetLiveStreamSignalRHubUrl();
+        var url = _cameraManager.GetLiveStreamSignalRHubUrl();
+        // If the URL has changed, push it to the observable
+        if (_liveVideoFeedSubject.Value != url)
+        {
+            _liveVideoFeedSubject.OnNext(url);
+        }
+        return url;
+    }
+
+    /// <summary>
+    /// Call this method to notify observers that the live video feed URL has changed.
+    /// </summary>
+    /// <param name="newUrl">The new live video feed URL.</param>
+    public void NotifyLiveVideoFeedUrlChanged(string newUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(newUrl) && _liveVideoFeedSubject.Value != newUrl)
+        {
+            _liveVideoFeedSubject.OnNext(newUrl);
+        }
     }
 
     /// <summary>

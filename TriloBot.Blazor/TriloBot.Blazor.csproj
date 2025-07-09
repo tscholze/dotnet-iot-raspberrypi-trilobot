@@ -10,4 +10,8 @@
     <ProjectReference Include="..\TriloBot\TriloBot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.7" />
+  </ItemGroup>
+
 </Project>

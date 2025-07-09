@@ -1,40 +1,155 @@
-﻿@page "/"
-
-@inject TriloBot Robot
+﻿
+@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
 
-<button @onclick="TakePhoto">Take Photo</button>
-@if (!string.IsNullOrEmpty(photoPath))
-{
-    <img src="@photoPath" alt="Photo" style="max-width:400px;" />
-}
+<h1>TriloBot Remote Control</h1>
+
+<div style="margin-bottom: 1em;">
+    <button @onclick="TakePhoto">Take Photo</button>
+    @if (!string.IsNullOrEmpty(photoPath))
+    {
+        <img src="@photoPath" alt="Photo" style="max-width:400px; display:block; margin-top:0.5em;" />
+    }
+</div>
 
 <h2>Live Stream</h2>
-@if (!string.IsNullOrEmpty(streamUrl))
-{
-    <img src="@streamUrl" alt="Live Stream" style="max-width:400px;" />
-}
+<div style="margin-bottom: 1em;">
+    @if (!string.IsNullOrEmpty(streamUrl))
+    {
+        <img src="@streamUrl" alt="Live Stream" style="max-width:400px; border:1px solid #ccc;" />
+    }
+</div>
+
+
+<div style="margin-bottom: 1em;">
+    <button @onclick="Forward">Forward</button>
+    <button @onclick="Backward">Backward</button>
+    <button @onclick="TurnLeft">Left</button>
+    <button @onclick="TurnRight">Right</button>
+    <button @onclick="Stop">Stop</button>
+</div>
+
+<h2>Lights</h2>
+<div style="margin-bottom: 1em;">
+    <button @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED On</button>
+    <button @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED Off</button>
+    <button @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED On</button>
+    <button @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED Off</button>
+    <button @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED On</button>
+    <button @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED Off</button>
+    <button @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED On</button>
+    <button @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED Off</button>
+</div>
+<div style="margin-bottom: 1em;">
+    <button @onclick="() => FillUnderlighting(255,0,0)">Underlight Red</button>
+    <button @onclick="() => FillUnderlighting(0,255,0)">Underlight Green</button>
+    <button @onclick="() => FillUnderlighting(0,0,255)">Underlight Blue</button>
+    <button @onclick="() => FillUnderlighting(255,255,255)">Underlight White</button>
+    <button @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
+</div>
 
 @code {
     private string? photoPath;
     private string? streamUrl;
+    private HubConnection? hubConnection;
 
-    protected override void OnInitialized()
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
     {
-        streamUrl = Robot.GetLiveStreamUrl();
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
+            .WithAutomaticReconnect()
+            .Build();
+        await hubConnection.StartAsync();
+
+        // Subscribe to live stream URL updates via SignalR streaming
+        var stream = hubConnection.StreamAsync<string>("LiveVideoFeedStream");
+        _ = Task.Run(async () => {
+            await foreach (var url in stream)
+            {
+                streamUrl = url;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        // Optionally, get the initial live stream URL
+        try
+        {
+            streamUrl = await hubConnection.InvokeAsync<string>("GetLiveStreamUrl");
+        }
+        catch
+        {
+            streamUrl = string.Empty;
+        }
     }
 
     private async Task TakePhoto()
     {
-        // Save to wwwroot/photos or another accessible folder
-        var savePath = Path.Combine("wwwroot", "photos");
-        Directory.CreateDirectory(savePath);
-        var file = await Robot.TakePhotoAsync(savePath);
-        // For Blazor, the path should be relative to wwwroot
-        photoPath = "/photos/" + Path.GetFileName(file);
+        if (hubConnection is null) return;
+        var savePath = "wwwroot/photos";
+        try
+        {
+            var file = await hubConnection.InvokeAsync<string>("TakePhoto", savePath);
+            if (!string.IsNullOrEmpty(file))
+                photoPath = "/photos/" + System.IO.Path.GetFileName(file);
+            else
+                photoPath = null;
+        }
+        catch
+        {
+            photoPath = null;
+        }
         StateHasChanged();
     }
+
+    private async Task CallMotor(string method)
+    {
+        if (hubConnection is null) return;
+        try
+        {
+            await hubConnection.InvokeAsync(method);
+        }
+        catch
+        {
+            Console.WriteLine($"Error calling motor method: {method}");
+        }
+    }
+
+    private Task Forward() => CallMotor("Forward");
+    private Task Backward() => CallMotor("Backward");
+    private Task TurnLeft() => CallMotor("TurnLeft");
+    private Task TurnRight() => CallMotor("TurnRight");
+    private Task Stop() => CallMotor("Stop");
+
+    private async Task SetButtonLed(string button, double value)
+    {
+        if (hubConnection is null) return;
+        try
+        {
+            await hubConnection.InvokeAsync("SetButtonLed", button, value);
+        }
+        catch
+        {
+            // Optionally handle errors
+        }
+    }
+
+    private async Task FillUnderlighting(byte r, byte g, byte b)
+    {
+        if (hubConnection is null) return;
+        try
+        {
+            await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
+        }
+        catch
+        {
+            // Optionally handle errors
+        }
+    }
 }
+

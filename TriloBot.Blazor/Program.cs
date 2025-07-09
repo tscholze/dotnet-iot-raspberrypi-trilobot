@@ -1,10 +1,15 @@
 using TriloBot.Blazor.Components;
+using TriloBot.Blazor.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
+builder.Services
+    .AddSingleton<TriloBot.TriloBot>()
+    .AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
 
 var app = builder.Build();
 
@@ -16,8 +21,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+app.MapHub<TriloBotHub>("/trilobotHub");
 
+app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
