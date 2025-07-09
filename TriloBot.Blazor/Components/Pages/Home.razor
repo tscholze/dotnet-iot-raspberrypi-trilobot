@@ -28,6 +28,17 @@
     }
 </div>
 
+<h2>Live Video Signal</h2>
+<div style="margin-bottom: 1em;">
+    @if (!string.IsNullOrEmpty(streamUrl))
+    {
+        <video src="@streamUrl" autoplay controls style="max-width:400px; border:1px solid #ccc;"></video>
+    }
+    else
+    {
+        <p>No live video signal available.</p>
+    }
+</div>
 
 <div style="margin-bottom: 1em;">
     <button @onclick="Forward">Forward</button>

@@ -1,5 +1,6 @@
 using TriloBot.Blazor.Components;
 using TriloBot.Blazor.SignalR;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,5 +34,17 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Add middleware to serve the /photos directory as static files
+var photosPath = Path.Combine(app.Environment.WebRootPath ?? "wwwroot", "photos");
+if (!Directory.Exists(photosPath))
+{
+    Directory.CreateDirectory(photosPath);
+}
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(photosPath),
+    RequestPath = "/photos"
+});
 
 app.Run();
