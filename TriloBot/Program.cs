@@ -16,6 +16,8 @@ public class Program
         // Start distance monitoring
         robot.StartDistanceMonitoring();
 
+        robot.Forward();
+
         // Subscribe to objectTooNearObserver
         var tooNearSubscription = robot.ObjectTooNearObservable.Subscribe(tooNear =>
         {
@@ -37,7 +39,7 @@ public class Program
 
         var buttonListenerSubscription = robot.ButtonPressedObservable.Subscribe(button =>
         {
-            Console.WriteLine($"Button pressed: {button}");
+           // Console.WriteLine($"Button pressed: {button}");
 
             switch (button)
             {

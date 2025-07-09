@@ -1,4 +1,3 @@
-
 using System.Device.Gpio;
 using System.Runtime.InteropServices;
 using System.Reactive.Subjects;
@@ -26,7 +25,6 @@ public class TriloBot : IDisposable
     /// Exposes the object-too-near observer as an IObservable (read-only).
     /// </summary>
     public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
-
 
     /// <summary>
     /// Exposes the button pressed observer as an IObservable (read-only).
@@ -100,7 +98,6 @@ public class TriloBot : IDisposable
     /// </summary>
     private readonly UltrasoundManager _ultrasoundManager = null!;
 
-
     /// <summary>
     /// Manages camera operations.
     /// </summary>
@@ -115,7 +112,6 @@ public class TriloBot : IDisposable
     /// Observable that indicates if an object is too near (distance below 10).
     /// </summary>
     private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
-
 
     /// <summary>
     /// Observable for the latest button press events.
@@ -149,10 +145,13 @@ public class TriloBot : IDisposable
             {
                 try
                 {
-                    // Read and publish distance
                     var distance = _ultrasoundManager.ReadDistance();
+                    var isTooNear = distance < minDistance;
+
                     _distanceObserver.OnNext(distance);
-                    _objectTooNearObserver.OnNext(distance < minDistance);
+                    _objectTooNearObserver.OnNext(isTooNear);
+
+                 //   Console.WriteLine($"Distance: {distance} cm, too near: '{isTooNear}'");
                 }
                 catch (Exception ex)
                 {
@@ -224,6 +223,8 @@ public class TriloBot : IDisposable
         // Setup ultrasound manager
         _ultrasoundManager = new UltrasoundManager(_gpio);
 
+        _cameraManager = new CameraManager();
+
         // Register cancellation token to handle graceful shutdown
         // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
         // It ensures that any ongoing effects or operations are properly terminated
@@ -234,6 +235,8 @@ public class TriloBot : IDisposable
             DisableMotors();
             // Do not call Dispose() here; handled by using statement
         });
+
+        StartDistanceMonitoring();
 
         // Log successful initialization
         Console.WriteLine("Successfully initialized TrilBot manager");
@@ -345,36 +348,36 @@ public class TriloBot : IDisposable
     public void DisableMotors() => _motorManager.DisableMotors();
 
     /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void Forward(double speed = 0.25) => _motorManager.Forward(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void Forward(double speed = 0.75) => _motorManager.Forward(speed);
 
     /// <summary>Drives both motors backward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void Backward(double speed = 0.25) => _motorManager.Backward(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void Backward(double speed = 0.75) => _motorManager.Backward(speed);
 
     /// <summary>Turns the robot left in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void TurnLeft(double speed = 0.25) => _motorManager.TurnLeft(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void TurnLeft(double speed = 0.75) => _motorManager.TurnLeft(speed);
 
     /// <summary>Turns the robot right in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void TurnRight(double speed = 0.25) => _motorManager.TurnRight(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void TurnRight(double speed = 0.75) => _motorManager.TurnRight(speed);
 
     /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void CurveForwardLeft(double speed = 0.25) => _motorManager.CurveForwardLeft(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void CurveForwardLeft(double speed = 0.75) => _motorManager.CurveForwardLeft(speed);
 
     /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void CurveForwardRight(double speed = 0.25) => _motorManager.CurveForwardRight(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void CurveForwardRight(double speed = 0.75) => _motorManager.CurveForwardRight(speed);
 
     /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void CurveBackwardLeft(double speed = 0.25) => _motorManager.CurveBackwardLeft(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void CurveBackwardLeft(double speed = 0.75) => _motorManager.CurveBackwardLeft(speed);
 
     /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void CurveBackwardRight(double speed = 0.25) => _motorManager.CurveBackwardRight(speed);
+    /// <param name="speed">Speed value (default 0.75).</param>
+    public void CurveBackwardRight(double speed = 0.75) => _motorManager.CurveBackwardRight(speed);
 
     /// <summary>Stops both motors (brake mode).</summary>
     public void Stop() => _motorManager.Stop();
@@ -461,28 +464,6 @@ public class TriloBot : IDisposable
     /// </summary>
     /// <param name="timeout">Timeout in milliseconds for each sample.</param>
     /// <param name="samples">Number of samples to average.</param>
-    /// <returns>Distance
-
-    #region Effect methods
-
-    /// <summary>
-    /// Plays the police lights effect on the underlighting.
-    /// This effect alternates red and blue lights in a rotating pattern.
-    /// </summary>
-    /// <param name="cancellationToken">A cancellation token to stop the effect.</param>
-    /// <remarks>
-    /// The effect is cancelable using a cancellation token.
-    /// </remarks>
-    public void PlayPoliceEffect(CancellationToken cancellationToken = default)
-    {
-        LightModesExtensions.PoliceLightsEffect(_lightManager, cancellationToken);
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Reads the distance from the ultrasonic sensor.
-    /// </summary>
     /// <returns>Distance in centimeters</returns>
     public double ReadDistance()
         => _ultrasoundManager.ReadDistance();

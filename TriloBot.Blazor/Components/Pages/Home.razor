@@ -1,9 +1,14 @@
-﻿
-@page "/"
+﻿@page "/"
+@rendermode InteractiveServer
+
 @using Microsoft.AspNetCore.SignalR.Client
 
 <PageTitle>Home</PageTitle>
 
+<div>
+    <h1>Welcome to TriloBot Remote Control</h1>
+    <p>Use the buttons below to control your TriloBot.</p>
+</div>
 
 <h1>TriloBot Remote Control</h1>
 
@@ -51,13 +56,33 @@
     <button @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
 </div>
 
+@if (isObjectTooNear)
+{
+    <p>NEAR</p>
+}
+else
+{
+    <p>WIDE</p>
+}
+
 @code {
-    private string? photoPath;
-    private string? streamUrl;
-    private HubConnection? hubConnection;
+    #region Injections 
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
+
+    #endregion
+
+    #region Private fields 
+
+    private HubConnection? hubConnection;
+    private string? photoPath;
+    private string? streamUrl;
+    private bool isObjectTooNear;
+
+    #endregion
+
+    #region Lifecycle methods
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,7 +90,7 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
             .WithAutomaticReconnect()
             .Build();
-            
+
         await hubConnection.StartAsync();
 
         // Subscribe to live stream URL updates via SignalR streaming
@@ -74,6 +99,18 @@
             await foreach (var url in stream)
             {
                 streamUrl = url;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        // Subscribe to ObjectTooNearStream
+        var objectTooNearStream = hubConnection.StreamAsync<bool>("ObjectTooNearStream");
+        _ = Task.Run(async () => {
+            await foreach (var isNear in objectTooNearStream)
+            {
+                Console.WriteLine($"Object too near: {isNear}");
+                isObjectTooNear = isNear;
+
                 await InvokeAsync(StateHasChanged);
             }
         });
@@ -88,6 +125,10 @@
             streamUrl = string.Empty;
         }
     }
+
+    #endregion
+
+    #region Photo
 
     private async Task TakePhoto()
     {
@@ -108,17 +149,14 @@
         StateHasChanged();
     }
 
+    #endregion
+
+    #region Motor Control
+
     private async Task CallMotor(string method)
     {
         if (hubConnection is null) return;
-        try
-        {
-            await hubConnection.InvokeAsync(method);
-        }
-        catch
-        {
-            Console.WriteLine($"Error calling motor method: {method}");
-        }
+        await hubConnection?.InvokeAsync(method);
     }
 
     private Task Forward() => CallMotor("Forward");
@@ -127,30 +165,22 @@
     private Task TurnRight() => CallMotor("TurnRight");
     private Task Stop() => CallMotor("Stop");
 
+    #endregion
+
+    #region Lights
+
     private async Task SetButtonLed(string button, double value)
     {
         if (hubConnection is null) return;
-        try
-        {
-            await hubConnection.InvokeAsync("SetButtonLed", button, value);
-        }
-        catch
-        {
-            // Optionally handle errors
-        }
+        await hubConnection?.InvokeAsync("SetButtonLed", button, value);
     }
 
     private async Task FillUnderlighting(byte r, byte g, byte b)
     {
         if (hubConnection is null) return;
-        try
-        {
-            await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
-        }
-        catch
-        {
-            // Optionally handle errors
-        }
+        await hubConnection?.InvokeAsync("FillUnderlighting", r, g, b);
     }
+
+    #endregion
 }
 

@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddSingleton<TriloBot.TriloBot>()
     .AddRazorComponents()
-    .AddInteractiveServerComponents(); // Add this to enable interactive server render mode
+    .AddInteractiveServerComponents();
 
 // Ensure SignalR is added to the service collection.
 builder.Services.AddSignalR();
@@ -31,7 +31,7 @@ app.UseAntiforgery();
 
 // Map static assets and Razor components.
 app.MapStaticAssets();
-app.MapRazorComponents<App>();
- //   .AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
