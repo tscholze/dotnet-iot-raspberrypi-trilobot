@@ -413,3 +413,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+# Project related
+TriloBot.Blazor/wwwroot/photos

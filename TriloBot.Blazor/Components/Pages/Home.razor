@@ -5,76 +5,95 @@
 
 <PageTitle>Home</PageTitle>
 
-<div>
-    <h1>Welcome to TriloBot Remote Control</h1>
-    <p>Use the buttons below to control your TriloBot.</p>
-</div>
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h1 class="display-4">Welcome to TriloBot Remote Control</h1>
+        <p class="lead">Use the buttons below to control your TriloBot.</p>
+    </div>
 
-<h1>TriloBot Remote Control</h1>
+    <div class="card mb-4">
+        <div class="card-header">Take a Photo</div>
+        <div class="card-body text-center">
+            <button class="btn btn-primary" @onclick="TakePhoto">Take Photo</button>
+            @if (!string.IsNullOrEmpty(photoPath))
+            {
+                <img src="@photoPath" alt="Photo" class="img-fluid mt-3" style="max-width:400px;" />
+            }
+        </div>
+    </div>
 
-<div style="margin-bottom: 1em;">
-    <button @onclick="TakePhoto">Take Photo</button>
-    @if (!string.IsNullOrEmpty(photoPath))
-    {
-        <img src="@photoPath" alt="Photo" style="max-width:400px; display:block; margin-top:0.5em;" />
-    }
-</div>
+    <div class="card mb-4">
+        <div class="card-header">Live Stream</div>
+        <div class="card-body text-center">
+            @if (!string.IsNullOrEmpty(streamUrl))
+            {
+                <img src="@streamUrl" alt="Live Stream" class="img-fluid border" style="max-width:400px;" />
+            }
+        </div>
+    </div>
 
-<h2>Live Stream</h2>
-<div style="margin-bottom: 1em;">
-    @if (!string.IsNullOrEmpty(streamUrl))
-    {
-        <img src="@streamUrl" alt="Live Stream" style="max-width:400px; border:1px solid #ccc;" />
-    }
-</div>
+    <div class="card mb-4">
+        <div class="card-header">Live Video Signal</div>
+        <div class="card-body text-center">
+            @if (!string.IsNullOrEmpty(streamUrl))
+            {
+                <video src="@streamUrl" autoplay controls class="img-fluid border" style="max-width:400px;"></video>
+            }
+            else
+            {
+                <p class="text-muted">No live video signal available.</p>
+            }
+        </div>
+    </div>
 
-<h2>Live Video Signal</h2>
-<div style="margin-bottom: 1em;">
-    @if (!string.IsNullOrEmpty(streamUrl))
-    {
-        <video src="@streamUrl" autoplay controls style="max-width:400px; border:1px solid #ccc;"></video>
-    }
-    else
-    {
-        <p>No live video signal available.</p>
-    }
-</div>
+    <div class="card mb-4">
+        <div class="card-header">Motor Control</div>
+        <div class="card-body text-center">
+            <button class="btn btn-success m-1" @onclick="Forward">Forward</button>
+            <button class="btn btn-danger m-1" @onclick="Backward">Backward</button>
+            <button class="btn btn-warning m-1" @onclick="TurnLeft">Left</button>
+            <button class="btn btn-warning m-1" @onclick="TurnRight">Right</button>
+            <button class="btn btn-secondary m-1" @onclick="Stop">Stop</button>
+        </div>
+    </div>
 
-<div style="margin-bottom: 1em;">
-    <button @onclick="Forward">Forward</button>
-    <button @onclick="Backward">Backward</button>
-    <button @onclick="TurnLeft">Left</button>
-    <button @onclick="TurnRight">Right</button>
-    <button @onclick="Stop">Stop</button>
-</div>
+    <div class="card mb-4">
+        <div class="card-header">Lights</div>
+        <div class="card-body">
+            <h5>Button LEDs</h5>
+            <div class="d-flex flex-wrap mb-3">
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED Off</button>
+            </div>
 
-<h2>Lights</h2>
-<div style="margin-bottom: 1em;">
-    <button @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED On</button>
-    <button @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED Off</button>
-    <button @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED On</button>
-    <button @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED Off</button>
-    <button @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED On</button>
-    <button @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED Off</button>
-    <button @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED On</button>
-    <button @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED Off</button>
-</div>
-<div style="margin-bottom: 1em;">
-    <button @onclick="() => FillUnderlighting(255,0,0)">Underlight Red</button>
-    <button @onclick="() => FillUnderlighting(0,255,0)">Underlight Green</button>
-    <button @onclick="() => FillUnderlighting(0,0,255)">Underlight Blue</button>
-    <button @onclick="() => FillUnderlighting(255,255,255)">Underlight White</button>
-    <button @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
-</div>
+            <h5>Underlighting</h5>
+            <div class="d-flex flex-wrap">
+                <button class="btn btn-danger m-1" @onclick="() => FillUnderlighting(255,0,0)">Underlight Red</button>
+                <button class="btn btn-success m-1" @onclick="() => FillUnderlighting(0,255,0)">Underlight Green</button>
+                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0,0,255)">Underlight Blue</button>
+                <button class="btn btn-light m-1" @onclick="() => FillUnderlighting(255,255,255)">Underlight White</button>
+                <button class="btn btn-dark m-1" @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
+            </div>
+        </div>
+    </div>
 
-@if (isObjectTooNear)
-{
-    <p>NEAR</p>
-}
-else
-{
-    <p>WIDE</p>
-}
+    <div class="alert alert-info text-center">
+        @if (isObjectTooNear)
+        {
+            <p class="mb-0">NEAR</p>
+        }
+        else
+        {
+            <p class="mb-0">WIDE</p>
+        }
+    </div>
+</div>
 
 @code {
     #region Injections 
@@ -157,6 +176,7 @@ else
         {
             photoPath = null;
         }
+        
         StateHasChanged();
     }
 
@@ -167,7 +187,7 @@ else
     private async Task CallMotor(string method)
     {
         if (hubConnection is null) return;
-        await hubConnection?.InvokeAsync(method);
+        await hubConnection.InvokeAsync(method);
     }
 
     private Task Forward() => CallMotor("Forward");
@@ -183,13 +203,13 @@ else
     private async Task SetButtonLed(string button, double value)
     {
         if (hubConnection is null) return;
-        await hubConnection?.InvokeAsync("SetButtonLed", button, value);
+        await hubConnection.InvokeAsync("SetButtonLed", button, value);
     }
 
     private async Task FillUnderlighting(byte r, byte g, byte b)
     {
         if (hubConnection is null) return;
-        await hubConnection?.InvokeAsync("FillUnderlighting", r, g, b);
+        await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
     }
 
     #endregion
