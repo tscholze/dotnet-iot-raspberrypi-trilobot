@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Channels;
 using Microsoft.AspNetCore.SignalR;
 using TriloBot.Light;
@@ -10,14 +9,9 @@ namespace TriloBot.Blazor.SignalR;
 /// SignalR Hub for remote controlling the TriloBot.
 /// Exposes key TriloBot methods to web clients.
 /// </summary>
-public class TriloBotHub : Hub
+public class TriloBotHub(TriloBot _robot) : Hub
 {
-    private readonly TriloBot _robot;
-
-    public TriloBotHub(TriloBot robot)
-    {
-        _robot = robot;
-    }
+    public const string HubEndpoint = "/trilobotHub";
 
     #region Button_LED_Light
     public Task SetButtonLed(string button, double value)

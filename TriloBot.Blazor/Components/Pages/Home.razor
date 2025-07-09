@@ -65,6 +65,7 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
             .WithAutomaticReconnect()
             .Build();
+            
         await hubConnection.StartAsync();
 
         // Subscribe to live stream URL updates via SignalR streaming

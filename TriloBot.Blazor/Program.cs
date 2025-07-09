@@ -7,28 +7,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddSingleton<TriloBot.TriloBot>()
     .AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(); // Add this to enable interactive server render mode
 
-
+// Ensure SignalR is added to the service collection.
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
+// Map SignalR hub.
 app.MapHub<TriloBotHub>("/trilobotHub");
 
 app.UseHttpsRedirection();
 
+// Ensure Antiforgery middleware is properly configured.
 app.UseAntiforgery();
 
+// Map static assets and Razor components.
 app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>();
+ //   .AddInteractiveServerRenderMode();
 
 app.Run();

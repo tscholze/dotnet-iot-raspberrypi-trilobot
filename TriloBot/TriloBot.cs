@@ -502,13 +502,7 @@ public class TriloBot : IDisposable
 
     public string GetLiveStreamUrl()
     {
-        var url = _cameraManager.GetLiveStreamSignalRHubUrl();
-        // If the URL has changed, push it to the observable
-        if (_liveVideoFeedSubject.Value != url)
-        {
-            _liveVideoFeedSubject.OnNext(url);
-        }
-        return url;
+        return _cameraManager.GetLiveStreamSignalRHubUrl();
     }
 
     /// <summary>
