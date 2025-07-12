@@ -43,10 +43,10 @@ public static class LightsExtensions
     {
         return light switch
         {
-            Lights.LIGHT_LED_A => 23, // LedAPin
-            Lights.LIGHT_LED_B => 22,  // LedBPin
-            Lights.LIGHT_LED_X => 17, // LedXPin
-            Lights.LIGHT_LED_Y => 27,   // LedYPin
+            Lights.LIGHT_LED_A => 23,
+            Lights.LIGHT_LED_B => 22,
+            Lights.LIGHT_LED_X => 17,
+            Lights.LIGHT_LED_Y => 27,
             _ => throw new ArgumentOutOfRangeException(nameof(light), light, null)
         };
     }
@@ -90,56 +90,56 @@ public static class LightsExtensions
     /// <summary>
     /// Gets all left-side underlights.
     /// </summary>
-    public static Lights[] LightsLeft => new[]
-    {
+    public static Lights[] LightsLeft =>
+    [
         Lights.LIGHT_FRONT_LEFT, Lights.LIGHT_MIDDLE_LEFT, Lights.LIGHT_REAR_LEFT
-    };
+    ];
 
     /// <summary>
     /// Gets all right-side underlights.
     /// </summary>
-    public static Lights[] LightsRight => new[]
-    {
+    public static Lights[] LightsRight =>
+    [
         Lights.LIGHT_FRONT_RIGHT, Lights.LIGHT_MIDDLE_RIGHT, Lights.LIGHT_REAR_RIGHT
-    };
+    ];
 
     /// <summary>
     /// Gets all front underlights.
     /// </summary>
-    public static Lights[] LightsFront => new[]
-    {
+    public static Lights[] LightsFront =>
+    [
         Lights.LIGHT_FRONT_LEFT, Lights.LIGHT_FRONT_RIGHT
-    };
+    ];
 
     /// <summary>
     /// Gets all middle underlights.
     /// </summary>
-    public static Lights[] LightsMiddle => new[]
-    {
+    public static Lights[] LightsMiddle =>
+    [
         Lights.LIGHT_MIDDLE_LEFT, Lights.LIGHT_MIDDLE_RIGHT
-    };
+    ];
 
     /// <summary>
     /// Gets all rear underlights.
     /// </summary>
-    public static Lights[] LightsRear => new[]
-    {
+    public static Lights[] LightsRear =>
+    [
         Lights.LIGHT_REAR_LEFT, Lights.LIGHT_REAR_RIGHT
-    };
+    ];
 
     /// <summary>
     /// Gets the left diagonal underlights (front left and rear right).
     /// </summary>
-    public static Lights[] LightsLeftDiagonal => new[]
-    {
+    public static Lights[] LightsLeftDiagonal =>
+    [
         Lights.LIGHT_FRONT_LEFT, Lights.LIGHT_REAR_RIGHT
-    };
+    ];
 
     /// <summary>
     /// Gets the right diagonal underlights (front right and rear left).
     /// </summary>
-    public static Lights[] LightsRightDiagonal => new[]
-    {
+    public static Lights[] LightsRightDiagonal =>
+    [
         Lights.LIGHT_FRONT_RIGHT, Lights.LIGHT_REAR_LEFT
-    };
+    ];
 }

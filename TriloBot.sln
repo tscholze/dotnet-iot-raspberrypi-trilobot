@@ -1,11 +1,12 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot", "TriloBot\TriloBot.csproj", "{F4AC2284-75B1-40BB-B583-A1D3F5B8CD2A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot.Blazor", "TriloBot.Blazor\TriloBot.Blazor.csproj", "{1E5895B7-65CF-4199-959B-EC92CC88A6CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trilobot.Tests", "Trilobot.Tests/Trilobot.Tests.csproj", "{NEW_GUID}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +42,18 @@ Global
 		{1E5895B7-65CF-4199-959B-EC92CC88A6CC}.Release|x64.Build.0 = Release|Any CPU
 		{1E5895B7-65CF-4199-959B-EC92CC88A6CC}.Release|x86.ActiveCfg = Release|Any CPU
 		{1E5895B7-65CF-4199-959B-EC92CC88A6CC}.Release|x86.Build.0 = Release|Any CPU
+		{NEW_GUID}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{NEW_GUID}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{NEW_GUID}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{NEW_GUID}.Debug|x64.Build.0 = Debug|Any CPU
+		{NEW_GUID}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{NEW_GUID}.Debug|x86.Build.0 = Debug|Any CPU
+		{NEW_GUID}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{NEW_GUID}.Release|Any CPU.Build.0 = Release|Any CPU
+		{NEW_GUID}.Release|x64.ActiveCfg = Release|Any CPU
+		{NEW_GUID}.Release|x64.Build.0 = Release|Any CPU
+		{NEW_GUID}.Release|x86.ActiveCfg = Release|Any CPU
+		{NEW_GUID}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
