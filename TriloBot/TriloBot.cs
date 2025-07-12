@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Reactive.Subjects;
 using System.Reactive.Linq;
 using TriloBot.Light;
-using TriloBot.Light.Modes;
 using TriloBot.Motor;
 using TriloBot.Ultrasound;
 using TriloBot.Button;
@@ -41,11 +40,6 @@ public class TriloBot : IDisposable
     /// Task for background button monitoring.
     /// </summary>
     private Task? _buttonMonitoringTask;
-
-    /// <summary>
-    /// CancellationTokenSource for button monitoring.
-    /// </summary>
-    private CancellationTokenSource? _buttonMonitoringCts;
 
     /// <summary>
     /// Tracks whether the object has been disposed.
@@ -123,6 +117,11 @@ public class TriloBot : IDisposable
     /// </summary>
     private readonly BehaviorSubject<double> _distanceObserver = new(0.0);
 
+    /// <summary>
+    /// CancellationTokenSource for button monitoring.
+    /// </summary>
+    private CancellationTokenSource? _buttonMonitoringCts;
+
     #endregion
 
     #region Distance Monitoring
@@ -148,10 +147,16 @@ public class TriloBot : IDisposable
                     var distance = _ultrasoundManager.ReadDistance();
                     var isTooNear = distance < minDistance;
 
-                    _distanceObserver.OnNext(distance);
-                    _objectTooNearObserver.OnNext(isTooNear);
+                    // Only trigger if the value changes
+                    if (_distanceObserver.Value != distance)
+                    {
+                        _distanceObserver.OnNext(distance);
+                    }
 
-                 //   Console.WriteLine($"Distance: {distance} cm, too near: '{isTooNear}'");
+                    if (_objectTooNearObserver.Value != isTooNear)
+                    {
+                        _objectTooNearObserver.OnNext(isTooNear);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -236,10 +241,8 @@ public class TriloBot : IDisposable
             // Do not call Dispose() here; handled by using statement
         });
 
-        StartDistanceMonitoring();
-
         // Log successful initialization
-        Console.WriteLine("Successfully initialized TrilBot manager");
+        Console.WriteLine("Successfully initialized TrilBot manager. Start observer listing or triggering other methods.");
     }
 
     #endregion
@@ -269,21 +272,22 @@ public class TriloBot : IDisposable
         if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
             return;
 
-        _buttonMonitoringCts = new CancellationTokenSource();
-        var token = _buttonMonitoringCts.Token;
+        if (_buttonMonitoringCts == null || _buttonMonitoringCts.IsCancellationRequested)
+        {
+            _buttonMonitoringCts = new CancellationTokenSource();
+        }
 
         _buttonMonitoringTask = Task.Run(async () =>
         {
             var lastPressed = (Buttons?)null;
-            while (!token.IsCancellationRequested)
+            while (!_buttonMonitoringCts.Token.IsCancellationRequested)
             {
                 try
                 {
                     var pressed = Enum.GetValues(typeof(Buttons))
-                    .Cast<Buttons?>()
-                    .FirstOrDefault(b => b.HasValue && _buttonManager.ReadButton(b.Value));
+                        .Cast<Buttons?>()
+                        .FirstOrDefault(b => b.HasValue && _buttonManager.ReadButton(b.Value));
 
-                    Console.WriteLine($"Button pressed: {pressed}");
                     if (pressed != null && lastPressed != pressed)
                     {
                         _buttonPressedObserver.OnNext(pressed);
@@ -298,9 +302,12 @@ public class TriloBot : IDisposable
                 {
                     Console.WriteLine($"Button monitoring error: {ex.Message}");
                 }
-                await Task.Delay(100, token).ConfigureAwait(false);
+                finally
+                {
+                    await Task.Delay(100, _buttonMonitoringCts.Token).ConfigureAwait(false);
+                }
             }
-        }, token);
+        }, _buttonMonitoringCts.Token);
     }
 
     /// <summary>
@@ -308,21 +315,9 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StopButtonMonitoring()
     {
-        if (_buttonMonitoringCts != null)
+        if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
         {
-            _buttonMonitoringCts.Cancel();
-            try
-            {
-                _buttonMonitoringTask?.Wait(1000);
-            }
-            catch (AggregateException) { }
-            catch (OperationCanceledException) { }
-            finally
-            {
-                _buttonMonitoringCts.Dispose();
-                _buttonMonitoringCts = null;
-                _buttonMonitoringTask = null;
-            }
+            _buttonMonitoringTask = null;
         }
     }
 
