@@ -2,7 +2,7 @@ using System;
 using Microsoft.Maui;
 using Microsoft.Maui.Hosting;
 
-namespace Trilobot.Maui;
+namespace TriloBot.Maui;
 
 class Program : MauiApplication
 {

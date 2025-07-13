@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace Trilobot.Maui;
+namespace TriloBot.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace Trilobot.Maui;
+namespace TriloBot.Maui;
 
 [Application]
 public class MainApplication : MauiApplication

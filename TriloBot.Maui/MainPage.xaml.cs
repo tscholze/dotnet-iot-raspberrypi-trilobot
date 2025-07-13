@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 
-namespace Trilobot.Maui
+namespace TriloBot.Maui
 {
     public partial class MainPage : ContentPage
     {

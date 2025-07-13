@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace Trilobot.Maui;
+namespace TriloBot.Maui;
 
 public class Program
 {

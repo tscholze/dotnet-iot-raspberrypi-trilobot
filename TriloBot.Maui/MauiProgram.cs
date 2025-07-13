@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Trilobot.Maui;
+namespace TriloBot.Maui;
 
 public static class MauiProgram
 {

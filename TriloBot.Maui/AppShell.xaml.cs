@@ -1,4 +1,4 @@
-﻿namespace Trilobot.Maui;
+﻿namespace TriloBot.Maui;
 
 public partial class AppShell : Shell
 {
