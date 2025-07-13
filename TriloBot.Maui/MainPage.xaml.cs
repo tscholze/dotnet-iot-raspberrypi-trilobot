@@ -27,7 +27,9 @@ namespace TriloBot.Maui
             {
                 await _hubConnection.StartAsync();
                 Console.WriteLine("Connected to SignalR Hub");
-                StartDistanceUpdates();
+
+                await StartDistanceUpdates();
+                Console.WriteLine("Distance updates started");
             }
             catch (Exception ex)
             {
@@ -35,11 +37,11 @@ namespace TriloBot.Maui
             }
         }
 
-        private void StartDistanceUpdates()
+        private async Task StartDistanceUpdates()
         {
             try
             {
-                _hubConnection.InvokeAsync("StartDistanceMonitoring");
+                await _hubConnection.InvokeAsync("StartDistanceMonitoring");
 
                 _hubConnection.On<double>("DistanceUpdated", distance =>
                 {

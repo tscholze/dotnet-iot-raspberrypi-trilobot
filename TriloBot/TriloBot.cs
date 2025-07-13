@@ -135,6 +135,8 @@ public class TriloBot : IDisposable
         if (_distanceMonitoringTask != null && !_distanceMonitoringTask.IsCompleted)
             return;
 
+        Console.WriteLine("Starting distance monitoring...");
+
         _distanceMonitoringCts = new CancellationTokenSource();
         var token = _distanceMonitoringCts.Token;
 
