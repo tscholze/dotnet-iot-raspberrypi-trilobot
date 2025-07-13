@@ -6,7 +6,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot", "TriloBot\TriloB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot.Blazor", "TriloBot.Blazor\TriloBot.Blazor.csproj", "{1E5895B7-65CF-4199-959B-EC92CC88A6CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trilobot.Tests", "Trilobot.Tests/Trilobot.Tests.csproj", "{NEW_GUID}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trilobot.Tests", "Trilobot.Tests\Trilobot.Tests.csproj", "{41687CFE-27AC-9FBE-A07F-4148E5F04FEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trilobot.Maui", "Trilobot.Maui\Trilobot.Maui.csproj", "{NEW_GUID}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
