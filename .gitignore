@@ -417,3 +417,4 @@ FodyWeavers.xsd
 
 # Project related
 TriloBot.Blazor/wwwroot/photos
+.DS_Store
