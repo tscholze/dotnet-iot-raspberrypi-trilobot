@@ -102,6 +102,14 @@ public class TriloBotHub(TriloBot _robot) : Hub
     #region Distance
 
     /// <summary>
+    /// Starts monitoring the distance sensor in a background task.
+    /// This allows the robot to continuously check for proximity and distance changes.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task StartDistanceMonitoring()
+        => Task.Run(() => _robot.StartDistanceMonitoring());
+
+    /// <summary>
     /// Reads the distance from the ultrasonic sensor.
     /// </summary>
     /// <returns>The distance in centimeters.</returns>
@@ -121,12 +129,14 @@ public class TriloBotHub(TriloBot _robot) : Hub
     {
         var channel = Channel.CreateUnbounded<double>();
         var subscription = _robot.DistanceObservable
-            .Subscribe(async value => {
+            .Subscribe(async value =>
+            {
                 await channel.Writer.WriteAsync(value, cancellationToken);
             },
             ex => channel.Writer.TryComplete(ex),
             () => channel.Writer.TryComplete());
-        cancellationToken.Register(() => {
+        cancellationToken.Register(() =>
+        {
             subscription.Dispose();
             channel.Writer.TryComplete();
         });
@@ -142,12 +152,14 @@ public class TriloBotHub(TriloBot _robot) : Hub
     {
         var channel = Channel.CreateUnbounded<bool>();
         var subscription = _robot.ObjectTooNearObservable
-            .Subscribe(async value => {
+            .Subscribe(async value =>
+            {
                 await channel.Writer.WriteAsync(value, cancellationToken);
             },
             ex => channel.Writer.TryComplete(ex),
             () => channel.Writer.TryComplete());
-        cancellationToken.Register(() => {
+        cancellationToken.Register(() =>
+        {
             subscription.Dispose();
             channel.Writer.TryComplete();
         });
@@ -163,12 +175,14 @@ public class TriloBotHub(TriloBot _robot) : Hub
     {
         var channel = Channel.CreateUnbounded<string>();
         var subscription = _robot.LiveVideoFeedObservable
-            .Subscribe(async url => {
+            .Subscribe(async url =>
+            {
                 await channel.Writer.WriteAsync(url, cancellationToken);
             },
             ex => channel.Writer.TryComplete(ex),
             () => channel.Writer.TryComplete());
-        cancellationToken.Register(() => {
+        cancellationToken.Register(() =>
+        {
             subscription.Dispose();
             channel.Writer.TryComplete();
         });
