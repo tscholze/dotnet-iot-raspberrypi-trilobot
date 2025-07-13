@@ -9,17 +9,19 @@ namespace TriloBot.Maui
     {
         private readonly HubConnection _hubConnection;
 
+       private IAsyncEnumerable<double>? _distanceStream;
+
         public MainPage()
-		{
-			InitializeComponent();
+        {
+            InitializeComponent();
 
-			// Initialize SignalR connection
-			_hubConnection = new HubConnectionBuilder()
-				.WithUrl("http://pi5:6969/trilobotHub") // Replace <server-ip> with the actual server IP
-				.Build();
+            // Initialize SignalR connection
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl("http://pi5:6969/trilobotHub") // Replace <server-ip> with the actual server IP
+                .Build();
 
-			ConnectToHub();
-		}
+            ConnectToHub();
+        }
 
         private async void ConnectToHub()
         {
@@ -39,17 +41,26 @@ namespace TriloBot.Maui
 
         private async Task StartDistanceUpdates()
         {
+
             try
             {
-                await _hubConnection.InvokeAsync("StartDistanceMonitoring");
+                // Subscribe to DistanceStream
+                _distanceStream = _hubConnection.StreamAsync<double>("DistanceStream");
 
-                _hubConnection.On<double>("DistanceUpdated", distance =>
+                _ = Task.Run(async () =>
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    await foreach (var distance in _distanceStream)
                     {
-                        DistanceLabel.Text = $"Distance: {distance:F2} cm";
-                    });
+                        Console.WriteLine($"Distance updated: {distance:F2} cm");
+                        // Update the UI on the main thread
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            DistanceLabel.Text = $"Distance: {distance:F2} cm";
+                        });
+                    }
                 });
+
+                await _hubConnection.InvokeAsync("StartDistanceMonitoring");
             }
             catch (Exception ex)
             {
