@@ -7,6 +7,7 @@ using TriloBot.Motor;
 using TriloBot.Ultrasound;
 using TriloBot.Button;
 using TriloBot.Camera;
+using System.Threading.Tasks;
 
 namespace TriloBot;
 
@@ -481,6 +482,11 @@ public class TriloBot : IDisposable
     public string GetLiveStreamUrl()
     {
         return _cameraManager.GetLiveStreamSignalRHubUrl();
+    }
+
+    public async Task<string> StartVideoStreamingAsync()
+    {
+        return await _cameraManager.StartVideoStreamingAsync();
     }
 
     /// <summary>

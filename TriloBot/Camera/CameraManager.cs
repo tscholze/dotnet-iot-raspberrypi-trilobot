@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Iot.Device.Camera.Settings;
+using Iot.Device.Common;
 
 namespace TriloBot.Camera;
 
@@ -67,6 +69,29 @@ public class CameraManager
         process.Start();
         await process.WaitForExitAsync();
         return fileName;
+    }
+
+    public async Task<string> StartVideoStreamingAsync()
+    {
+        var builder = new CommandOptionsBuilder()
+        .WithContinuousStreaming()
+        .WithH264VideoOptions("baseline", "4", 15)
+        .WithResolution(640, 480);
+        var args = builder.GetArguments();
+
+        ProcessSettings settings = new()
+        {
+            Filename = "libcamera-vid",
+            WorkingDirectory = null,
+        };
+
+        using var proc = new ProcessRunner(settings);
+        var fullCommandLine = proc.GetFullCommandLine(args);
+        var text = await proc.ExecuteReadOutputAsStringAsync(args);
+        Console.WriteLine($"Video streaming started with command: {fullCommandLine}");
+        Console.WriteLine($"Output: {text}");
+        // Return the full command line for debugging purposes
+        return text;
     }
 
     /// <summary>
