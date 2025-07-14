@@ -13,6 +13,8 @@
                 Style="{StaticResource Headline}"
                 SemanticProperties.HeadingLevel="Level1" />
 
+                
+
             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto" HorizontalOptions="Center" RowSpacing="10" ColumnSpacing="10">
                 <Button
                     Grid.Row="0"
@@ -54,6 +56,16 @@
                 x:Name="DistanceLabel"
                 Text="Distance: -- cm"
                 HorizontalOptions="Center" />
+
+            <Label
+                Text="Live Stream"
+                Style="{StaticResource SubHeadline}"
+                SemanticProperties.HeadingLevel="Level2" />
+
+            <WebView
+                Source="<html><body><video id='videoPlayer' autoplay controls style='width:100%;height:100%;'><script src='https://cdn.jsdelivr.net/npm/hls.js@latest'></script><script>if(Hls.isSupported()){var hls=new Hls();hls.loadSource('rtmp://localhost/live/stream');hls.attachMedia(document.getElementById('videoPlayer'));}else{document.getElementById('videoPlayer').src='rtmp://localhost/live/stream';}</script></video></body></html>"
+                HeightRequest="300"
+                WidthRequest="400" />
 
         </VerticalStackLayout>
     </ScrollView>

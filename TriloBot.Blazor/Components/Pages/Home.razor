@@ -11,41 +11,19 @@
         <p class="lead">Use the buttons below to control your TriloBot.</p>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header">Take a Photo</div>
-        <div class="card-body text-center">
-            <button class="btn btn-primary" @onclick="TakePhoto">Take Photo</button>
-            @if (!string.IsNullOrEmpty(photoPath))
-            {
-                <img src="@photoPath" alt="Photo" class="img-fluid mt-3" style="max-width:400px;" />
-            }
-        </div>
+<!-- Optional: Display the live stream if available -->
+    <div class="alert alert-info text-center">
+        @if (isObjectTooNear)
+        {
+            <p class="mb-0">An object seems to be near.</p>
+        }
+        else
+        {
+            <p class="mb-0">No objects in driving path.</p>
+        }
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header">Live Stream</div>
-        <div class="card-body text-center">
-            @if (!string.IsNullOrEmpty(streamUrl))
-            {
-                <img src="@streamUrl" alt="Live Stream" class="img-fluid border" style="max-width:400px;" />
-            }
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header">Live Video Signal</div>
-        <div class="card-body text-center">
-            @if (!string.IsNullOrEmpty(streamUrl))
-            {
-                <video src="@streamUrl" autoplay controls class="img-fluid border" style="max-width:400px;"></video>
-            }
-            else
-            {
-                <p class="text-muted">No live video signal available.</p>
-            }
-        </div>
-    </div>
-
+    <!-- Motor controls -->
     <div class="card mb-4">
         <div class="card-header">Motor Control</div>
         <div class="card-body text-center">
@@ -57,6 +35,7 @@
         </div>
     </div>
 
+<!-- Light controls -->
     <div class="card mb-4">
         <div class="card-header">Lights</div>
         <div class="card-body">
@@ -82,38 +61,28 @@
             </div>
         </div>
     </div>
-
-    <div class="alert alert-info text-center">
-        @if (isObjectTooNear)
-        {
-            <p class="mb-0">NEAR</p>
-        }
-        else
-        {
-            <p class="mb-0">WIDE</p>
-        }
-    </div>
 </div>
 
 @code {
-    #region Injections 
-
+    /// <summary>
+    /// Injected NavigationManager for handling navigation.
+    /// </summary>
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
-    #endregion
-
-    #region Private fields 
-
+    /// <summary>
+    /// SignalR hub connection for real-time communication.
+    /// </summary>
     private HubConnection? hubConnection;
-    private string? photoPath;
-    private string? streamUrl;
+
+    /// <summary>
+    /// Indicates whether an object is too near to the TriloBot.
+    /// </summary>
     private bool isObjectTooNear;
 
-    #endregion
-
-    #region Lifecycle methods
-
+    /// <summary>
+    /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         hubConnection = new HubConnectionBuilder()
@@ -122,16 +91,6 @@
             .Build();
 
         await hubConnection.StartAsync();
-
-        // Subscribe to live stream URL updates via SignalR streaming
-        var stream = hubConnection.StreamAsync<string>("LiveVideoFeedStream");
-        _ = Task.Run(async () => {
-            await foreach (var url in stream)
-            {
-                streamUrl = url;
-                await InvokeAsync(StateHasChanged);
-            }
-        });
 
         // Subscribe to ObjectTooNearStream
         var objectTooNearStream = hubConnection.StreamAsync<bool>("ObjectTooNearStream");
@@ -144,74 +103,64 @@
                 await InvokeAsync(StateHasChanged);
             }
         });
-
-        // Optionally, get the initial live stream URL
-        try
-        {
-            streamUrl = await hubConnection.InvokeAsync<string>("GetLiveStreamUrl");
-        }
-        catch
-        {
-            streamUrl = string.Empty;
-        }
     }
 
-    #endregion
-
-    #region Photo
-
-    private async Task TakePhoto()
-    {
-        if (hubConnection is null) return;
-        var savePath = "wwwroot/photos";
-        try
-        {
-            var file = await hubConnection.InvokeAsync<string>("TakePhoto", savePath);
-            if (!string.IsNullOrEmpty(file))
-                photoPath = "/photos/" + System.IO.Path.GetFileName(file);
-            else
-                photoPath = null;
-        }
-        catch
-        {
-            photoPath = null;
-        }
-        
-        StateHasChanged();
-    }
-
-    #endregion
-
-    #region Motor Control
-
+    /// <summary>
+    /// Invokes a motor control method on the SignalR hub.
+    /// </summary>
+    /// <param name="method">The name of the motor control method to invoke.</param>
     private async Task CallMotor(string method)
     {
         if (hubConnection is null) return;
         await hubConnection.InvokeAsync(method);
     }
 
+    /// <summary>
+    /// Moves the TriloBot forward.
+    /// </summary>
     private Task Forward() => CallMotor("Forward");
+
+    /// <summary>
+    /// Moves the TriloBot backward.
+    /// </summary>
     private Task Backward() => CallMotor("Backward");
+
+    /// <summary>
+    /// Turns the TriloBot to the left.
+    /// </summary>
     private Task TurnLeft() => CallMotor("TurnLeft");
+
+    /// <summary>
+    /// Turns the TriloBot to the right.
+    /// </summary>
     private Task TurnRight() => CallMotor("TurnRight");
+
+    /// <summary>
+    /// Stops the TriloBot's movement.
+    /// </summary>
     private Task Stop() => CallMotor("Stop");
 
-    #endregion
-
-    #region Lights
-
+    /// <summary>
+    /// Sets the LED state for a specific button.
+    /// </summary>
+    /// <param name="button">The button identifier (e.g., ButtonA, ButtonB).</param>
+    /// <param name="value">The LED state (1 for on, 0 for off).</param>
     private async Task SetButtonLed(string button, double value)
     {
         if (hubConnection is null) return;
         await hubConnection.InvokeAsync("SetButtonLed", button, value);
     }
 
+    /// <summary>
+    /// Sets the underlighting color of the TriloBot.
+    /// </summary>
+    /// <param name="r">Red component (0-255).</param>
+    /// <param name="g">Green component (0-255).</param>
+    /// <param name="b">Blue component (0-255).</param>
     private async Task FillUnderlighting(byte r, byte g, byte b)
     {
         if (hubConnection is null) return;
         await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
     }
-
-    #endregion
 }
 

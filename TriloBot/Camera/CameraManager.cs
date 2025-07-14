@@ -73,25 +73,11 @@ public class CameraManager
 
     public async Task<string> StartVideoStreamingAsync()
     {
-        var builder = new CommandOptionsBuilder()
-        .WithContinuousStreaming()
-        .WithH264VideoOptions("baseline", "4", 15)
-        .WithResolution(640, 480);
-        var args = builder.GetArguments();
-
-        ProcessSettings settings = new()
-        {
-            Filename = "libcamera-vid",
-            WorkingDirectory = null,
-        };
-
-        using var proc = new ProcessRunner(settings);
-        var fullCommandLine = proc.GetFullCommandLine(args);
-        var text = await proc.ExecuteReadOutputAsStringAsync(args);
-        Console.WriteLine($"Video streaming started with command: {fullCommandLine}");
-        Console.WriteLine($"Output: {text}");
-        // Return the full command line for debugging purposes
-        return text;
+        // This method should start the video streaming process
+        // For example, you could use a library like FFmpeg to stream the video
+        // Here we just return a placeholder URL for the live stream
+        await Task.Delay(1000); // Simulate some delay for starting the stream
+        return "http://localhost:5000/live-stream"; // Replace with actual streaming URL
     }
 
     /// <summary>

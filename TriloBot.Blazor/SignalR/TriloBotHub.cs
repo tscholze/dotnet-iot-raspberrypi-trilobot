@@ -97,7 +97,7 @@ public class TriloBotHub(TriloBot _robot) : Hub
     public Task<string> GetLiveStreamUrl()
         => Task.FromResult(_robot.GetLiveStreamUrl());
 
-    public Task<string> StartVideoStreaming()
+    public Task<string> StartVideoStreamingAsync()
     => Task.Run(_robot.StartVideoStreamingAsync);
 
     #endregion
