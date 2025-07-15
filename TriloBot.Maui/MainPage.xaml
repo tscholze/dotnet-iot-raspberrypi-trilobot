@@ -1,7 +1,51 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="TriloBot.Maui.MainPage">
+             x:Class="TriloBot.Maui.MainPage"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="InfoCardBorderStyle" TargetType="Border">
+            <Setter Property="Stroke" Value="Purple" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="StrokeShape">
+                <Setter.Value>
+                    <RoundRectangle CornerRadius="0,8,8,0"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="WidthRequest" Value="120" />
+            <Setter Property="HeightRequest" Value="80" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+
+        <Style x:Key="InfoCardBorderStyle2" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+            <Setter Property="StrokeShape">
+                <Setter.Value>
+                    <RoundRectangle CornerRadius="8,0,0,8"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InfoCardBorderStyle3" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+            <Setter Property="StrokeShape">
+                <Setter.Value>
+                    <RoundRectangle CornerRadius="8"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InfoCardTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+        
+        <Style x:Key="InfoCardValueStyle" TargetType="Label">
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+        </Style>
+    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout
@@ -13,7 +57,32 @@
                 Style="{StaticResource Headline}"
                 SemanticProperties.HeadingLevel="Level1" />
 
-                
+            <!-- Info Cards Section -->
+            <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+                <!-- Connection Status Card -->
+                <Border Style="{StaticResource InfoCardBorderStyle}">
+                    <VerticalStackLayout>
+                        <Label Text="Connected" Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="ConnectionStatusLabel" Text="No" Style="{StaticResource InfoCardValueStyle}" TextColor="Red"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Distance Card -->
+                <Border Style="{StaticResource InfoCardBorderStyle3}">
+                    <VerticalStackLayout>
+                        <Label Text="Distance" Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="DistanceCardLabel" Text="-- cm" Style="{StaticResource InfoCardValueStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Proximity Alert Card -->
+                <Border Style="{StaticResource InfoCardBorderStyle2}">
+                    <VerticalStackLayout>
+                        <Label Text="Too Near?" Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="ProximityAlertLabel" Text="No" Style="{StaticResource InfoCardValueStyle}" TextColor="Green"/>
+                    </VerticalStackLayout>
+                </Border>
+            </HorizontalStackLayout>
 
             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto" HorizontalOptions="Center" RowSpacing="10" ColumnSpacing="10">
                 <Button
@@ -61,11 +130,6 @@
                 Text="Live Stream"
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2" />
-
-            <WebView
-                Source="<html><body><video id='videoPlayer' autoplay controls style='width:100%;height:100%;'><script src='https://cdn.jsdelivr.net/npm/hls.js@latest'></script><script>if(Hls.isSupported()){var hls=new Hls();hls.loadSource('rtmp://localhost/live/stream');hls.attachMedia(document.getElementById('videoPlayer'));}else{document.getElementById('videoPlayer').src='rtmp://localhost/live/stream';}</script></video></body></html>"
-                HeightRequest="300"
-                WidthRequest="400" />
 
         </VerticalStackLayout>
     </ScrollView>
