@@ -76,11 +76,11 @@
 
     <Style TargetType="Button">
         <Setter Property="TextColor" Value="White" />
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="BackgroundColor" Value="#FF4B024B" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="BorderColor" Value="Purple" />
+        <Setter Property="BorderWidth" Value="2" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="14,10" />
         <Setter Property="MinimumHeightRequest" Value="44" />
