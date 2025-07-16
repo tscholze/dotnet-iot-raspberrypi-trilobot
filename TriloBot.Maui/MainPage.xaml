@@ -1,92 +1,73 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:media="clr-namespace:CommunityToolkit.Maui.MediaElement;assembly=CommunityToolkit.Maui.MediaElement"
-		xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-			 x:Class="TriloBot.Maui.MainPage"
-             Shell.NavBarIsVisible="False">
-
-    <ContentPage.Resources>
-        <Style x:Key="InfoCardBorderStyle" TargetType="Border">
-            <Setter Property="Stroke" Value="Purple" />
-            <Setter Property="StrokeThickness" Value="2" />
-            <Setter Property="BackgroundColor" Value="White" />
-            <Setter Property="StrokeShape">
-                <Setter.Value>
-                    <RoundRectangle CornerRadius="0,8,8,0"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="WidthRequest" Value="120" />
-            <Setter Property="HeightRequest" Value="80" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
-
-        <Style x:Key="InfoCardBorderStyle2" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-            <Setter Property="StrokeShape">
-                <Setter.Value>
-                    <RoundRectangle CornerRadius="8,0,0,8"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="InfoCardBorderStyle3" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-            <Setter Property="StrokeShape">
-                <Setter.Value>
-                    <RoundRectangle CornerRadius="8"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="InfoCardTitleStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="HorizontalOptions" Value="Start" />
-        </Style>
-        
-        <Style x:Key="InfoCardValueStyle" TargetType="Label">
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="FontSize" Value="24" />
-            <Setter Property="HorizontalOptions" Value="Center" />
-        </Style>
-    </ContentPage.Resources>
-
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="TriloBot.Maui.MainPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="Black">
     <ScrollView>
         <VerticalStackLayout
-            Padding="30,0"
+            Padding="30,20"
             Spacing="25">
 
-            <Label
-                Text="TriloBot Controller"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+            <!-- Camera Section -->
+            <Border x:Name="CameraBorder"
+                    Style="{StaticResource InfoCardBorderStyle3}">
+                <WebView
+                    x:Name="CameraWebView"
+                    Source="http://pi5:8889/cam" />
+            </Border>
 
             <!-- Info Cards Section -->
-            <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
                 <!-- Connection Status Card -->
-                <Border Style="{StaticResource InfoCardBorderStyle}">
-                    <VerticalStackLayout>
-                        <Label Text="Connected" Style="{StaticResource InfoCardTitleStyle}" />
-                        <Label x:Name="ConnectionStatusLabel" Text="No" Style="{StaticResource InfoCardValueStyle}" TextColor="Red"/>
+                <Border Grid.Column="0" Style="{StaticResource InfoCardBorderStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Connected"
+                               Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="ConnectionStatusLabel"
+                               Text="No"
+                               Style="{StaticResource InfoCardValueStyle}"
+                               TextColor="Red" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Distance Card -->
-                <Border Style="{StaticResource InfoCardBorderStyle3}">
-                    <VerticalStackLayout>
-                        <Label Text="Distance" Style="{StaticResource InfoCardTitleStyle}" />
-                        <Label x:Name="DistanceCardLabel" Text="-- cm" Style="{StaticResource InfoCardValueStyle}" />
+                <Border Grid.Column="1" Style="{StaticResource InfoCardBorderStyle3}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Distance"
+                               Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="DistanceCardLabel"
+                               Text="-- cm"
+                               Style="{StaticResource InfoCardValueStyle}" />
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Proximity Alert Card -->
-                <Border Style="{StaticResource InfoCardBorderStyle2}">
-                    <VerticalStackLayout>
-                        <Label Text="Too Near?" Style="{StaticResource InfoCardTitleStyle}" />
-                        <Label x:Name="ProximityAlertLabel" Text="No" Style="{StaticResource InfoCardValueStyle}" TextColor="Green"/>
+                <Border Grid.Column="2" Style="{StaticResource InfoCardBorderStyle2}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Collision"
+                               Style="{StaticResource InfoCardTitleStyle}" />
+                        <Label x:Name="ProximityAlertLabel"
+                               Text="No"
+                               Style="{StaticResource InfoCardValueStyle}"
+                               TextColor="Green" />
                     </VerticalStackLayout>
                 </Border>
-            </HorizontalStackLayout>
+            </Grid>
 
-            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto" HorizontalOptions="Center" RowSpacing="10" ColumnSpacing="10">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="Auto,Auto,Auto"
+                  HorizontalOptions="Center"
+                  RowSpacing="10"
+                  ColumnSpacing="10">
                 <Button
                     Grid.Row="0"
                     Grid.Column="1"
@@ -117,28 +98,6 @@
                     Text="Move Backward"
                     Clicked="OnMoveBackwardClicked" />
             </Grid>
-
-            <Label
-                Text="Distance Sensor"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2" />
-
-            <Label
-                x:Name="DistanceLabel"
-                Text="Distance: -- cm"
-                HorizontalOptions="Center" />
-
-            <Label
-                Text="Live Stream"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2" />
-
-            <Border Style="{StaticResource InfoCardBorderStyle3}">
-                <VerticalStackLayout>
-                    <Label Text="Live Stream" Style="{StaticResource InfoCardTitleStyle}" />
-                    <toolkit:MediaElement Source="http://pi5:8889/cam/" />
-                </VerticalStackLayout>
-            </Border>
         </VerticalStackLayout>
     </ScrollView>
 

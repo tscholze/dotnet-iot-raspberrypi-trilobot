@@ -7,10 +7,14 @@ namespace TriloBot.Maui
 {
     public partial class MainPage : ContentPage
     {
+        #region Fields
         private readonly HubConnection _hubConnection;
+        private IAsyncEnumerable<double>? _distanceStream;
 
-       private IAsyncEnumerable<double>? _distanceStream;
-
+        #endregion
+        
+        #region Constructors
+        
         public MainPage()
         {
             InitializeComponent();
@@ -21,7 +25,32 @@ namespace TriloBot.Maui
                 .Build();
 
             ConnectToHub();
+
+            // Attach SizeChanged event handler
+            this.SizeChanged += OnSizeChanged;
         }
+        
+        #endregion
+        
+        #region Event Handlers
+
+        private void OnSizeChanged(object? sender, EventArgs e)
+        {
+            var borderWidth = this.Width - 40;
+            CameraBorder.WidthRequest = borderWidth;
+            CameraBorder.HeightRequest = borderWidth * 9 / 16;
+
+            var webViewWidth = borderWidth - 4;
+            CameraWebView.WidthRequest = webViewWidth;
+            CameraWebView.HeightRequest = webViewWidth * 9 / 16;
+
+            Console.WriteLine($"CameraWebView size: {CameraWebView.WidthRequest}x{CameraWebView.HeightRequest}");
+            Console.WriteLine($"MainPage size: {this.Width}x{this.Height}");
+        }
+        
+        #endregion
+        
+        #region SignalR Hub Connection
 
         private async void ConnectToHub()
         {
@@ -38,25 +67,22 @@ namespace TriloBot.Maui
                 Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
             }
         }
+        
+        #endregion
 
+        #region Observers
+        
         private async Task StartDistanceUpdates()
         {
-
             try
             {
-                // Subscribe to DistanceStream
                 _distanceStream = _hubConnection.StreamAsync<double>("DistanceStream");
 
                 _ = Task.Run(async () =>
                 {
                     await foreach (var distance in _distanceStream)
                     {
-                        Console.WriteLine($"Distance updated: {distance:F2} cm");
-                        // Update the UI on the main thread
-                        MainThread.BeginInvokeOnMainThread(() =>
-                        {
-                            DistanceLabel.Text = $"Distance: {distance:F2} cm";
-                        });
+                        MainThread.BeginInvokeOnMainThread(() => { DistanceCardLabel.Text = $"Distance: {distance:F2} cm"; });
                     }
                 });
 
@@ -67,6 +93,10 @@ namespace TriloBot.Maui
                 Console.WriteLine($"Error subscribing to distance updates: {ex.Message}");
             }
         }
+        
+        #endregion
+        
+        #region Button Handlers
 
         private async void OnMoveForwardClicked(object sender, EventArgs e)
         {
@@ -92,5 +122,7 @@ namespace TriloBot.Maui
         {
             await _hubConnection.InvokeAsync("Stop");
         }
+        
+        #endregion
     }
 }
