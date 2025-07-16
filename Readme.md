@@ -60,6 +60,7 @@ All managers are composed in the main `TriloBot` class, which exposes observable
 - Pimoroni Trilobot
 - .NET 9.0 SDK or newer
 - Basic knowledge of C# and .NET
+- Binary of [MediaMTX](https://github.com/bluenviron/mediamtx) must be placed into `_thirdparty/webrtc`
 
 ### Installation
 1. Clone this repository:
@@ -67,14 +68,14 @@ All managers are composed in the main `TriloBot` class, which exposes observable
    git clone https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot.git
    cd dotnet-iot-raspberrypi-trilobot
    ```
-2. Build the project:
-   ```sh
-   dotnet build
-   ```
-3. Run the demo (see `TriloBot/Program.cs`):
+2. Run the demo (see `TriloBot/Program.cs`):
    ```sh
    dotnet run --project TriloBot
    ```
+3. To run for example the web client:
+    ```sh
+    ./_thirdparty/webrtc/mediamtx & dotnet run --project TriloBot.Blazor
+    ```
 
 ## 📖 Documentation & Usage Examples
 
@@ -116,18 +117,6 @@ robot.FillUnderlighting(0, 0, 255);
 string photoPath = await robot.TakePhotoAsync("/home/pi/photos");
 Console.WriteLine($"Photo saved to: {photoPath}");
 ```
-
-### Blazor Playground (WIP)
-
-The Blazor subproject is a playground for web-based control and streaming. Example:
-
-```razor
-<button @onclick="TakePhoto">Take Photo</button>
-<img src="@photoPath" />
-<img src="@streamUrl" />
-```
-
-See the Blazor project for more details.
 
 
 ## 🙏 Acknowledgments

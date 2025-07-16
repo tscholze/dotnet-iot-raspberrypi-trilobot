@@ -418,3 +418,5 @@ FodyWeavers.xsd
 # Project related
 TriloBot.Blazor/wwwroot/photos
 .DS_Store
+_thirdparty/webrtc/LICENSE
+_thirdparty/webrtc/mediamtx
