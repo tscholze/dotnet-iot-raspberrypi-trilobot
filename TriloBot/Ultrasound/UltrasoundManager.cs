@@ -71,7 +71,6 @@ public class UltrasoundManager : IDisposable
             {
                 if (timeoutWatch.ElapsedMilliseconds > UltrasoundConfiguration.Timeout)
                 {
-                    System.Console.WriteLine("Ultrasound: Echo pin never went high (timeout)");
                     continue;
                 }
             }
@@ -83,7 +82,6 @@ public class UltrasoundManager : IDisposable
             {
                 if (timeoutWatch.ElapsedMilliseconds > UltrasoundConfiguration.Timeout)
                 {
-                    System.Console.WriteLine("Ultrasound: Echo pin stuck high (timeout)");
                     continue;
                 }
             }

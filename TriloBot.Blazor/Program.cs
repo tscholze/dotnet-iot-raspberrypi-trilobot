@@ -1,7 +1,6 @@
 using TriloBot.Blazor.Components;
 using TriloBot.Blazor.SignalR;
 using Microsoft.Extensions.FileProviders;
-using LiveStreamingServerNet;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,15 +53,6 @@ app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(
 
 
 var cancellationToken = new CancellationTokenSource();
-
-_ = Task.Run(async () =>
-{
-    using var server = LiveStreamingServerBuilder.Create()
-        .ConfigureLogging(options => options.AddConsole())
-        .Build();
-
-    await server.RunAsync(new IPEndPoint(IPAddress.Any, 1935), cancellationToken.Token);
-}, cancellationToken.Token);
 
 Console.CancelKeyPress += (s, e) =>
 {

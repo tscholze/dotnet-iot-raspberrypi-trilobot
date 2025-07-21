@@ -56,6 +56,7 @@
                 <button class="btn btn-danger m-1" @onclick="() => FillUnderlighting(255,0,0)">Underlight Red</button>
                 <button class="btn btn-success m-1" @onclick="() => FillUnderlighting(0,255,0)">Underlight Green</button>
                 <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0,0,255)">Underlight Blue</button>
+                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(128,0,128)">Underlight Purple</button>
                 <button class="btn btn-light m-1" @onclick="() => FillUnderlighting(255,255,255)">Underlight White</button>
                 <button class="btn btn-dark m-1" @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
             </div>
@@ -79,6 +80,8 @@
     /// Indicates whether an object is too near to the TriloBot.
     /// </summary>
     private bool isObjectTooNear;
+
+    private CancellationTokenSource? policeEffectCancellationTokenSource;
 
     /// <summary>
     /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
