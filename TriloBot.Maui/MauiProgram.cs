@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Maui;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace TriloBot.Maui;
 
@@ -7,10 +6,9 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
-		var builder = MauiApp.CreateBuilder();
-		builder
+		var builder = MauiApp
+			.CreateBuilder()
 			.UseMauiApp<App>()
-			.UseMauiCommunityToolkitMediaElement()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
