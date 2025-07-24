@@ -8,6 +8,7 @@ public class Program
     public static void Main(string[] args)
     {      
         Console.WriteLine("Starting TriloBot...");
+
         var cancellationTokenSource = new CancellationTokenSource();
         using var robot = new TriloBot(cancellationTokenSource.Token);
 
@@ -17,16 +18,14 @@ public class Program
         // Subscribe to objectTooNearObserver
         var tooNearSubscription = robot.ObjectTooNearObservable.Subscribe(tooNear =>
         {
-            Console.WriteLine($"Object too near: {tooNear}");
-
+            // Change underlighting based on distance
+            // If the object is too near, set underlighting to red, otherwise set it to green
             if (tooNear)
             {
-                // Set underlight to red
                 robot.FillUnderlighting(255, 0, 0);
             }
             else
             {
-                // Set underlight to green
                 robot.FillUnderlighting(0, 255, 0);
             }
         });
@@ -35,6 +34,9 @@ public class Program
         robot.StartButtonMonitoring();
         var buttonListenerSubscription = robot.ButtonPressedObservable.Subscribe(button =>
         {
+            // Change underlighting based on button pressed
+            // Button A: Yellow, Button B: Orange, Button X: Blue, Button Y: Pink
+            // Default: White
             switch (button)
             {
                 case Buttons.ButtonA:
