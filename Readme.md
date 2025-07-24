@@ -1,11 +1,11 @@
 # 🤖 Trilobot.NET
+<p align="center">
+  <img src="_docs/image.png" height="200" alt="Image of the project" />
+</p>
 
-> A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
 
+A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
 
-<center>
-   <img src="_docs/image.png" height="200" alt="Image of the project" />
-</center>
 
 ## 🚀 What Does It Do?
 
