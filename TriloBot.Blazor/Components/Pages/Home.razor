@@ -11,7 +11,7 @@
         <p class="lead">Use the buttons below to control your TriloBot.</p>
     </div>
 
-<!-- Optional: Display the live stream if available -->
+    <!-- Optional: Display the live stream if available -->
     <div class="alert alert-info text-center">
         @if (isObjectTooNear)
         {
@@ -35,30 +35,41 @@
         </div>
     </div>
 
-<!-- Light controls -->
+    <!-- Light controls -->
     <div class="card mb-4">
         <div class="card-header">Lights</div>
         <div class="card-body">
             <h5>Button LEDs</h5>
             <div class="d-flex flex-wrap mb-3">
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED
+                    On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED
+                    Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED
+                    On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED
+                    Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED
+                    On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED
+                    Off</button>
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED
+                    On</button>
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED
+                    Off</button>
             </div>
 
             <h5>Underlighting</h5>
             <div class="d-flex flex-wrap">
-                <button class="btn btn-danger m-1" @onclick="() => FillUnderlighting(255,0,0)">Underlight Red</button>
-                <button class="btn btn-success m-1" @onclick="() => FillUnderlighting(0,255,0)">Underlight Green</button>
-                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0,0,255)">Underlight Blue</button>
-                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(128,0,128)">Underlight Purple</button>
-                <button class="btn btn-light m-1" @onclick="() => FillUnderlighting(255,255,255)">Underlight White</button>
-                <button class="btn btn-dark m-1" @onclick="() => FillUnderlighting(0,0,0)">Underlight Off</button>
+                <button class="btn btn-danger m-1" @onclick="() => FillUnderlighting(255, 0, 0)">Underlight Red</button>
+                <button class="btn btn-success m-1" @onclick="() => FillUnderlighting(0, 255, 0)">Underlight
+                    Green</button>
+                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0, 0, 255)">Underlight Blue</button>
+                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(128, 0, 128)">Underlight
+                    Purple</button>
+                <button class="btn btn-light m-1" @onclick="() => FillUnderlighting(255, 255, 255)">Underlight
+                    White</button>
+                <button class="btn btn-dark m-1" @onclick="() => FillUnderlighting(0, 0, 0)">Underlight Off</button>
             </div>
         </div>
     </div>
@@ -89,15 +100,17 @@
     protected override async Task OnInitializedAsync()
     {
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
-            .WithAutomaticReconnect()
-            .Build();
+        .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
+        .WithAutomaticReconnect()
+        .Build();
 
+        // Connect to SignalR hub
         await hubConnection.StartAsync();
 
         // Subscribe to ObjectTooNearStream
         var objectTooNearStream = hubConnection.StreamAsync<bool>("ObjectTooNearStream");
-        _ = Task.Run(async () => {
+        _ = Task.Run(async () =>
+        {
             await foreach (var isNear in objectTooNearStream)
             {
                 Console.WriteLine($"Object too near: {isNear}");
@@ -106,6 +119,9 @@
                 await InvokeAsync(StateHasChanged);
             }
         });
+
+        // Start distance monitoring
+        await hubConnection.InvokeAsync("StartDistanceMonitoring");
     }
 
     /// <summary>
@@ -166,4 +182,3 @@
         await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
     }
 }
-

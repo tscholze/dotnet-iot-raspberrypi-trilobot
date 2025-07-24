@@ -90,7 +90,7 @@ public sealed class UltrasoundManager : IDisposable
         var ticksPerNs = Stopwatch.Frequency / 1_000_000_000.0;
 
         // Busy-wait for a specified number of ticks
-        void BusyWait(long durationTicks)
+        static void BusyWait(long durationTicks)
         {
             var t0 = Stopwatch.GetTimestamp();
             while ((Stopwatch.GetTimestamp() - t0) < durationTicks) { }
