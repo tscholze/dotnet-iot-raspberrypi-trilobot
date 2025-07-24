@@ -74,37 +74,35 @@ public class UltrasoundManager : IDisposable
     /// <returns>Average distance in centimeters, or 0 if no valid readings.</returns>
     public double ReadDistance()
     {
-        long startTime = Stopwatch.GetTimestamp();
-        long timeElapsedNs = 0;
-        int validSampleCount = 0;
-        long totalPulseDurations = 0;
-        long timeoutTotalNs = Timeout * 1_000_000; // ms to ns
-        double ticksPerNs = Stopwatch.Frequency / 1_000_000_000.0;
+        var startTime = Stopwatch.GetTimestamp();
+        var timeElapsedNs = 0L;
+        var validSampleCount = 0;
+        var totalPulseDurations = 0L;
+        var timeoutTotalNs = Timeout * 1_000_000L; // ms to ns
+        var ticksPerNs = Stopwatch.Frequency / 1_000_000_000.0;
+
+        // Local function for busy-wait
+        static void BusyWait(long durationTicks)
+        {
+            var t0 = Stopwatch.GetTimestamp();
+            while ((Stopwatch.GetTimestamp() - t0) < durationTicks) { }
+        }
 
         // Loop until the required number of samples is collected or the total timeout is reached
         while (validSampleCount < Samples && timeElapsedNs < timeoutTotalNs)
         {
-            // 1. Ensure the trigger pin is low for a short period
+            // 1. Ensure the trigger pin is low for a short period (~2us)
             _gpio.Write(UltraTrigPin, PinValue.Low);
-            var t0 = Stopwatch.GetTimestamp();
-            while ((Stopwatch.GetTimestamp() - t0) < (Stopwatch.Frequency / 500000)) { } // ~2us
+            BusyWait(Stopwatch.Frequency / 500_000);
 
             // 2. Send a 10 microsecond pulse on the trigger pin
             _gpio.Write(UltraTrigPin, PinValue.High);
-            var pulseWatch = Stopwatch.StartNew();
-            while (pulseWatch.ElapsedTicks < (Stopwatch.Frequency / 100000)) { } // ~10us busy-wait
+            BusyWait(Stopwatch.Frequency / 100_000);
             _gpio.Write(UltraTrigPin, PinValue.Low);
 
             // 3. Wait for the echo pin to go high (start of echo)
             var timeoutWatch = Stopwatch.StartNew();
-            while (_gpio.Read(UltraEchoPin) == PinValue.Low)
-            {
-                if (timeoutWatch.ElapsedMilliseconds > Timeout)
-                {
-                    break;
-                }
-            }
-
+            while (_gpio.Read(UltraEchoPin) == PinValue.Low && timeoutWatch.ElapsedMilliseconds <= Timeout) { }
             if (_gpio.Read(UltraEchoPin) == PinValue.Low)
             {
                 // Timed out waiting for echo to go high
@@ -112,16 +110,11 @@ public class UltrasoundManager : IDisposable
                 continue;
             }
 
-            long pulseStart = Stopwatch.GetTimestamp();
+            var pulseStart = Stopwatch.GetTimestamp();
 
             // 4. Wait for the echo pin to go low (end of echo)
             timeoutWatch.Restart();
-            while (_gpio.Read(UltraEchoPin) == PinValue.High)
-            {
-                if (timeoutWatch.ElapsedMilliseconds > Timeout)
-                    break;
-            }
-
+            while (_gpio.Read(UltraEchoPin) == PinValue.High && timeoutWatch.ElapsedMilliseconds <= Timeout) { }
             if (_gpio.Read(UltraEchoPin) == PinValue.High)
             {
                 // Timed out waiting for echo to go low
@@ -130,10 +123,9 @@ public class UltrasoundManager : IDisposable
             }
 
             // 5. Calculate the pulse duration in nanoseconds
-            long pulseEnd = Stopwatch.GetTimestamp();
-            long pulseDurationNs = (long)((pulseEnd - pulseStart) / ticksPerNs) - DefaultOffsetNs;
-            if (pulseDurationNs < 0)
-                pulseDurationNs = 0;
+            var pulseEnd = Stopwatch.GetTimestamp();
+            var pulseDurationNs = (long)((pulseEnd - pulseStart) / ticksPerNs) - DefaultOffsetNs;
+            pulseDurationNs = Math.Max(pulseDurationNs, 0);
 
             // Only count reading if achieved in less than timeout total time
             if (pulseDurationNs < timeoutTotalNs)
@@ -145,7 +137,13 @@ public class UltrasoundManager : IDisposable
             timeElapsedNs = (long)((Stopwatch.GetTimestamp() - startTime) / ticksPerNs);
         }
 
-        return totalPulseDurations * SpeedOfSoundCmNs / (2 * Math.Max(validSampleCount, 1));
+        // Calculate the average distance based on the total pulse durations
+        if (validSampleCount is 0)
+            return 0.0;
+
+        // Round to a 10th of a centimeter to avoid jitter in readings
+        var rawDistance = totalPulseDurations * SpeedOfSoundCmNs / (2 * validSampleCount);
+        return Math.Round(rawDistance, 1);
     }
 
     #endregion
