@@ -7,8 +7,12 @@
 
 <div class="container mt-4">
     <div class="text-center mb-4">
-        <h1 class="display-4">Welcome to TriloBot Remote Control</h1>
+        <h1 class="display-4">Welcome to TriloBot Control</h1>
         <p class="lead">Use the buttons below to control your TriloBot.</p>
+    </div>
+
+    <div class="text-center mb-4" style="aspect-ratio:16/9;max-width:100%;max-height:480px;display:flex;justify-content:center;align-items:center;">
+         <iframe src="http://pi5:8889/cam/"  alt="TriloBot Live Stream" style="aspect-ratio:16/9;width:100%;max-width:100%;max-height:480px;object-fit:contain;background:black;" />
     </div>
 
     <!-- Optional: Display the live stream if available -->
@@ -41,21 +45,21 @@
         <div class="card-body">
             <h5>Button LEDs</h5>
             <div class="d-flex flex-wrap mb-3">
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonA", 1)'>Button A LED
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(6, 1)'>Button A LED
                     On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonA", 0)'>Button A LED
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(6, 0)'>Button A LED
                     Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonB", 1)'>Button B LED
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(7, 1)'>Button B LED
                     On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonB", 0)'>Button B LED
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(7, 0)'>Button B LED
                     Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonX", 1)'>Button X LED
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(8, 1)'>Button X LED
                     On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonX", 0)'>Button X LED
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(8, 0)'>Button X LED
                     Off</button>
-                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed("ButtonY", 1)'>Button Y LED
+                <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(9, 1)'>Button Y LED
                     On</button>
-                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed("ButtonY", 0)'>Button Y LED
+                <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(9, 0)'>Button Y LED
                     Off</button>
             </div>
 
@@ -92,8 +96,6 @@
     /// </summary>
     private bool isObjectTooNear;
 
-    private CancellationTokenSource? policeEffectCancellationTokenSource;
-
     /// <summary>
     /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
     /// </summary>
@@ -113,9 +115,7 @@
         {
             await foreach (var isNear in objectTooNearStream)
             {
-                Console.WriteLine($"Object too near: {isNear}");
                 isObjectTooNear = isNear;
-
                 await InvokeAsync(StateHasChanged);
             }
         });
@@ -162,12 +162,12 @@
     /// <summary>
     /// Sets the LED state for a specific button.
     /// </summary>
-    /// <param name="button">The button identifier (e.g., ButtonA, ButtonB).</param>
+    /// <param name="lightId">The light identifier (e.g., 0 -> ButtonA LED).</param>
     /// <param name="value">The LED state (1 for on, 0 for off).</param>
-    private async Task SetButtonLed(string button, double value)
+    private async Task SetButtonLed(int lightId, double value)
     {
         if (hubConnection is null) return;
-        await hubConnection.InvokeAsync("SetButtonLed", button, value);
+        await hubConnection.InvokeAsync("SetButtonLed", lightId, value);
     }
 
     /// <summary>

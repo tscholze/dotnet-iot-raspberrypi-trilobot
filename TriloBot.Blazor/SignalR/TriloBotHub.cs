@@ -25,10 +25,10 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <summary>
     /// Sets the brightness of a button LED.
     /// </summary>
-    /// <param name="button">The button name (e.g., "ButtonA").</param>
+    /// <param name="lightId">The light id (e.g., 6 for Button A's LED).</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
-    public Task SetButtonLed(string button, double value)
-        => Task.Run(() => _robot.SetButtonLed(Enum.Parse<Buttons>(button), value));
+    public Task SetButtonLed(int lightId, double value)
+        => Task.Run(() => _robot.SetButtonLed((Lights)lightId, value));
 
     /// <summary>
     /// Fills the underlighting with the specified RGB color.

@@ -23,9 +23,16 @@ public enum Lights
     /// <summary>Middle right underlight (index 5).</summary>
     LIGHT_MIDDLE_RIGHT = 5,
 
+    /// <summary>Button LED A (index 6).</summary>
     LIGHT_LED_A = 6,
+
+    /// <summary>Button LED B (index 7).</summary>
     LIGHT_LED_B = 7,
+
+    /// <summary> Button LED X (index 8).</summary>
     LIGHT_LED_X = 8,
+
+    /// <summary>Button LED Y (index 9).</summary>
     LIGHT_LED_Y = 9
 }
 
@@ -66,7 +73,13 @@ public static class LightsExtensions
             Lights.LIGHT_REAR_LEFT => "Rear Left",
             Lights.LIGHT_REAR_RIGHT => "Rear Right",
             Lights.LIGHT_MIDDLE_RIGHT => "Middle Right",
-            _ => light.ToString()
+            Lights.LIGHT_LED_A => "Button A LED",
+            Lights.LIGHT_LED_B => "Button B LED",
+            Lights.LIGHT_LED_X => "Button X LED",
+            Lights.LIGHT_LED_Y => "Button Y LED",
+
+            // Default case for any other lights not explicitly handled
+            _ => throw new ArgumentOutOfRangeException(nameof(light), light, "Invalid light position")
         };
     }
 

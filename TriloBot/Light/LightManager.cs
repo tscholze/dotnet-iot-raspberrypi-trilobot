@@ -63,6 +63,8 @@ namespace TriloBot.Light
                 Console.WriteLine("Please check I2C connections and address");
                 throw;
             }
+
+            Console.WriteLine("LightManager initialized successfully.");
         }
 
         #endregion
@@ -72,12 +74,12 @@ namespace TriloBot.Light
         /// <summary>
         /// Sets the brightness of a button LED.
         /// </summary>
-        /// <param name="button">The button whose LED to set.</param>
+        /// <param name="light">The light whose LED to set.</param>
         /// <param name="value">Brightness value between 0.0 and 1.0.</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if parameters are out of range.</exception>
-        public void SetButtonLed(Buttons button, double value)
+        public void SetButtonLed(Lights light, double value)
         {
-            _ledPwmMapping[button.ToPinNumber()].ChangeDutyCycle(value * 100.0);
+            _ledPwmMapping[light.ToPinNumber()].ChangeDutyCycle(value * 100.0);
         }
 
         /// <summary>

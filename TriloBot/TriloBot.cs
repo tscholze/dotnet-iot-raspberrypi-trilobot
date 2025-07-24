@@ -262,9 +262,9 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Sets the brightness of a button LED.
     /// </summary>
-    /// <param name="button">The button whose LED to set.</param>
+    /// <param name="light">The light whose button LED to set.</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
-    public void SetButtonLed(Buttons button, double value) => _lightManager.SetButtonLed(button, value);
+    public void SetButtonLed(Lights light, double value) => _lightManager.SetButtonLed(light, value);
 
     /// <summary>
     /// Starts non-blocking background monitoring of button presses every 100ms.
