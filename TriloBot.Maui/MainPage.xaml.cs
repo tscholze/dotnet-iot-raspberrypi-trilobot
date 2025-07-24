@@ -77,14 +77,18 @@ namespace TriloBot.Maui
             try
             {
                 await _hubConnection.StartAsync();
-                Console.WriteLine("Connected to SignalR Hub");
-
                 await StartDistanceUpdates();
-                Console.WriteLine("Distance updates started");
+                await StartCollisionUpdates();
+                Console.WriteLine("Connected and subscript to SignalR Hub");
+                
+                ConnectionStatusLabel.Text = "Yes";
+                ConnectionStatusLabel.TextColor = Colors.Green;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+                ConnectionStatusLabel.Text = "No";
+                ConnectionStatusLabel.TextColor = Colors.Red;
             }
         }
 
@@ -105,7 +109,7 @@ namespace TriloBot.Maui
                 {
                     await foreach (var distance in _distanceStream)
                     {
-                        MainThread.BeginInvokeOnMainThread(() => { DistanceCardLabel.Text = $"Distance: {distance:F2} cm"; });
+                        MainThread.BeginInvokeOnMainThread(() => { DistanceCardLabel.Text = $"{distance:F0} cm"; });
                     }
                 });
 
@@ -114,6 +118,30 @@ namespace TriloBot.Maui
             catch (Exception ex)
             {
                 Console.WriteLine($"Error subscribing to distance updates: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Starts receiving collision warning updates from the SignalR hub.
+        /// </summary>
+        private async Task StartCollisionUpdates()
+        {
+            try
+            {
+                await _hubConnection.InvokeAsync("StartCollisionMonitoring");
+
+                _hubConnection.On<bool>("ObjectTooNear", tooNear =>
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        CollisionAlertLabel.Text = tooNear ? "Yes" : "No";
+                        CollisionAlertLabel.TextColor = tooNear ? Colors.Red : Colors.Green;
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error subscribing to collision updates: {ex.Message}");
             }
         }
 
@@ -184,5 +212,35 @@ namespace TriloBot.Maui
         }
 
         #endregion
+
+        /// <summary>
+        /// Event handler to turn all lights on (white).
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        private void OnLightAllOn(object? sender, EventArgs e)
+        {
+            SafeInvokeAsync("FillUnderlighting", 255, 255, 255).ConfigureAwait(false);
+        }
+        
+        /// <summary>
+        /// Event handler to turn all lights off.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        private void OnLightAllOff(object? sender, EventArgs e)
+        {
+            SafeInvokeAsync("FillUnderlighting", 0, 0, 0).ConfigureAwait(false);
+        }
+        
+        /// <summary>
+        /// Event handler to turn all lights purple.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        private void OnLightAllPurple(object? sender, EventArgs e)
+        {
+            SafeInvokeAsync("FillUnderlighting", 128, 0, 128).ConfigureAwait(false);
+        }
     }
 }
