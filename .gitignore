@@ -421,3 +421,4 @@ TriloBot.Blazor/wwwroot/photos
 _thirdparty/webrtc/LICENSE
 _thirdparty/webrtc/mediamtx
 .idea
+.DS_Store

@@ -63,8 +63,6 @@
                 </Border>
             </Grid>
             
-            <Rectangle HeightRequest="20" BackgroundColor="Transparent" />
-
             <Label Text="Controller" 
                    FontSize="24"
                    FontAttributes="Bold"

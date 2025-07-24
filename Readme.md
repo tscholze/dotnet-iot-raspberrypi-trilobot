@@ -1,25 +1,40 @@
 # 🤖 Trilobot.NET
 
-A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a modern, modular, and idiomatic C# API for all Trilobot features.
+> A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
 
 
 <center>
    <img src="_docs/image.png" height="200" alt="Image of the project" />
 </center>
 
-
-
 ## 🚀 What Does It Do?
 
 This library provides easy-to-use manager classes for all major Trilobot hardware components:
 
-- 🕹️ **ButtonManager** – Read and react to button presses (A, B, X, Y) with observable events
-- 💡 **LightManager** – Control underlighting (RGB LEDs) and button LEDs, including color effects
-- 🦾 **MotorManager** – Drive, steer, and control both motors with speed and direction
-- 📏 **UltrasoundManager** – Measure distance and proximity with the ultrasonic sensor, with observable events
-- 📸 **CameraManager** – Take photos and (optionally) stream live video (SignalR/MJPEG integration)
+- 🦾 **Driving around** – Drive, steer, and control both motors with speed and direction
+- 🕹️ **Buttons** – Read and react to button presses (A, B, X, Y) with observable events
+- 💡 **Lights, LEDs and more** – Control underlighting (RGB LEDs) and button LEDs, including color effects
+- 📏 **Keep distance** – Measure distance and proximity with the ultrasonic sensor, with observable events
+- 📸 **Live Feed** – Take photos and (optionally) stream live video (SignalR/MJPEG integration)
 
-All hardware mappings use enums and extension methods for clarity and maintainability.
+## How it looks
+
+### Outside
+|                                    |                                    |
+| ---------------------------------- | ---------------------------------- |
+| ![](_docs/trilobot-outside-1.jpeg) | ![](_docs/trilobot-outside-2.jpeg) |
+
+### Android (Surface Duo)
+
+|                                         |     |
+| --------------------------------------- | --- |
+| ![](_docs/trilobot-android-surface.png) |     |
+
+### Windows
+|                                  |                            |
+| -------------------------------- | -------------------------- |
+| ![](_docs/trilobot-web-edge.png) | ![](_docs/trilobot-vs.png) |
+| ![](_docs/trilobot-windows.png)  |                            |
 
 
 ## 🔧 Hardware Components (Pimoroni Trilobot)
@@ -36,28 +51,22 @@ All hardware mappings use enums and extension methods for clarity and maintainab
 
 Each hardware subsystem is managed by its own class:
 
-- `ButtonManager` – Handles button state, debouncing, and events
-- `LightManager` – Controls all LEDs and underlighting
-- `MotorManager` – Abstracts motor control and movement
-- `UltrasoundManager` – Provides distance readings and proximity events
-- `CameraManager` – Photo capture and video streaming (SignalR-ready)
+| Manager Class       | Responsibility                                       |
+| ------------------- | ---------------------------------------------------- |
+| `ButtonManager`     | Handles button state, debouncing, and events         |
+| `LightManager`      | Controls all LEDs and underlighting                  |
+| `MotorManager`      | Abstracts motor control and movement                 |
+| `UltrasoundManager` | Provides distance readings and proximity events      |
+| `CameraManager`     | Photo captures and other image related operations in |
 
-All managers are composed in the main `TriloBot` class, which exposes observables and high-level control methods.
-
-
-## 🚧 Project Status
-
-**This project is heavily in development!**
-- The core library is functional but APIs may change.
-- The Blazor and other sub-projects are playgrounds and not production-ready.
-- Documentation and demos are a work in progress.
-
+All managers are composed in the main `TriloBot` class, which exposes observables and high-level control methods. All hardware mappings use enums and extension methods for clarity and maintainability.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Raspberry Pi (any model with GPIO)
+- Raspberry Pi 4
 - Pimoroni Trilobot
+- Enabled GPIO, CSI, SPI, IC2 interfaces
 - .NET 9.0 SDK or newer
 - Basic knowledge of C# and .NET
 - Binary of [MediaMTX](https://github.com/bluenviron/mediamtx) must be placed into `_thirdparty/webrtc`
@@ -74,8 +83,12 @@ All managers are composed in the main `TriloBot` class, which exposes observable
    ```
 3. To run for example the web client:
     ```sh
-    ./_thirdparty/webrtc/mediamtx & dotnet run --project TriloBot.Blazor
+    dotnet run --project TriloBot.Blazor
     ```
+4. To start the web cam feed:
+   ```sh
+   cd _thirdparty/webrtc && mediamtx
+   ```
 
 ## 📖 Documentation & Usage Examples
 
