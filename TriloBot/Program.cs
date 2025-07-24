@@ -6,17 +6,13 @@ namespace TriloBot;
 public class Program
 {
     public static void Main(string[] args)
-    {
-        Console.WriteLine("Trilobot Police Lights Effect");
-        Console.WriteLine("Press Ctrl+C to exit");
-
+    {      
+        Console.WriteLine("Starting TriloBot...");
         var cancellationTokenSource = new CancellationTokenSource();
         using var robot = new TriloBot(cancellationTokenSource.Token);
 
         // Start distance monitoring
         robot.StartDistanceMonitoring();
-
-        robot.Forward();
 
         // Subscribe to objectTooNearObserver
         var tooNearSubscription = robot.ObjectTooNearObservable.Subscribe(tooNear =>
@@ -35,36 +31,31 @@ public class Program
             }
         });
 
+        // Start button monitoring
         robot.StartButtonMonitoring();
-
         var buttonListenerSubscription = robot.ButtonPressedObservable.Subscribe(button =>
         {
-           // Console.WriteLine($"Button pressed: {button}");
-
             switch (button)
             {
                 case Buttons.ButtonA:
-                    robot.FillUnderlighting(255, 255, 0); // Yellow
+                    robot.FillUnderlighting(255, 255, 0);
                     break;
                 case Buttons.ButtonB:
-                    robot.FillUnderlighting(255, 165, 0); // Orange
-
+                    robot.FillUnderlighting(255, 165, 0);
                     break;
                 case Buttons.ButtonX:
-                    robot.FillUnderlighting(0, 0, 5); // Blue
-
+                    robot.FillUnderlighting(0, 0, 5);
                     break;
                 case Buttons.ButtonY:
                     robot.FillUnderlighting(255, 192, 203); // Pink
-
                     break;
                 default:
-                    robot.FillUnderlighting(255, 255, 255); // white
-
+                    robot.FillUnderlighting(255, 255, 255);
                     break;
             }
         });
-        
+
+        // Handle cancellation gracefully
         Console.CancelKeyPress += (s, e) =>
         {
             cancellationTokenSource.Cancel();
