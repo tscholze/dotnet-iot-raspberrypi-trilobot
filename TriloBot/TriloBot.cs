@@ -7,7 +7,6 @@ using TriloBot.Motor;
 using TriloBot.Ultrasound;
 using TriloBot.Button;
 using TriloBot.Camera;
-using System.Threading.Tasks;
 
 namespace TriloBot;
 
@@ -45,7 +44,7 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Tracks whether the object has been disposed.
     /// </summary>
-    private bool _disposed = false;
+    private bool _disposed;
 
     /// <summary>
     /// Task for background distance monitoring.
@@ -60,15 +59,6 @@ public class TriloBot : IDisposable
     #region Private Fields
 
     /// <summary>
-    /// Cancellation token for managing asynchronous operations.
-    /// This allows for graceful shutdown of effects and operations.
-    /// It can be used to cancel ongoing tasks like light effects or motor operations.
-    /// This is particularly useful for effects that run in a loop or for long-running operations.
-    /// The cancellation token can be passed to methods that support cancellation, allowing them to stop gracefully.
-    /// </summary>
-    private CancellationToken _cancellationToken;
-
-    /// <summary>
     /// The GPIO controller used for all hardware operations.
     /// </summary>
     private readonly GpioController _gpio;
@@ -76,27 +66,27 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Manages button input operations.
     /// </summary>
-    private readonly ButtonManager _buttonManager = null!;
+    private readonly ButtonManager _buttonManager;
 
     /// <summary>
     /// Manages LED and underlighting operations.
     /// </summary>
-    private readonly LightManager _lightManager = null!;
+    private readonly LightManager _lightManager;
 
     /// <summary>
     /// Manages motor control operations.
     /// </summary>
-    private readonly MotorManager _motorManager = null!;
+    private readonly MotorManager _motorManager;
 
     /// <summary>
     /// Manages ultrasound distance measurement operations.
     /// </summary>
-    private readonly UltrasoundManager _ultrasoundManager = null!;
+    private readonly UltrasoundManager _ultrasoundManager;
 
     /// <summary>
     /// Manages camera operations.
     /// </summary>
-    private readonly CameraManager _cameraManager = null!;
+    private readonly CameraManager _cameraManager;
 
     /// <summary>
     /// Subject for live video feed URL changes.
@@ -128,12 +118,12 @@ public class TriloBot : IDisposable
     #region Distance Monitoring
 
     /// <summary>
-    /// Starts non-blocking background monitoring of the distance sensor every 500ms.
+    /// Starts non-blocking background monitoring of the distance sensor every 500 ms.
     /// </summary>
     public void StartDistanceMonitoring(double minDistance = 30.0)
     {
         // If already running, do nothing
-        if (_distanceMonitoringTask != null && !_distanceMonitoringTask.IsCompleted)
+        if (_distanceMonitoringTask is { IsCompleted: false })
             return;
 
         Console.WriteLine("Starting distance monitoring...");
@@ -151,7 +141,8 @@ public class TriloBot : IDisposable
                     var isTooNear = distance < minDistance;
 
                     // Only trigger if the value changes
-                    if (_distanceObserver.Value != distance)
+                    // This prevents unnecessary updates and notifications.
+                    if (Math.Abs(_distanceObserver.Value - distance) > 0.1)
                     {
                         _distanceObserver.OnNext(distance);
                     }
@@ -210,13 +201,9 @@ public class TriloBot : IDisposable
         }
 
         // Set the cancellation token for this instance
-        _cancellationToken = cancellationToken;
 
         // Initialize GPIO controller
         // This is the main controller for all GPIO operations
-        // It manages the pins used for buttons, lights, motors, and ultrasound sensors
-        // It is initialized once and used throughout the TriloBot operations
-        // This allows for efficient resource management and avoids multiple initializations
         _gpio = new GpioController();
 
         // Setup button manager
@@ -236,7 +223,7 @@ public class TriloBot : IDisposable
         // Register cancellation token to handle graceful shutdown
         // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
         // It ensures that any ongoing effects or operations are properly terminated
-        _cancellationToken.Register(() =>
+        cancellationToken.Register(() =>
         {
             // Cancel any ongoing effects or operations
             DisableUnderlighting();
@@ -245,7 +232,7 @@ public class TriloBot : IDisposable
         });
 
         // Log successful initialization
-        Console.WriteLine("Successfully initialized TrilBot manager. Start observer listing or triggering other methods.");
+        Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
     }
 
     #endregion
@@ -272,7 +259,7 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StartButtonMonitoring()
     {
-        if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
+        if (_buttonMonitoringTask is { IsCompleted: false })
             return;
 
         if (_buttonMonitoringCts == null || _buttonMonitoringCts.IsCancellationRequested)
@@ -318,7 +305,7 @@ public class TriloBot : IDisposable
     /// </summary>
     public void StopButtonMonitoring()
     {
-        if (_buttonMonitoringTask != null && !_buttonMonitoringTask.IsCompleted)
+        if (_buttonMonitoringTask is { IsCompleted: false })
         {
             _buttonMonitoringTask = null;
         }
@@ -333,7 +320,7 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Sets the speed and direction of a single motor.
     /// </summary>
-    /// <param name="motor">The motor index (0 for left, 1 for right).</param>
+    /// <param name="motor">The motor index (0 for left motor, 1 for right).</param>
     /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
     public void SetMotorSpeed(int motor, double speed) => _motorManager.SetMotorSpeed(motor, speed);
 
@@ -460,8 +447,6 @@ public class TriloBot : IDisposable
     /// <summary>
     /// Reads the distance using the ultrasonic sensor.
     /// </summary>
-    /// <param name="timeout">Timeout in milliseconds for each sample.</param>
-    /// <param name="samples">Number of samples to average.</param>
     /// <returns>Distance in centimeters</returns>
     public double ReadDistance()
         => _ultrasoundManager.ReadDistance();
@@ -469,44 +454,13 @@ public class TriloBot : IDisposable
     #endregion
 
     #region Camera
-
-    /// <summary>
-    /// Gets the URL for the live stream from the camera.
-    /// </summary>
-    /// <returns>URL string for the live stream.</returns>
-    /// <remarks>
-    /// This method retrieves the URL for the live stream from the camera's SignalR hub.
-    /// It is used to access the live video feed from the camera.
-    /// </remarks>
-
-    public string GetLiveStreamUrl()
-    {
-        return _cameraManager.GetLiveStreamSignalRHubUrl();
-    }
-
-    public async Task<string> StartVideoStreamingAsync()
-    {
-        return await _cameraManager.StartVideoStreamingAsync();
-    }
-
-    /// <summary>
-    /// Call this method to notify observers that the live video feed URL has changed.
-    /// </summary>
-    /// <param name="newUrl">The new live video feed URL.</param>
-    public void NotifyLiveVideoFeedUrlChanged(string newUrl)
-    {
-        if (!string.IsNullOrWhiteSpace(newUrl) && _liveVideoFeedSubject.Value != newUrl)
-        {
-            _liveVideoFeedSubject.OnNext(newUrl);
-        }
-    }
-
+    
     /// <summary>
     /// Takes a photo using the camera and saves it to the specified filename.
     /// This method blocks until the photo is taken.
     /// It returns the full path to the saved photo.
     /// If an error occurs, it returns an empty string.
-    /// The filename should include the full path and file extension (e.g., "photos/photo.jpg
+    /// The filename should include the full path and file extension (e.g., photos/photo.jpg
     /// </summary>
     /// <param name="filename"></param>
     /// <returns>Image data</returns>
@@ -533,7 +487,7 @@ public class TriloBot : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        System.Console.WriteLine("Disposing TriloBot...");
+        Console.WriteLine("Disposing TriloBot...");
 
         try
         {
@@ -541,14 +495,14 @@ public class TriloBot : IDisposable
             StopButtonMonitoring();
             DisableUnderlighting();
             DisableMotors();
-            _motorManager?.Dispose();
-            _buttonManager?.Dispose();
-            _lightManager?.Dispose();
-            _ultrasoundManager?.Dispose();
+            _motorManager.Dispose();
+            _buttonManager.Dispose();
+            _lightManager.Dispose();
+            _ultrasoundManager.Dispose();
             _gpio.Dispose();
-            _distanceObserver?.Dispose();
-            _objectTooNearObserver?.Dispose();
-            _buttonPressedObserver?.Dispose();
+            _distanceObserver.Dispose();
+            _objectTooNearObserver.Dispose();
+            _buttonPressedObserver.Dispose();
         }
         catch (Exception ex)
         {

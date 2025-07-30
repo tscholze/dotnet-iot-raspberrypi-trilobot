@@ -34,7 +34,7 @@ namespace TriloBot.Motor
 
             // Setup motor pins using Motor enum and extensions
             _gpio.OpenPin(MotorExtensions.GetEnablePin(), PinMode.Output);
-            foreach (Motor motor in (Motor[])Enum.GetValues(typeof(Motor)))
+            foreach (var motor in (Motor[])Enum.GetValues(typeof(Motor)))
             {
                 _gpio.OpenPin(motor.GetPositivePin(), PinMode.Output);
                 _gpio.OpenPin(motor.GetNegativePin(), PinMode.Output);
@@ -56,9 +56,9 @@ namespace TriloBot.Motor
         /// <summary>
         /// Sets the speed and direction of a single motor.
         /// </summary>
-        /// <param name="motor">The motor index (0 for left, 1 for right).</param>
+        /// <param name="motor">The motor index (0 for left motor, 1 for right).</param>
         /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if motor index is out of range.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if the motor index is out of range.</exception>
         public void SetMotorSpeed(int motor, double speed)
         {
             if (!Enum.IsDefined(typeof(Motor), motor))
@@ -72,24 +72,24 @@ namespace TriloBot.Motor
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
             var motorEnum = (Motor)motor;
-            // Left motor inverted so positive speed drives forward
-            SoftPwmChannel pwmP = _motorPwmMapping[motorEnum.GetNegativePin()];
-            SoftPwmChannel pwmN = _motorPwmMapping[motorEnum.GetPositivePin()];
+            // Left motor inverted, positive speed drives forward
+            var pwmP = _motorPwmMapping[motorEnum.GetNegativePin()];
+            var pwmN = _motorPwmMapping[motorEnum.GetPositivePin()];
 
-            if (speed > 0.0)
+            switch (speed)
             {
-                pwmP.ChangeDutyCycle(100);
-                pwmN.ChangeDutyCycle(100 - (speed * 100));
-            }
-            else if (speed < 0.0)
-            {
-                pwmP.ChangeDutyCycle(100 - (-speed * 100));
-                pwmN.ChangeDutyCycle(100);
-            }
-            else
-            {
-                pwmP.ChangeDutyCycle(100);
-                pwmN.ChangeDutyCycle(100);
+                case > 0.0:
+                    pwmP.ChangeDutyCycle(100);
+                    pwmN.ChangeDutyCycle(100 - (speed * 100));
+                    break;
+                case < 0.0:
+                    pwmP.ChangeDutyCycle(100 - (-speed * 100));
+                    pwmN.ChangeDutyCycle(100);
+                    break;
+                default:
+                    pwmP.ChangeDutyCycle(100);
+                    pwmN.ChangeDutyCycle(100);
+                    break;
             }
         }
 
@@ -110,7 +110,7 @@ namespace TriloBot.Motor
         public void DisableMotors()
         {
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.Low);
-            foreach (Motor motor in (Motor[])Enum.GetValues(typeof(Motor)))
+            foreach (var motor in (Motor[])Enum.GetValues(typeof(Motor)))
             {
                 _motorPwmMapping[motor.GetPositivePin()].ChangeDutyCycle(0);
                 _motorPwmMapping[motor.GetNegativePin()].ChangeDutyCycle(0);

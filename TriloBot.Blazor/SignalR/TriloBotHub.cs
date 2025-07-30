@@ -1,7 +1,6 @@
 using System.Threading.Channels;
 using Microsoft.AspNetCore.SignalR;
 using TriloBot.Light;
-using TriloBot.Button;
 
 namespace TriloBot.Blazor.SignalR;
 
@@ -9,7 +8,7 @@ namespace TriloBot.Blazor.SignalR;
 /// SignalR Hub for remote controlling the TriloBot.
 /// Exposes key TriloBot methods to web clients.
 /// </summary>
-public class TriloBotHub(TriloBot _robot) : Hub
+public class TriloBotHub(TriloBot robot) : Hub
 {
     #region Constants
 
@@ -28,7 +27,7 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <param name="lightId">The light id (e.g., 6 for Button A's LED).</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
     public Task SetButtonLed(int lightId, double value)
-        => Task.Run(() => _robot.SetButtonLed((Lights)lightId, value));
+        => Task.Run(() => robot.SetButtonLed((Lights)lightId, value));
 
     /// <summary>
     /// Fills the underlighting with the specified RGB color.
@@ -37,7 +36,7 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     public Task FillUnderlighting(byte r, byte g, byte b)
-        => Task.Run(() => _robot.FillUnderlighting(r, g, b));
+        => Task.Run(() => robot.FillUnderlighting(r, g, b));
 
     /// <summary>
     /// Sets the RGB value of a single underlight.
@@ -47,7 +46,7 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     public Task SetUnderlight(string light, byte r, byte g, byte b)
-        => Task.Run(() => _robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
+        => Task.Run(() => robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
 
     #endregion
 
@@ -56,27 +55,27 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <summary>
     /// Moves the robot forward at the default speed.
     /// </summary>
-    public Task Forward() => Task.Run(() => _robot.Forward());
+    public Task Forward() => Task.Run(() => robot.Forward());
 
     /// <summary>
     /// Moves the robot backward at the default speed.
     /// </summary>
-    public Task Backward() => Task.Run(() => _robot.Backward());
+    public Task Backward() => Task.Run(() => robot.Backward());
 
     /// <summary>
     /// Turns the robot left in place at the default speed.
     /// </summary>
-    public Task TurnLeft() => Task.Run(() => _robot.TurnLeft());
+    public Task TurnLeft() => Task.Run(() => robot.TurnLeft());
 
     /// <summary>
     /// Turns the robot right in place at the default speed.
     /// </summary>
-    public Task TurnRight() => Task.Run(() => _robot.TurnRight());
+    public Task TurnRight() => Task.Run(() => robot.TurnRight());
 
     /// <summary>
     /// Stops the robot's motors.
     /// </summary>
-    public Task Stop() => Task.Run(() => _robot.Stop());
+    public Task Stop() => Task.Run(robot.Stop);
 
     #endregion
 
@@ -88,17 +87,7 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// <param name="savePath">The path to save the photo.</param>
     /// <returns>The full path to the saved photo.</returns>
     public async Task<string> TakePhoto(string savePath)
-        => await _robot.TakePhotoAsync(savePath);
-
-    /// <summary>
-    /// Gets the URL for the live video stream from the robot's camera.
-    /// </summary>
-    /// <returns>The live stream URL.</returns>
-    public Task<string> GetLiveStreamUrl()
-        => Task.FromResult(_robot.GetLiveStreamUrl());
-
-    public Task<string> StartVideoStreamingAsync()
-    => Task.Run(_robot.StartVideoStreamingAsync);
+        => await robot.TakePhotoAsync(savePath);
 
     #endregion
 
@@ -110,14 +99,14 @@ public class TriloBotHub(TriloBot _robot) : Hub
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task StartDistanceMonitoring()
-        => Task.Run(() => _robot.StartDistanceMonitoring());
+        => Task.Run(() => robot.StartDistanceMonitoring());
 
     /// <summary>
     /// Reads the distance from the ultrasonic sensor.
     /// </summary>
     /// <returns>The distance in centimeters.</returns>
     public Task<double> ReadDistance()
-        => Task.FromResult(_robot.ReadDistance());
+        => Task.FromResult(robot.ReadDistance());
 
     #endregion
 
@@ -131,11 +120,20 @@ public class TriloBotHub(TriloBot _robot) : Hub
     public ChannelReader<double> DistanceStream(CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateUnbounded<double>();
-        var subscription = _robot.DistanceObservable
-            .Subscribe(async value =>
-            {
-                await channel.Writer.WriteAsync(value, cancellationToken);
-            },
+        var subscription = robot.DistanceObservable
+            .Subscribe(async void (value) =>
+                {
+                    try
+                    {
+                        await channel.Writer.WriteAsync(value, cancellationToken);
+                    }
+                    catch (Exception e)
+                    {
+                        // If the channel is completed or if the writing fails, log the error
+                        Console.WriteLine($"Error writing to distance stream: {e.Message}");
+                        channel.Writer.TryComplete(e);
+                    }
+                },
             ex => channel.Writer.TryComplete(ex),
             () => channel.Writer.TryComplete());
         cancellationToken.Register(() =>
@@ -154,11 +152,19 @@ public class TriloBotHub(TriloBot _robot) : Hub
     public ChannelReader<bool> ObjectTooNearStream(CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateUnbounded<bool>();
-        var subscription = _robot.ObjectTooNearObservable
-            .Subscribe(async value =>
-            {
-                await channel.Writer.WriteAsync(value, cancellationToken);
-            },
+        var subscription = robot.ObjectTooNearObservable
+            .Subscribe(async void (value) =>
+                {
+                    try
+                    {
+                        await channel.Writer.WriteAsync(value, cancellationToken);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error writing to channel: {e.Message}");
+                        channel.Writer.TryComplete(e);
+                    }
+                },
             ex => channel.Writer.TryComplete(ex),
             () => channel.Writer.TryComplete());
         cancellationToken.Register(() =>
@@ -168,29 +174,6 @@ public class TriloBotHub(TriloBot _robot) : Hub
         });
         return channel.Reader;
     }
-
-    /// <summary>
-    /// Streams live video feed URLs to clients (pushes new URL when stream changes).
-    /// </summary>
-    /// <param name="cancellationToken">A cancellation token to stop the stream.</param>
-    /// <returns>A channel reader for the live video feed stream.</returns>
-    public ChannelReader<string> LiveVideoFeedStream(CancellationToken cancellationToken = default)
-    {
-        var channel = Channel.CreateUnbounded<string>();
-        var subscription = _robot.LiveVideoFeedObservable
-            .Subscribe(async url =>
-            {
-                await channel.Writer.WriteAsync(url, cancellationToken);
-            },
-            ex => channel.Writer.TryComplete(ex),
-            () => channel.Writer.TryComplete());
-        cancellationToken.Register(() =>
-        {
-            subscription.Dispose();
-            channel.Writer.TryComplete();
-        });
-        return channel.Reader;
-    }
-
+    
     #endregion
 }

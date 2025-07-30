@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using Iot.Device.Camera.Settings;
-using Iot.Device.Common;
 
 namespace TriloBot.Camera;
 
@@ -35,17 +33,6 @@ public class CameraManager
     }
 
     /// <summary>
-    /// Returns the SignalR hub endpoint for video streaming.
-    /// The actual video stream should be handled by a SignalR hub in the web project.
-    /// </summary>
-    /// <returns>The SignalR hub URL for video streaming.</returns>
-    public string GetLiveStreamSignalRHubUrl()
-    {
-        // This should match the SignalR hub route in your Blazor server/web project
-        return "/cameraStreamHub";
-    }
-
-    /// <summary>
     /// Starts recording a video using the system camera and saves it to the specified path.
     /// </summary>
     /// <param name="savePath">The directory to save the video in.</param>
@@ -69,32 +56,5 @@ public class CameraManager
         process.Start();
         await process.WaitForExitAsync();
         return fileName;
-    }
-
-    public async Task<string> StartVideoStreamingAsync()
-    {
-        // This method should start the video streaming process
-        // For example, you could use a library like FFmpeg to stream the video
-        // Here we just return a placeholder URL for the live stream
-        await Task.Delay(1000); // Simulate some delay for starting the stream
-        return "http://localhost:5000/live-stream"; // Replace with actual streaming URL
-    }
-
-    /// <summary>
-    /// Starts the live video stream and returns the URL for the video element.
-    /// </summary>
-    /// <returns>The URL for the live video stream.</returns>
-    public string StartLiveStream()
-    {
-        // Assuming the live stream is hosted on a specific endpoint
-        return "http://localhost:5000/live-stream"; // Replace with the actual stream URL
-    }
-
-    /// <summary>
-    /// Stops the live video stream.
-    /// </summary>
-    public void StopLiveStream()
-    {
-        // Logic to stop the live stream can be implemented here if needed
     }
 }

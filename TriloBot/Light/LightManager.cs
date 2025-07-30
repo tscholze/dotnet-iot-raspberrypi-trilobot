@@ -1,20 +1,14 @@
 using System.Device.Gpio;
 using TriloBot.Platform;
-using TriloBot.Button;
 
 namespace TriloBot.Light
 {
     /// <summary>
     /// Manages all LED and underlighting operations for the TriloBot.
     /// </summary>
-    public partial class LightManager : IDisposable
+    public class LightManager : IDisposable
     {
         #region Private Fields
-
-        /// <summary>
-        /// The GPIO controller used for pin operations.
-        /// </summary>
-        private readonly GpioController _gpio;
 
         /// <summary>
         /// Mapping of LED pins to their PWM channels.
@@ -24,7 +18,7 @@ namespace TriloBot.Light
         /// <summary>
         /// SN3218 LED driver instance.
         /// </summary>
-        private readonly SN3218 _sn3218 = new();
+        private readonly Sn3218 _sn3218 = new();
 
         /// <summary>
         /// Buffer for underlighting RGB values.
@@ -41,13 +35,13 @@ namespace TriloBot.Light
         /// <param name="gpio">The GPIO controller to use for pin operations.</param>
         public LightManager(GpioController gpio)
         {
-            _gpio = gpio;
+            var gpio1 = gpio;
 
             // Open LED pins for PWM control
             foreach (var pin in Enum.GetValues(typeof(Lights)).Cast<Lights>().Where(light => light.IsPinable()).Select(light => light.ToPinNumber()))
             {
-                _gpio.OpenPin(pin, PinMode.Output);
-                _ledPwmMapping[pin] = new SoftPwmChannel(_gpio, pin, 2000);
+                gpio1.OpenPin(pin, PinMode.Output);
+                _ledPwmMapping[pin] = new SoftPwmChannel(gpio1, pin, 2000);
             }
 
             // Initialize SN3218 LED driver
@@ -57,7 +51,7 @@ namespace TriloBot.Light
                 _sn3218.EnableLeds(0b111111111111111111);
                 ShowUnderlighting();
             }
-            catch (System.IO.IOException ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"Error initializing SN3218 LED driver: {ex.Message}");
                 Console.WriteLine("Please check I2C connections and address");
@@ -92,7 +86,7 @@ namespace TriloBot.Light
                 _sn3218.Enable();
                 _sn3218.Output(_underlight);
             }
-            catch (System.IO.IOException ex)
+            catch (IOException ex)
             {
                 Console.WriteLine($"Error initializing SN3218 LED driver: {ex.Message}");
                 Console.WriteLine("Please check I2C connections and address");

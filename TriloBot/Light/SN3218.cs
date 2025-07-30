@@ -5,7 +5,7 @@ namespace TriloBot.Light;
 /// <summary>
 /// Driver for the SN3218 18-channel LED driver.
 /// </summary>
-internal class SN3218 : IDisposable
+internal class Sn3218 : IDisposable
 {
     #region Private Constants
 
@@ -42,9 +42,9 @@ internal class SN3218 : IDisposable
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SN3218"/> class and sets up the device and gamma tables.
+    /// Initializes a new instance of the <see cref="Sn3218"/> class and sets up the device and gamma tables.
     /// </summary>
-    public SN3218()
+    public Sn3218()
     {
         _device = I2cDevice.Create(new I2cConnectionSettings(1, 0x54));
 
@@ -139,38 +139,11 @@ internal class SN3218 : IDisposable
     }
 
     /// <summary>
-    /// Sets the output values for all 18 channels without gamma correction.
-    /// </summary>
-    /// <param name="values">Array of 18 brightness values (0-255).</param>
-    /// <exception cref="ArgumentNullException">Thrown if values is null.</exception>
-    /// <exception cref="ArgumentException">Thrown if values is not length 18.</exception>
-    public void OutputRaw(byte[] values)
-    {
-        if (values == null)
-        {
-            throw new ArgumentNullException(nameof(values));
-        }
-
-        if (values.Length != 18)
-        {
-            throw new ArgumentException("Values array must contain exactly 18 values", nameof(values));
-        }
-
-        var data = new byte[19];
-        data[0] = CommandSetPwmValues;
-        Array.Copy(values, 0, data, 1, 18);
-        _device.Write(data);
-
-        // Update the output
-        _device.Write([CommandUpdate, 0xFF]);
-    }
-
-    /// <summary>
     /// Sets the gamma correction table for a specific channel.
     /// </summary>
     /// <param name="channel">Channel index (0-17).</param>
     /// <param name="gammaTable">Gamma table (256 values).</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown if channel is out of range.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the channel is out of range.</exception>
     /// <exception cref="ArgumentNullException">Thrown if gammaTable is null.</exception>
     /// <exception cref="ArgumentException">Thrown if gammaTable is not length 256.</exception>
     public void SetChannelGamma(int channel, byte[] gammaTable)
@@ -194,6 +167,34 @@ internal class SN3218 : IDisposable
     }
 
     #endregion
+    
+    #region Private Methods
+    
+    /// <summary>
+    /// Sets the output values for all 18 channels without gamma correction.
+    /// </summary>
+    /// <param name="values">Array of 18 brightness values (0-255).</param>
+    /// <exception cref="ArgumentNullException">Thrown if values is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if values is not length 18.</exception>
+    private void OutputRaw(byte[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+
+        if (values.Length != 18)
+        {
+            throw new ArgumentException("Values array must contain exactly 18 values", nameof(values));
+        }
+
+        var data = new byte[19];
+        data[0] = CommandSetPwmValues;
+        Array.Copy(values, 0, data, 1, 18);
+        _device.Write(data);
+
+        // Update the output
+        _device.Write([CommandUpdate, 0xFF]);
+    }
+    
+    #endregion
 
     #region IDisposable
 
@@ -202,8 +203,7 @@ internal class SN3218 : IDisposable
     /// </summary>
     public void Dispose()
     {
-        _device?.Dispose();
-
+        _device.Dispose();
     }
 
     #endregion

@@ -46,7 +46,7 @@ public static class ButtonsExtensions
     }
 
     /// <summary>
-    /// Returns the GPIO pin number for the button.
+    /// Returns the GPIO pin for the button.
     /// </summary>
     public static int ToPinNumber(this Buttons button)
     {
