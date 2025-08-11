@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    JoystickControl.xaml
+    This file defines the visual layout for the JoystickControl custom control.
+    The control consists of a circular base and a movable knob, which can be dragged by the user.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TriloBot.Maui.Controls.JoystickControl">
+    <Grid>
+        <!-- Joystick base: circular area for the joystick -->
+        <Border x:Name="JoystickBase"
+               WidthRequest="120"
+               HeightRequest="120"
+               BackgroundColor="#333333"
+               Stroke="#555555"
+               StrokeThickness="2"
+               HorizontalOptions="Center"
+               VerticalOptions="Center">
+            <Border.StrokeShape>
+                <Ellipse /> <!-- Makes the base circular -->
+            </Border.StrokeShape>
+            <!-- Joystick knob: draggable element inside the base -->
+            
+            <Border x:Name="JoystickKnob"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    BackgroundColor="#666666"
+                    Stroke="#888888"
+                    StrokeThickness="2"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center">
+                <Border.StrokeShape>
+                    <Ellipse /> <!-- Makes the knob circular -->
+                </Border.StrokeShape>
+                
+                <Border.GestureRecognizers>
+                    <!-- Pan gesture for moving the knob -->
+                    <PanGestureRecognizer PanUpdated="OnJoystickPanUpdated" />
+                </Border.GestureRecognizers>
+            </Border>
+        </Border>
+    </Grid>
+</ContentView>

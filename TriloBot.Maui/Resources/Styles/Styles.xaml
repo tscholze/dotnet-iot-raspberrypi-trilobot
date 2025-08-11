@@ -44,6 +44,48 @@
         </Setter>
     </Style>
 
+    <Style x:Key="TopLeftRoundedBorderStyle"
+           TargetType="Border"
+           BasedOn="{StaticResource InfoCardBorderStyle}">
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="8,0,0,0" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TopRightRoundedBorderStyle"
+           TargetType="Border"
+           BasedOn="{StaticResource InfoCardBorderStyle}">
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="0,8,0,0" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BottomLeftRoundedBorderStyle"
+           TargetType="Border"
+           BasedOn="{StaticResource InfoCardBorderStyle}">
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="0,0,8,0" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BottomRightRoundedBorderStyle"
+           TargetType="Border"
+           BasedOn="{StaticResource InfoCardBorderStyle}">
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="0,0,0,8" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Label Styles -->
+
     <Style x:Key="InfoCardTitleStyle"
            TargetType="Label">
         <Setter Property="FontSize"
@@ -61,18 +103,42 @@
         <Setter Property="HorizontalOptions"
                 Value="Center" />
     </Style>
-    
+
     <Style TargetType="Label">
         <Setter Property="TextColor" Value="White" />
     </Style>
-    
+
     <!-- Page Style -->
-    
+
     <Style TargetType="ContentPage">
         <Setter Property="BackgroundColor" Value="DarkSlateGrey" />
     </Style>
-    
+
     <!-- Button Style -->
+
+    <Style TargetType="ImageButton">
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal">
+                        <VisualState.Setters>
+                            <Setter Property="Scale"
+                                    Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale"
+                                    Value="0.8" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="PointerOver" />
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
 
     <Style TargetType="Button">
         <Setter Property="TextColor" Value="White" />
@@ -101,6 +167,14 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <Style x:Key="PlainButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="BorderColor" Value="Transparent" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
 </ResourceDictionary>

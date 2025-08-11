@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 
-namespace TriloBot.Maui
+namespace TriloBot.Maui.Pages
 {
     /// <summary>
     /// Represents the main page of the TriloBot application.

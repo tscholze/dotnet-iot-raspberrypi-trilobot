@@ -2,8 +2,85 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="TriloBot.Maui.Pages.JoystickPage">
-    <ContentPage.Content>
-        
-    </ContentPage.Content>
+             xmlns:controls="clr-namespace:TriloBot.Maui.Controls"
+             x:Class="TriloBot.Maui.Pages.JoystickPage"
+             Shell.NavBarIsVisible="False"
+             Background="Black">
+    <Grid>
+        <!-- WebView for the camera stream -->
+        <WebView Source="http://pi5:8889/cam"
+                 BackgroundColor="Black"
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Fill"
+                 Margin="0" />
+
+        <!-- Overlay controls -->
+        <Grid x:Name="ControlGrid"
+              VerticalOptions="End"
+              Padding="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Joystick Control on the left -->
+            <controls:JoystickControl Grid.Column="0" x:Name="Joystick" />
+
+            <!-- Circular Buttons on the right -->
+            <Grid
+                Grid.Column="2"
+                ColumnSpacing="4"
+                RowSpacing="4"
+                VerticalOptions="Center"
+                HorizontalOptions="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Buttons in a circular layout -->
+                <Border
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Style="{StaticResource TopLeftRoundedBorderStyle}">
+                    <ImageButton
+                        Source="cd_on.png"
+                    />
+                </Border>
+
+                <Border
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Style="{StaticResource TopRightRoundedBorderStyle}">
+                    <ImageButton
+                        Source="horn_on.png"
+                    />
+                </Border>
+
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Style="{StaticResource BottomLeftRoundedBorderStyle}">
+                    <ImageButton
+                        Source="light_on.png"
+                    />
+                </Border>
+
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Style="{StaticResource BottomRightRoundedBorderStyle}">
+                <ImageButton
+                    Source="light_mode_2_off.png"
+                    />
+                </Border>
+
+            </Grid>
+        </Grid>
+    </Grid>
 </ContentPage>
