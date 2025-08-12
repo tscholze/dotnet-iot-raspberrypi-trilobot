@@ -6,20 +6,23 @@
              xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls"
              x:Class="TriloBot.Maui.Pages.JoystickPage"
              Shell.NavBarIsVisible="False"
-             Background="Black"
+             Background="Red"
              ios:Page.UseSafeArea="False">
-    <Grid IgnoreSafeArea="True">
+    <Grid IgnoreSafeArea="True" HorizontalOptions="Fill" VerticalOptions="Fill">
         <!-- WebView for the camera stream -->
         <WebView Source="http://pi5:8889/cam"
-                 BackgroundColor="Black"
+                 BackgroundColor="Red"
                  HorizontalOptions="Fill"
                  VerticalOptions="Fill"
-                 Margin="0" />
+                 Margin="0" 
+                 />
 
         <!-- Overlay controls -->
         <Grid x:Name="ControlGrid"
               VerticalOptions="End"
-              Padding="16">
+              HorizontalOptions="Fill" 
+              Padding="16"
+              IgnoreSafeArea="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -35,7 +38,8 @@
                 ColumnSpacing="4"
                 RowSpacing="4"
                 VerticalOptions="Center"
-                HorizontalOptions="Center">
+                HorizontalOptions="Center"
+                IgnoreSafeArea="True">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -81,7 +85,6 @@
                     Source="light_mode_2_off.png"
                     />
                 </Border>
-
             </Grid>
         </Grid>
     </Grid>
