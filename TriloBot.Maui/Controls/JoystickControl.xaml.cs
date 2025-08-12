@@ -19,7 +19,7 @@ public partial class JoystickControl : ContentView
     /// <summary>
     /// Event that is triggered when the joystick position changes.
     /// </summary>
-    public event Action<string, double, double>? OnJoystickChanged;
+    public event Action<double, double>? OnJoystickChanged;
 
     #endregion
 
@@ -73,7 +73,7 @@ public partial class JoystickControl : ContentView
                 var normalizedY = Math.Round(-newY / JoystickRadius, 2);
 
                 // Trigger event
-                OnJoystickChanged?.Invoke("Joystick", normalizedX, normalizedY);
+                OnJoystickChanged?.Invoke(normalizedX, normalizedY);
                 break;
 
             case GestureStatus.Completed:
@@ -83,7 +83,7 @@ public partial class JoystickControl : ContentView
                 JoystickKnob.TranslationY = 0;
 
                 // Trigger event with neutral position
-                OnJoystickChanged?.Invoke("Joystick", 0, 0);
+                OnJoystickChanged?.Invoke(0, 0);
                 break;
         }
     }

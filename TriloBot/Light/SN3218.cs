@@ -77,7 +77,14 @@ internal class Sn3218 : IDisposable
     /// </summary>
     public void Reset()
     {
-        _device.Write([CommandReset, 0xFF]);
+        try
+        {
+            _device.Write([CommandReset, 0xFF]);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resetting SN3218: {ex.Message}. Ignoring exception.");
+        }
     }
 
     /// <summary>
@@ -167,9 +174,9 @@ internal class Sn3218 : IDisposable
     }
 
     #endregion
-    
+
     #region Private Methods
-    
+
     /// <summary>
     /// Sets the output values for all 18 channels without gamma correction.
     /// </summary>
@@ -193,7 +200,7 @@ internal class Sn3218 : IDisposable
         // Update the output
         _device.Write([CommandUpdate, 0xFF]);
     }
-    
+
     #endregion
 
     #region IDisposable

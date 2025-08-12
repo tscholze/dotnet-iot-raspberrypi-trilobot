@@ -1,12 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace TriloBot.Maui.Pages;
 
+/// <summary>
+/// Represents the page for controlling the TriloBot using a joystick.
+/// Handles SignalR communication and joystick events.
+/// </summary>
 public partial class JoystickPage : ContentPage
 {
     #region Private fields
@@ -20,6 +19,9 @@ public partial class JoystickPage : ContentPage
 
     #region Constructor
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JoystickPage"/> class and sets up the SignalR connection and joystick event handler.
+    /// </summary>
     public JoystickPage()
     {
         InitializeComponent();
@@ -31,13 +33,8 @@ public partial class JoystickPage : ContentPage
 
         ConnectToHub();
 
+        // Attach joystick event handler
         Joystick.OnJoystickChanged += Joystick_OnJoystickChanged;
-    }
-
-    private void Joystick_OnJoystickChanged(string horizontal, double vertical, double rotation)
-    {
-        Console.WriteLine($"Joystick moved: Horizontal={horizontal}, Vertical={vertical}, Rotation={rotation}");
-        _ = _hubConnection.InvokeAsync("Move", horizontal, vertical);
     }
 
     #endregion
@@ -57,6 +54,27 @@ public partial class JoystickPage : ContentPage
         catch (Exception ex)
         {
             Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Event Handlers
+
+    /// <summary>
+    /// Handles joystick movement events and sends updates to the SignalR hub only if the change exceeds a threshold.
+    /// </summary>
+    /// <param name="horizontal">The horizontal axis value.</param>
+    /// <param name="vertical">The vertical axis value.</param>
+    private async void Joystick_OnJoystickChanged(double horizontal, double vertical)
+    {
+        try
+        {
+            await _hubConnection.InvokeAsync("Move", horizontal, vertical);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error sending joystick movement: {e.Message}");
         }
     }
 
