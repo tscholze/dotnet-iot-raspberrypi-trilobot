@@ -53,6 +53,13 @@ public class TriloBotHub(TriloBot robot) : Hub
     #region Motors
 
     /// <summary>
+    /// Moves the robot in the specified direction.
+    /// </summary>
+    /// <param name="horizontal">Horizontal movement (-1 to 1).</param>
+    /// <param name="vertical">Vertical movement (-1 to 1).</param>
+    public Task Move(double horizontal, double vertical) => Task.Run(() => robot.Move(horizontal, vertical));
+
+    /// <summary>
     /// Moves the robot forward at the default speed.
     /// </summary>
     public Task Forward() => Task.Run(() => robot.Forward());

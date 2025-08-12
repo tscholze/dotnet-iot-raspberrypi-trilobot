@@ -7,7 +7,7 @@ namespace TriloBot.Maui.Pages
     /// </summary>
     public partial class MainPage : ContentPage
     {
-        #region Fields
+        #region Private fields
 
         /// <summary>
         /// SignalR hub connection for real-time communication.

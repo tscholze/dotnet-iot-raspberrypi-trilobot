@@ -115,6 +115,89 @@ public class TriloBot : IDisposable
 
     #endregion
 
+    #region Private constants
+
+    private const double MovementThreshold = 0.1;
+
+    private const double DefaultSpeed = 0.75;
+
+    #endregion
+
+    /// <summary>
+    /// Controls the robot's movement using normalized horizontal and vertical values.
+    /// Horizontal: -1 (left) to 1 (right), 0 = no turn.
+    /// Vertical: -1 (backward) to 1 (forward), 0 = stop.
+    /// </summary>
+    /// <param name="horizontal">-1 (left) to 1 (right)</param>
+    /// <param name="vertical">-1 (backward) to 1 (forward)</param>
+    public void Move(double horizontal, double vertical)
+    {
+        // Step 1: Get absolute values for easier range checks and calculations
+        var horizontalAbs = Math.Abs(horizontal);
+        var verticalAbs = Math.Abs(vertical);
+
+        // Step 2: Validate horizontal input range
+        // If horizontal is outside [-1, 1], stop and throw exception
+        if (horizontalAbs > 1)
+        {
+            Stop();
+            throw new ArgumentOutOfRangeException(nameof(horizontal), "Value must be between -1 and 1.");
+        }
+
+        // Step 3: Validate vertical input range
+        // If vertical is outside [-1, 1], stop and throw exception
+        if (verticalAbs > 1)
+        {
+            Stop();
+            throw new ArgumentOutOfRangeException(nameof(vertical), "Value must be between -1 and 1.");
+        }
+
+        // Step 4: If vertical is below movement threshold, stop motors and exit
+        if (verticalAbs < MovementThreshold)
+        {
+            Stop();
+            return;
+        }
+
+        // Step 5: Calculate base speed for both motors
+        double leftSpeed = verticalAbs;
+        double rightSpeed = verticalAbs;
+
+        // Step 6: Apply turning logic
+        // If horizontal is below threshold, skip turning logic
+        if (horizontalAbs < MovementThreshold)
+        {
+            // No significant turn requested, continue with equal speeds
+            // Motors will move straight
+        }
+        else
+        {
+            // Reduce speed on one side for turning
+            // If horizontal is negative, turn left by reducing left motor speed
+            // If horizontal is positive, turn right by reducing right motor speed
+            if (horizontal < 0)
+            {
+                leftSpeed *= 1.0 - Math.Abs(horizontal);
+            }
+            else
+            {
+                rightSpeed *= 1.0 - Math.Abs(horizontal);
+            }
+        }
+
+        // Step 7: Apply direction
+        // If vertical is positive, move forward
+        // If vertical is negative, move backward
+        if (vertical > 0)
+        {
+            SetMotorSpeeds(leftSpeed, rightSpeed);
+        }
+        else // vertical < 0
+        {
+            SetMotorSpeeds(-leftSpeed, -rightSpeed);
+        }
+    }
+
     #region Distance Monitoring
 
     /// <summary>
@@ -333,36 +416,36 @@ public class TriloBot : IDisposable
     public void DisableMotors() => _motorManager.DisableMotors();
 
     /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void Forward(double speed = 0.75) => _motorManager.Forward(speed);
+    /// <param name="speed">Speed value.</param>
+    public void Forward(double speed = DefaultSpeed) => _motorManager.Forward(speed);
 
     /// <summary>Drives both motors backward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void Backward(double speed = 0.75) => _motorManager.Backward(speed);
+    /// <param name="speed">Speed value.</param>
+    public void Backward(double speed = DefaultSpeed) => _motorManager.Backward(speed);
 
     /// <summary>Turns the robot left in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void TurnLeft(double speed = 0.75) => _motorManager.TurnLeft(speed);
+    /// <param name="speed">Speed value.</param>
+    public void TurnLeft(double speed = DefaultSpeed) => _motorManager.TurnLeft(speed);
 
     /// <summary>Turns the robot right in place at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void TurnRight(double speed = 0.75) => _motorManager.TurnRight(speed);
+    /// <param name="speed">Speed value.</param>
+    public void TurnRight(double speed = DefaultSpeed) => _motorManager.TurnRight(speed);
 
     /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void CurveForwardLeft(double speed = 0.75) => _motorManager.CurveForwardLeft(speed);
+    /// <param name="speed">Speed value.</param>
+    public void CurveForwardLeft(double speed = DefaultSpeed) => _motorManager.CurveForwardLeft(speed);
 
     /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void CurveForwardRight(double speed = 0.75) => _motorManager.CurveForwardRight(speed);
+    /// <param name="speed">Speed value.</param>
+    public void CurveForwardRight(double speed = DefaultSpeed) => _motorManager.CurveForwardRight(speed);
 
     /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void CurveBackwardLeft(double speed = 0.75) => _motorManager.CurveBackwardLeft(speed);
+    /// <param name="speed">Speed value.</param>
+    public void CurveBackwardLeft(double speed = DefaultSpeed) => _motorManager.CurveBackwardLeft(speed);
 
     /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-    /// <param name="speed">Speed value (default 0.75).</param>
-    public void CurveBackwardRight(double speed = 0.75) => _motorManager.CurveBackwardRight(speed);
+    /// <param name="speed">Speed value.</param>
+    public void CurveBackwardRight(double speed = DefaultSpeed) => _motorManager.CurveBackwardRight(speed);
 
     /// <summary>Stops both motors (brake mode).</summary>
     public void Stop() => _motorManager.Stop();
@@ -454,7 +537,7 @@ public class TriloBot : IDisposable
     #endregion
 
     #region Camera
-    
+
     /// <summary>
     /// Takes a photo using the camera and saves it to the specified filename.
     /// This method blocks until the photo is taken.

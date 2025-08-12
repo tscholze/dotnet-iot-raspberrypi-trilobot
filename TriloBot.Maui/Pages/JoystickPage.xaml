@@ -8,16 +8,16 @@
              Shell.NavBarIsVisible="False"
              ios:Page.UseSafeArea="False">
     <Grid
-        HorizontalOptions="FillAndExpand"
-        VerticalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
+        VerticalOptions="Fill"
         Padding="0"
         IgnoreSafeArea="True">
         <!-- WebView for the camera stream -->
         <WebView Source="http://pi5:8889/cam"
                  Background="Black"
-                 HorizontalOptions="FillAndExpand"
-                 VerticalOptions="FillAndExpand"
-                 Margin="0" />
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Fill"
+                 Margin="0"/>
 
         <!-- Overlay controls -->
         <Grid x:Name="ControlGrid"
@@ -25,13 +25,14 @@
               HorizontalOptions="Fill"
               Padding="0,20">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Joystick Control on the left -->
-            <controls:JoystickControl Grid.Column="0" x:Name="Joystick" />
+            <controls:JoystickControl  x:Name="Joystick"
+                                       Grid.Column="0"/>
 
             <!-- Circular Buttons on the right -->
             <Grid
@@ -41,12 +42,12 @@
                 VerticalOptions="Center"
                 HorizontalOptions="Center">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Buttons in a circular layout -->
@@ -55,7 +56,7 @@
                     Grid.Column="0"
                     Style="{StaticResource TopLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="cd_on.png" />
+                        Source="cd_on.png"/>
                 </Border>
 
                 <Border
@@ -63,7 +64,7 @@
                     Grid.Column="1"
                     Style="{StaticResource TopRightRoundedBorderStyle}">
                     <ImageButton
-                        Source="horn_on.png" />
+                        Source="horn_on.png"/>
                 </Border>
 
                 <Border
@@ -71,7 +72,7 @@
                     Grid.Column="0"
                     Style="{StaticResource BottomLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="light_on.png" />
+                        Source="light_on.png"/>
                 </Border>
 
                 <Border
@@ -79,7 +80,7 @@
                     Grid.Column="1"
                     Style="{StaticResource BottomRightRoundedBorderStyle}">
                     <ImageButton
-                        Source="light_mode_2_off.png" />
+                        Source="light_mode_2_off.png"/>
                 </Border>
             </Grid>
         </Grid>
