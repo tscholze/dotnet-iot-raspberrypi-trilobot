@@ -8,12 +8,17 @@
              Shell.NavBarIsVisible="False"
              Background="Red"
              ios:Page.UseSafeArea="False">
-    <Grid IgnoreSafeArea="True" HorizontalOptions="Fill" VerticalOptions="Fill">
+    <Grid 
+        HorizontalOptions="FillAndExpand" 
+        VerticalOptions="FillAndExpand"
+        Padding="0"
+        IgnoreSafeArea="True" >
         <!-- WebView for the camera stream -->
-        <WebView Source="http://pi5:8889/cam"
+        <WebView x:Name="CameraWebView"
+                Source="http://pi5:8889/cam"
                  BackgroundColor="Red"
-                 HorizontalOptions="Fill"
-                 VerticalOptions="Fill"
+                 HorizontalOptions="FillAndExpand"
+                 VerticalOptions="FillAndExpand"
                  Margin="0" 
                  />
 

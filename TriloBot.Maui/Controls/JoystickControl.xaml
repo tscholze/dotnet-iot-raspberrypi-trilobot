@@ -7,7 +7,7 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TriloBot.Maui.Controls.JoystickControl">
-    <Grid>
+    <Grid IgnoreSafeArea="True" HorizontalOptions="Fill" VerticalOptions="Fill">
         <!-- Joystick base: circular area for the joystick -->
         <Border x:Name="JoystickBase"
                WidthRequest="120"
