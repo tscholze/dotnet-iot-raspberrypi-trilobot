@@ -6,28 +6,24 @@
              xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls"
              x:Class="TriloBot.Maui.Pages.JoystickPage"
              Shell.NavBarIsVisible="False"
-             Background="Red"
              ios:Page.UseSafeArea="False">
-    <Grid 
-        HorizontalOptions="FillAndExpand" 
+    <Grid
+        HorizontalOptions="FillAndExpand"
         VerticalOptions="FillAndExpand"
         Padding="0"
-        IgnoreSafeArea="True" >
+        IgnoreSafeArea="True">
         <!-- WebView for the camera stream -->
-        <WebView x:Name="CameraWebView"
-                Source="http://pi5:8889/cam"
-                 BackgroundColor="Red"
+        <WebView Source="http://pi5:8889/cam"
+                 Background="Black"
                  HorizontalOptions="FillAndExpand"
                  VerticalOptions="FillAndExpand"
-                 Margin="0" 
-                 />
+                 Margin="0" />
 
         <!-- Overlay controls -->
         <Grid x:Name="ControlGrid"
               VerticalOptions="End"
-              HorizontalOptions="Fill" 
-              Padding="16"
-              IgnoreSafeArea="True">
+              HorizontalOptions="Fill"
+              Padding="0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -43,8 +39,7 @@
                 ColumnSpacing="4"
                 RowSpacing="4"
                 VerticalOptions="Center"
-                HorizontalOptions="Center"
-                IgnoreSafeArea="True">
+                HorizontalOptions="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -60,8 +55,7 @@
                     Grid.Column="0"
                     Style="{StaticResource TopLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="cd_on.png"
-                    />
+                        Source="cd_on.png" />
                 </Border>
 
                 <Border
@@ -69,8 +63,7 @@
                     Grid.Column="1"
                     Style="{StaticResource TopRightRoundedBorderStyle}">
                     <ImageButton
-                        Source="horn_on.png"
-                    />
+                        Source="horn_on.png" />
                 </Border>
 
                 <Border
@@ -78,17 +71,15 @@
                     Grid.Column="0"
                     Style="{StaticResource BottomLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="light_on.png"
-                    />
+                        Source="light_on.png" />
                 </Border>
 
                 <Border
                     Grid.Row="1"
                     Grid.Column="1"
                     Style="{StaticResource BottomRightRoundedBorderStyle}">
-                <ImageButton
-                    Source="light_mode_2_off.png"
-                    />
+                    <ImageButton
+                        Source="light_mode_2_off.png" />
                 </Border>
             </Grid>
         </Grid>
