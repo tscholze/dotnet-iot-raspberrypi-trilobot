@@ -93,11 +93,34 @@ public class HubConnectionService : IDisposable
 
     #endregion
 
+    #region Public methods
+
+    /// <summary>
+    /// Invokes the Move method on the SignalR hub.
+    /// </summary>
+    /// <param name="horizontal">The horizontal axis value.</param>
+    /// <param name="vertical">The vertical axis value.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task InvokeMove(double horizontal, double vertical)
+    {
+        try
+        {
+            await hubConnection.InvokeAsync("Move", horizontal, vertical);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error sending joystick movement: {e.Message}");
+        }
+    }
+
+    #endregion
+
     #region Private methods
 
     /// <summary>
     /// Connects to the SignalR Hub.
     /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task StartConnection()
     {
         try
@@ -106,13 +129,13 @@ public class HubConnectionService : IDisposable
             await StartDistanceUpdates();
             await StartCollisionUpdates();
 
-            _isConnectedObserver.OnNext(true);
+            _isConnectedObserver.OnNext(hubConnection.State == HubConnectionState.Connected);
             Console.WriteLine("Connected to SignalR Hub");
         }
         catch (Exception ex)
         {
             _isConnectedObserver.OnNext(false);
-             Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
+            Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
         }
     }
 

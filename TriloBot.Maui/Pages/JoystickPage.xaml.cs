@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.SignalR.Client;
 using TriloBot.Maui.Services;
 
 namespace TriloBot.Maui.Pages;
@@ -11,6 +10,9 @@ public partial class JoystickPage : ContentPage
 {
     #region Private fields
 
+    /// <summary>
+    /// Hub connection service for managing SignalR connections.
+    /// </summary>
     private readonly HubConnectionService _hubConnectionService;
 
     #endregion
@@ -45,7 +47,7 @@ public partial class JoystickPage : ContentPage
     {
         try
         {
-            await _hubConnection.InvokeAsync("Move", horizontal, vertical);
+            await _hubConnectionService.InvokeMove(horizontal, vertical);
         }
         catch (Exception e)
         {
