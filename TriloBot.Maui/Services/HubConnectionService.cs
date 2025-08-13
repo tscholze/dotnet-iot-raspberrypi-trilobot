@@ -113,6 +113,24 @@ public class HubConnectionService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Helper method to safely invoke a SignalR hub method with error handling.
+    /// </summary>
+    /// <param name="methodName">The name of the hub method to invoke.</param>
+    /// <param name="args">Optional arguments to pass to the hub method.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task SafeInvokeAsync(string methodName, params object[] args)
+    {
+        try
+        {
+            await hubConnection.InvokeAsync(methodName, args);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error invoking {methodName}: {e.Message}");
+        }
+    }
+
     #endregion
 
     #region Private methods
@@ -150,7 +168,7 @@ public class HubConnectionService : IDisposable
     {
         try
         {
-            hubConnection.On<double>("DistanceUpdate", _distanceObserver.OnNext);
+            _distanceSubscription =hubConnection.On<double>("DistanceUpdate", _distanceObserver.OnNext);
             await hubConnection.InvokeAsync("StartDistanceMonitoring");
         }
         catch (Exception ex)

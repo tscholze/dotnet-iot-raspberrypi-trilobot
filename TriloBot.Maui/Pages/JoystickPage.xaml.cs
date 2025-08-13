@@ -20,7 +20,8 @@ public partial class JoystickPage : ContentPage
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JoystickPage"/> class and sets up the SignalR connection and joystick event handler.
+    /// Initializes a new instance of the <see cref="JoystickPage"/> class and sets up 
+    /// the SignalR connection and joystick event handler.
     /// </summary>
     public JoystickPage(HubConnectionService hubConnectionService)
     {

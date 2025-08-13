@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
-using TriloBot.Maui.Services;
+﻿using TriloBot.Maui.Services;
 
 namespace TriloBot.Maui.Pages
 {
@@ -89,7 +88,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnMoveForwardClicked(object sender, EventArgs e)
         {
-            await SafeInvokeAsync("Forward");
+            await _hubConnectionService.SafeInvokeAsync("Forward");
         }
 
         /// <summary>
@@ -97,7 +96,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnMoveBackwardClicked(object sender, EventArgs e)
         {
-            await SafeInvokeAsync("Backward");
+            await _hubConnectionService.SafeInvokeAsync("Backward");
         }
 
         /// <summary>
@@ -105,7 +104,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnTurnLeftClicked(object sender, EventArgs e)
         {
-            await SafeInvokeAsync("TurnLeft");
+            await _hubConnectionService.SafeInvokeAsync("TurnLeft");
         }
 
         /// <summary>
@@ -113,7 +112,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnTurnRightClicked(object sender, EventArgs e)
         {
-            await SafeInvokeAsync("TurnRight");
+            await _hubConnectionService.SafeInvokeAsync("TurnRight");
         }
 
         /// <summary>
@@ -121,32 +120,11 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnStopClicked(object sender, EventArgs e)
         {
-            await SafeInvokeAsync("Stop");
+            await _hubConnectionService.SafeInvokeAsync("Stop");
         }
 
         #endregion
 
-        #region Helper Methods
-
-        /// <summary>
-        /// Helper method to safely invoke a SignalR hub method with error handling.
-        /// </summary>
-        /// <param name="methodName">The name of the hub method to invoke.</param>
-        /// <param name="args">Optional arguments to pass to the hub method.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task SafeInvokeAsync(string methodName, params object[] args)
-        {
-            try
-            {
-                await _hubConnection.InvokeAsync(methodName, args);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error invoking '{methodName}': {ex.Message}");
-            }
-        }
-
-        #endregion
 
         /// <summary>
         /// Event handler to turn all lights on (white).
@@ -155,7 +133,7 @@ namespace TriloBot.Maui.Pages
         /// <param name="e">Event arguments.</param>
         private void OnLightAllOn(object? sender, EventArgs e)
         {
-            SafeInvokeAsync("FillUnderlighting", 255, 255, 255).ConfigureAwait(false);
+            _hubConnectionService.SafeInvokeAsync("FillUnderlighting", 255, 255, 255).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -165,7 +143,7 @@ namespace TriloBot.Maui.Pages
         /// <param name="e">Event arguments.</param>
         private void OnLightAllOff(object? sender, EventArgs e)
         {
-            SafeInvokeAsync("FillUnderlighting", 0, 0, 0).ConfigureAwait(false);
+            _hubConnectionService.SafeInvokeAsync("FillUnderlighting", 0, 0, 0).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -175,7 +153,7 @@ namespace TriloBot.Maui.Pages
         /// <param name="e">Event arguments.</param>
         private void OnLightAllPurple(object? sender, EventArgs e)
         {
-            SafeInvokeAsync("FillUnderlighting", 128, 0, 128).ConfigureAwait(false);
+            _hubConnectionService.SafeInvokeAsync("FillUnderlighting", 128, 0, 128).ConfigureAwait(false);
         }
     }
 }
