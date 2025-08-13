@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR.Client;
+using TriloBot.Maui.Services;
 
 namespace TriloBot.Maui.Pages;
 
@@ -10,10 +11,7 @@ public partial class JoystickPage : ContentPage
 {
     #region Private fields
 
-    /// <summary>
-    /// SignalR hub connection for real-time communication.
-    /// </summary>
-    private readonly HubConnection _hubConnection;
+    private readonly HubConnectionService _hubConnectionService;
 
     #endregion
 
@@ -22,39 +20,16 @@ public partial class JoystickPage : ContentPage
     /// <summary>
     /// Initializes a new instance of the <see cref="JoystickPage"/> class and sets up the SignalR connection and joystick event handler.
     /// </summary>
-    public JoystickPage()
+    public JoystickPage(HubConnectionService hubConnectionService)
     {
+        // Start view lifecycle
         InitializeComponent();
 
-        // Initialize SignalR connection
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://pi5:6969/trilobotHub") // Replace <server-ip> with the actual server IP
-            .Build();
-
-        ConnectToHub();
+        // Ensure dependency is available
+        _hubConnectionService = hubConnectionService ?? throw new ArgumentNullException(nameof(hubConnectionService), "HubConnectionService cannot be null.");
 
         // Attach joystick event handler
         Joystick.OnJoystickChanged += Joystick_OnJoystickChanged;
-    }
-
-    #endregion
-
-    #region SignalR Hub Connection
-
-    /// <summary>
-    /// Connects to the SignalR hub and starts distance updates.
-    /// </summary>
-    private async void ConnectToHub()
-    {
-        try
-        {
-            await _hubConnection.StartAsync();
-            Console.WriteLine("Connected and subscript to SignalR Hub");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
-        }
     }
 
     #endregion

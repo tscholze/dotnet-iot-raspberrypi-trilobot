@@ -5,12 +5,19 @@ namespace TriloBot.Maui.Controls;
 /// </summary>
 public partial class JoystickControl : ContentView
 {
+
     #region Private fields
 
     /// <summary>
     /// The radius of the joystick knob in pixels.
     /// </summary>
     private const double JoystickRadius = 35;
+
+    /// <summary>
+    /// SignalR hub connection service (singleton).
+    /// </summary>
+    private readonly Services.HubConnectionService _hubConnectionService;
+    private readonly Microsoft.AspNetCore.SignalR.Client.HubConnection _hubConnection;
 
     #endregion
 
@@ -31,6 +38,11 @@ public partial class JoystickControl : ContentView
     public JoystickControl()
     {
         InitializeComponent();
+
+        // Get the singleton HubConnectionService from DI
+        _hubConnectionService = Application.Current?.Handler?.MauiContext?.Services?.GetService(typeof(Services.HubConnectionService)) as Services.HubConnectionService
+            ?? throw new InvalidOperationException("HubConnectionService not found in DI container.");
+        _hubConnection = _hubConnectionService.HubConnection;
     }
 
     #endregion

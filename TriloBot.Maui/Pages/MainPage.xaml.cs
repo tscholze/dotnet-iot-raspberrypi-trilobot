@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using TriloBot.Maui.Services;
 
 namespace TriloBot.Maui.Pages
 {
@@ -10,14 +11,9 @@ namespace TriloBot.Maui.Pages
         #region Private fields
 
         /// <summary>
-        /// SignalR hub connection for real-time communication.
-        /// </summary>
-        private readonly HubConnection _hubConnection;
-
-        /// <summary>
-        /// Stream of distance updates from the SignalR hub.
-        /// </summary>
-        private IAsyncEnumerable<double>? _distanceStream;
+        /// Hub connection service for managing SignalR connections.
+        /// </summary>  
+        private readonly HubConnectionService _hubConnectionService;
 
         #endregion
 
@@ -26,16 +22,14 @@ namespace TriloBot.Maui.Pages
         /// <summary>
         /// Initializes a new instance of the <see cref="MainPage"/> class.
         /// </summary>
-        public MainPage()
+        public MainPage(HubConnectionService hubConnectionService)
         {
+            // Start view lifecycle
             InitializeComponent();
 
-            // Initialize SignalR connection
-            _hubConnection = new HubConnectionBuilder()
-                .WithUrl("http://pi5:6969/trilobotHub") // Replace <server-ip> with the actual server IP
-                .Build();
-
-            ConnectToHub();
+            // Ensure dependency is available and setup
+            _hubConnectionService = hubConnectionService ?? throw new ArgumentNullException(nameof(hubConnectionService), "HubConnectionService cannot be null.");
+            _hubConnectionService.IsConnectedObservable.Subscribe(OnIsHubConnectedChanged);
 
             // Attach SizeChanged event handler
             SizeChanged += OnSizeChanged;
@@ -70,78 +64,19 @@ namespace TriloBot.Maui.Pages
         #region SignalR Hub Connection
 
         /// <summary>
-        /// Connects to the SignalR hub and starts distance updates.
+        /// Handles changes in the SignalR hub connection status.
         /// </summary>
-        private async void ConnectToHub()
+        private void OnIsHubConnectedChanged(bool isConnected)
         {
-            try
+            if (isConnected)
             {
-                await _hubConnection.StartAsync();
-                await StartDistanceUpdates();
-                await StartCollisionUpdates();
-                Console.WriteLine("Connected and subscript to SignalR Hub");
-                
                 ConnectionStatusLabel.Text = "Yes";
                 ConnectionStatusLabel.TextColor = Colors.Green;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
                 ConnectionStatusLabel.Text = "No";
                 ConnectionStatusLabel.TextColor = Colors.Red;
-            }
-        }
-
-        #endregion
-
-        #region Observers
-
-        /// <summary>
-        /// Starts receiving distance updates from the SignalR hub.
-        /// </summary>
-        private async Task StartDistanceUpdates()
-        {
-            try
-            {
-                _distanceStream = _hubConnection.StreamAsync<double>("DistanceStream");
-
-                _ = Task.Run(async () =>
-                {
-                    await foreach (var distance in _distanceStream)
-                    {
-                        MainThread.BeginInvokeOnMainThread(() => { DistanceCardLabel.Text = $"{distance:F0} cm"; });
-                    }
-                });
-
-                await _hubConnection.InvokeAsync("StartDistanceMonitoring");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error subscribing to distance updates: {ex.Message}");
-            }
-        }
-        
-        /// <summary>
-        /// Starts receiving collision warning updates from the SignalR hub.
-        /// </summary>
-        private async Task StartCollisionUpdates()
-        {
-            try
-            {
-                await _hubConnection.InvokeAsync("StartCollisionMonitoring");
-
-                _hubConnection.On<bool>("ObjectTooNear", tooNear =>
-                {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        CollisionAlertLabel.Text = tooNear ? "Yes" : "No";
-                        CollisionAlertLabel.TextColor = tooNear ? Colors.Red : Colors.Green;
-                    });
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error subscribing to collision updates: {ex.Message}");
             }
         }
 
@@ -222,7 +157,7 @@ namespace TriloBot.Maui.Pages
         {
             SafeInvokeAsync("FillUnderlighting", 255, 255, 255).ConfigureAwait(false);
         }
-        
+
         /// <summary>
         /// Event handler to turn all lights off.
         /// </summary>
@@ -232,7 +167,7 @@ namespace TriloBot.Maui.Pages
         {
             SafeInvokeAsync("FillUnderlighting", 0, 0, 0).ConfigureAwait(false);
         }
-        
+
         /// <summary>
         /// Event handler to turn all lights purple.
         /// </summary>
