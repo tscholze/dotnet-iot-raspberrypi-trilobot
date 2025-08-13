@@ -5,7 +5,6 @@ namespace TriloBot.Maui.Controls;
 /// </summary>
 public partial class JoystickControl : ContentView
 {
-
     #region Private fields
 
     /// <summary>

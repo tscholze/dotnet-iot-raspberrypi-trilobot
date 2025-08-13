@@ -12,19 +12,19 @@ public class HubConnectionService : IDisposable
     #region Public Properties
 
     /// <summary>
-    /// Observable for the connection status.
+    /// Emits true if the SignalR connection is established, false otherwise.
     /// </summary>
     public IObservable<bool> IsConnectedObservable => _isConnectedObserver.AsObservable();
 
     /// <summary>
-    /// Observable for the connection status.
+    /// Emits real-time distance sensor values from the robot (in centimeters).
     /// </summary>
     public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
 
     /// <summary>
-    /// Observable for the connection status.
+    /// Emits real-time proximity alerts (true if an object is detected too near by the robot's sensor).
     /// </summary>
-    public IObservable<bool> ObjectTooNear => _objectToNearObserver.AsObservable();
+    public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
 
     #endregion
 
@@ -48,7 +48,7 @@ public class HubConnectionService : IDisposable
     /// <summary>
     /// Observable for the latest object proximity readings.
     /// </summary>
-    private readonly BehaviorSubject<bool> _objectToNearObserver = new(false);
+    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
 
     /// <summary>
     /// Subscription for distance updates.
@@ -185,7 +185,7 @@ public class HubConnectionService : IDisposable
         try
         {
             await hubConnection.InvokeAsync("StartCollisionMonitoring");
-            _objectTooNearSubscription = hubConnection.On<bool>("ObjectTooNear", _objectToNearObserver.OnNext);
+            _objectTooNearSubscription = hubConnection.On<bool>("ObjectTooNear", _objectTooNearObserver.OnNext);
         }
         catch (Exception ex)
         {
