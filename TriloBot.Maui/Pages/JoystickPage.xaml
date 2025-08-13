@@ -31,8 +31,8 @@
             </Grid.ColumnDefinitions>
 
             <!-- Joystick Control on the left -->
-            <controls:JoystickControl  x:Name="Joystick"
-                                       Grid.Column="0"/>
+            <controls:JoystickControl x:Name="Joystick"
+                                      Grid.Column="0"/>
 
             <!-- Circular Buttons on the right -->
             <Grid
