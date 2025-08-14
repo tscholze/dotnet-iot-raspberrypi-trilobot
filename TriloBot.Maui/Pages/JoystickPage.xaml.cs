@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using TriloBot.Maui.Services;
 
 namespace TriloBot.Maui.Pages;
@@ -15,6 +16,21 @@ public partial class JoystickPage : ContentPage
     /// </summary>
     private readonly HubConnectionService _hubConnectionService;
 
+    /// <summary>
+    /// Subscription for the IsConnected observable.
+    /// </summary>
+    private readonly IDisposable? _isConnectedSubscription;
+
+    /// <summary>
+    /// Subscription for the ObjectTooNear observable.
+    /// </summary>
+    private readonly IDisposable? _objectTooNearSubscription;
+
+    /// <summary>
+    /// Subscription for the Distance observable.
+    /// </summary>
+    private readonly IDisposable? _distanceSubscription;
+
     #endregion
 
     #region Constructor
@@ -30,9 +46,9 @@ public partial class JoystickPage : ContentPage
 
         // Ensure dependency is available
         _hubConnectionService = hubConnectionService ?? throw new ArgumentNullException(nameof(hubConnectionService), "HubConnectionService cannot be null.");
-        _hubConnectionService.IsConnectedObservable.Subscribe(OnIsHubConnectedChanged);
-        _hubConnectionService.ObjectTooNearObservable.Subscribe(OnObjectTooNearChanged);
-        _hubConnectionService.DistanceObservable.Subscribe(OnDistanceChanged);
+        _isConnectedSubscription = _hubConnectionService.IsConnectedObservable.Subscribe(OnIsHubConnectedChanged);
+        _objectTooNearSubscription = _hubConnectionService.ObjectTooNearObservable.Subscribe(OnObjectTooNearChanged);
+        _distanceSubscription = _hubConnectionService.DistanceObservable.Subscribe(OnDistanceChanged);
 
         /// Initial values
         OnIsHubConnectedChanged(_hubConnectionService.IsConnected);

@@ -36,11 +36,11 @@
 
             <!-- Status -->
             <StackLayout Grid.Column="1"
-                         Orientation="Vertical"
+                         Orientation="Horizontal"
                          HorizontalOptions="Center"
                          VerticalOptions="End"
-                         Spacing="4"
-                         Padding="12">
+                         Spacing="12"
+                         Padding="12,20">
                 <Label Text="Status"
                        FontSize="Small"
                        FontAttributes="Bold"
