@@ -34,6 +34,27 @@
             <controls:JoystickControl x:Name="Joystick"
                                       Grid.Column="0"/>
 
+            <!-- Status -->
+            <StackLayout Grid.Column="1"
+                         Orientation="Vertical"
+                         HorizontalOptions="Center"
+                         VerticalOptions="End"
+                         Spacing="4"
+                         Padding="12">
+                <Label Text="Status"
+                       FontSize="Small"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"/>
+
+                <Label x:Name="IsConnectedLabel"
+                       Text="Disconnected"
+                       HorizontalTextAlignment="Center"/>
+
+                <Label x:Name="DistanceLabel"
+                       Text="Distance: 0"
+                       HorizontalTextAlignment="Center"/>
+            </StackLayout>
+
             <!-- Circular Buttons on the right -->
             <Grid
                 Grid.Column="2"

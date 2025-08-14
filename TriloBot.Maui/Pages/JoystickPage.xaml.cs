@@ -30,6 +30,12 @@ public partial class JoystickPage : ContentPage
 
         // Ensure dependency is available
         _hubConnectionService = hubConnectionService ?? throw new ArgumentNullException(nameof(hubConnectionService), "HubConnectionService cannot be null.");
+        _hubConnectionService.IsConnectedObservable.Subscribe(OnIsHubConnectedChanged);
+        _hubConnectionService.ObjectTooNearObservable.Subscribe(OnObjectTooNearChanged);
+        _hubConnectionService.DistanceObservable.Subscribe(OnDistanceChanged);
+
+        /// Initial values
+        OnIsHubConnectedChanged(_hubConnectionService.IsConnected);
 
         // Attach joystick event handler
         Joystick.OnJoystickChanged += Joystick_OnJoystickChanged;
@@ -38,6 +44,22 @@ public partial class JoystickPage : ContentPage
     #endregion
 
     #region Event Handlers
+
+    private void OnIsHubConnectedChanged(bool isConnected)
+    {
+        IsConnectedLabel.Text = isConnected ? "Connected" : "Disconnected";
+        IsConnectedLabel.TextColor = isConnected ? Colors.Green : Colors.Red;
+    }
+
+    private void OnObjectTooNearChanged(bool isObjectTooNear)
+    {
+        DistanceLabel.TextColor = isObjectTooNear ? Colors.Red : Colors.Green;
+    }
+
+    private void OnDistanceChanged(double distance)
+    {
+        DistanceLabel.Text = $"{distance:0} cm";
+    }
 
     /// <summary>
     /// Handles joystick movement events and sends updates to the SignalR hub only if the change exceeds a threshold.

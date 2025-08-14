@@ -12,6 +12,11 @@ public class HubConnectionService : IDisposable
     #region Public Properties
 
     /// <summary>
+    /// Gets a value indicating whether the SignalR connection is established.
+    /// </summary>
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+
+    /// <summary>
     /// Emits true if the SignalR connection is established, false otherwise.
     /// </summary>
     public IObservable<bool> IsConnectedObservable => _isConnectedObserver.AsObservable();
