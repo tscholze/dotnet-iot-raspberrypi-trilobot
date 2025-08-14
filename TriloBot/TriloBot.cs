@@ -117,8 +117,14 @@ public class TriloBot : IDisposable
 
     #region Private constants
 
+    /// <summary>
+    /// The minimum movement threshold for the robot.
+    /// </summary>
     private const double MovementThreshold = 0.1;
 
+    /// <summary>
+    /// The default speed for the robot.
+    /// </summary>
     private const double DefaultSpeed = 0.75;
 
     #endregion
