@@ -29,6 +29,8 @@ namespace TriloBot.Maui.Pages
             // Ensure dependency is available and setup
             _hubConnectionService = hubConnectionService ?? throw new ArgumentNullException(nameof(hubConnectionService), "HubConnectionService cannot be null.");
             _hubConnectionService.IsConnectedObservable.Subscribe(OnIsHubConnectedChanged);
+            _hubConnectionService.ObjectTooNearObservable.Subscribe(OnObjectTooNearChanged);
+            _hubConnectionService.DistanceObservable.Subscribe(OnDistanceChanged);
 
             // Attach SizeChanged event handler
             SizeChanged += OnSizeChanged;
@@ -77,6 +79,23 @@ namespace TriloBot.Maui.Pages
                 ConnectionStatusLabel.Text = "No";
                 ConnectionStatusLabel.TextColor = Colors.Red;
             }
+        }
+
+        /// <summary>
+        /// Handles changes in the SignalR hub distance value changes.
+        /// </summary>
+        private void OnDistanceChanged(double distance)
+        {
+            DistanceCardLabel.Text = $"{distance} cm";
+        }
+
+        /// <summary>
+        /// Handles changes in the SignalR hub collision warning value changes.
+        /// </summary>
+        private void OnObjectTooNearChanged(bool isTooNear)
+        {
+            CollisionAlertLabel.Text = isTooNear ? "Yes" : "No";
+            CollisionAlertLabel.TextColor = isTooNear ? Colors.Red : Colors.Green;
         }
 
         #endregion
