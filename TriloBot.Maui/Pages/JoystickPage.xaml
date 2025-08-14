@@ -34,7 +34,7 @@
             <controls:JoystickControl x:Name="Joystick"
                                       Grid.Column="0"/>
 
-            <!-- Status 
+            <!-- Status -->
             <StackLayout Grid.Column="1"
                          Orientation="Vertical"
                          HorizontalOptions="Center"
@@ -54,7 +54,6 @@
                        Text="Distance: 0"
                        HorizontalTextAlignment="Center"/>
             </StackLayout>
-            -->
 
             <!-- Circular Buttons on the right -->
             <Grid
