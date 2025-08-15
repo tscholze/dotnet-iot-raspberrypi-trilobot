@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.SignalR;
-using System.Reactive.Subjects;
-using System.Reactive.Linq;
 using TriloBot.Light;
 
 namespace TriloBot.Blazor.SignalR;
@@ -26,26 +24,16 @@ public class TriloBotHub : Hub
     /// Instance of the TriloBot that this hub controls.
     /// </summary>
     private readonly TriloBot _robot;
-
-    /// <summary>
-    /// Observable for the latest distance readings.
-    /// </summary>
-    private readonly BehaviorSubject<double> _distanceObserver = new(0);
-
-    /// <summary>
-    /// Observable for the latest object proximity readings.
-    /// </summary>
-    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
-
+    
     /// <summary>
     /// Subscription for distance updates.
     /// </summary>
-    private IDisposable? _distanceSubscription;
+    private readonly IDisposable? _distanceSubscription;
 
     /// <summary>
     /// Subscription for object proximity updates.
     /// </summary>
-    private IDisposable? _objectTooNearSubscription;
+    private readonly IDisposable? _objectTooNearSubscription;
 
     #endregion
 
@@ -61,8 +49,15 @@ public class TriloBotHub : Hub
         _robot = robot ?? throw new ArgumentNullException(nameof(robot), "TriloBot cannot be null.");
 
         // Forward observers
-        _distanceSubscription = robot.DistanceObservable.Subscribe(value => Clients.All.SendAsync("DistanceUpdated", value));
-        _objectTooNearSubscription = robot.ObjectTooNearObservable.Subscribe(value => Clients.All.SendAsync("ObjectTooNearUpdated", value));
+        _distanceSubscription = robot.DistanceObservable.Subscribe(value =>
+        {
+            Console.WriteLine("Value received from robot: " + value);
+            _ = Clients.All.SendAsync("DistanceUpdated", value);
+        });
+        _objectTooNearSubscription = robot.ObjectTooNearObservable.Subscribe(value =>
+        {
+            _ = Clients.All.SendAsync("ObjectTooNearUpdated", value);
+        });
     }
 
     #endregion

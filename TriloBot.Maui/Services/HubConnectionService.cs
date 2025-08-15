@@ -93,7 +93,7 @@ public class HubConnectionService : IDisposable
             return Task.CompletedTask;
         };
 
-
+        
 
         Task.Run(StartConnection);
     }
@@ -172,10 +172,21 @@ public class HubConnectionService : IDisposable
     /// </summary>
     private async Task StartDistanceUpdates()
     {
+        Console.WriteLine("Subscribing to distance updates...");
+        
         try
         {
-            _distanceSubscription = _hubConnection.On<double>("DistanceUpdate", d => Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d)));
-            _objectTooNearSubscription = _hubConnection.On<bool>("ObjectTooNearUpdated", b => Application.Current?.Dispatcher.Dispatch(() => _objectTooNearObserver.OnNext(b)));
+            _distanceSubscription = _hubConnection.On<double>(
+                "DistanceUpdated",
+                d => Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d))
+            );
+            
+            _objectTooNearSubscription = _hubConnection.On<bool>(
+                "ObjectTooNearUpdated",
+                b => Application.Current?.Dispatcher.Dispatch(() => _objectTooNearObserver.OnNext(b))
+            );
+
+            // Ensure the robot starts pushing distance updates
             await _hubConnection.InvokeAsync("StartDistanceMonitoring");
         }
         catch (Exception ex)
