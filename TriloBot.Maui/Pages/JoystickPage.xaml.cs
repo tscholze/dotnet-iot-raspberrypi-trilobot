@@ -7,7 +7,7 @@ namespace TriloBot.Maui.Pages;
 /// Represents the page for controlling the TriloBot using a joystick.
 /// Handles SignalR communication and joystick events.
 /// </summary>
-public partial class JoystickPage : ContentPage
+public partial class JoystickPage
 {
     #region Private fields
 
@@ -50,7 +50,7 @@ public partial class JoystickPage : ContentPage
         _objectTooNearSubscription = _hubConnectionService.ObjectTooNearObservable.Subscribe(OnObjectTooNearChanged);
         _distanceSubscription = _hubConnectionService.DistanceObservable.Subscribe(OnDistanceChanged);
 
-        /// Initial values
+        // Initial values
         OnIsHubConnectedChanged(_hubConnectionService.IsConnected);
 
         // Attach joystick event handler
@@ -61,17 +61,29 @@ public partial class JoystickPage : ContentPage
 
     #region Event Handlers
 
+    /// <summary>
+    /// Handles changes in the connection status of the SignalR hub and updates the UI label accordingly.
+    /// </summary>
+    /// <param name="isConnected"></param>
     private void OnIsHubConnectedChanged(bool isConnected)
     {
         IsConnectedLabel.Text = isConnected ? "Connected" : "Disconnected";
         IsConnectedLabel.TextColor = isConnected ? Colors.Green : Colors.Red;
     }
 
+    /// <summary>
+    /// Handles changes in the proximity of an object and updates the UI label color accordingly.
+    /// </summary>
+    /// <param name="isObjectTooNear"></param>
     private void OnObjectTooNearChanged(bool isObjectTooNear)
     {
         DistanceLabel.TextColor = isObjectTooNear ? Colors.Red : Colors.Green;
     }
 
+    /// <summary>
+    /// Handles changes in the distance measurement and updates the UI label accordingly.
+    /// </summary>
+    /// <param name="distance">New distance value</param>
     private void OnDistanceChanged(double distance)
     {
         DistanceLabel.Text = $"{distance:0} cm";
@@ -92,6 +104,14 @@ public partial class JoystickPage : ContentPage
         {
             Console.WriteLine($"Error sending joystick movement: {e.Message}");
         }
+    }
+    
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _isConnectedSubscription?.Dispose();
+        _objectTooNearSubscription?.Dispose();
+        _distanceSubscription?.Dispose();
     }
 
     #endregion

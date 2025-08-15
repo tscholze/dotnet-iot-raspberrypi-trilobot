@@ -1,5 +1,6 @@
-using System.Threading.Channels;
 using Microsoft.AspNetCore.SignalR;
+using System.Reactive.Subjects;
+using System.Reactive.Linq;
 using TriloBot.Light;
 
 namespace TriloBot.Blazor.SignalR;
@@ -8,7 +9,7 @@ namespace TriloBot.Blazor.SignalR;
 /// SignalR Hub for remote controlling the TriloBot.
 /// Exposes key TriloBot methods to web clients.
 /// </summary>
-public class TriloBotHub(TriloBot robot) : Hub
+public class TriloBotHub : Hub
 {
     #region Constants
 
@@ -16,6 +17,53 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// The endpoint for the SignalR hub.
     /// </summary>
     public const string HubEndpoint = "/trilobotHub";
+
+    #endregion
+
+    #region Private Fields
+
+    /// <summary>
+    /// Instance of the TriloBot that this hub controls.
+    /// </summary>
+    private readonly TriloBot _robot;
+
+    /// <summary>
+    /// Observable for the latest distance readings.
+    /// </summary>
+    private readonly BehaviorSubject<double> _distanceObserver = new(0);
+
+    /// <summary>
+    /// Observable for the latest object proximity readings.
+    /// </summary>
+    private readonly BehaviorSubject<bool> _objectTooNearObserver = new(false);
+
+    /// <summary>
+    /// Subscription for distance updates.
+    /// </summary>
+    private IDisposable? _distanceSubscription;
+
+    /// <summary>
+    /// Subscription for object proximity updates.
+    /// </summary>
+    private IDisposable? _objectTooNearSubscription;
+
+    #endregion
+
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TriloBotHub"/> class and
+    /// links it to the specified TriloBot instance.
+    /// </summary>
+    public TriloBotHub(TriloBot robot)
+    {
+        // Ensure the robot is not null
+        _robot = robot ?? throw new ArgumentNullException(nameof(robot), "TriloBot cannot be null.");
+
+        // Forward observers
+        _distanceSubscription = robot.DistanceObservable.Subscribe(value => Clients.All.SendAsync("DistanceUpdated", value));
+        _objectTooNearSubscription = robot.ObjectTooNearObservable.Subscribe(value => Clients.All.SendAsync("ObjectTooNearUpdated", value));
+    }
 
     #endregion
 
@@ -27,7 +75,7 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// <param name="lightId">The light id (e.g., 6 for Button A's LED).</param>
     /// <param name="value">Brightness value between 0.0 and 1.0.</param>
     public Task SetButtonLed(int lightId, double value)
-        => Task.Run(() => robot.SetButtonLed((Lights)lightId, value));
+        => Task.Run(() => _robot.SetButtonLed((Lights)lightId, value));
 
     /// <summary>
     /// Fills the underlighting with the specified RGB color.
@@ -36,7 +84,7 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     public Task FillUnderlighting(byte r, byte g, byte b)
-        => Task.Run(() => robot.FillUnderlighting(r, g, b));
+        => Task.Run(() => _robot.FillUnderlighting(r, g, b));
 
     /// <summary>
     /// Sets the RGB value of a single underlight.
@@ -46,7 +94,7 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     public Task SetUnderlight(string light, byte r, byte g, byte b)
-        => Task.Run(() => robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
+        => Task.Run(() => _robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
 
     #endregion
 
@@ -57,32 +105,32 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// </summary>
     /// <param name="horizontal">Horizontal movement (-1 to 1).</param>
     /// <param name="vertical">Vertical movement (-1 to 1).</param>
-    public Task Move(double horizontal, double vertical) => Task.Run(() => robot.Move(horizontal, vertical));
+    public Task Move(double horizontal, double vertical) => Task.Run(() => _robot.Move(horizontal, vertical));
 
     /// <summary>
     /// Moves the robot forward at the default speed.
     /// </summary>
-    public Task Forward() => Task.Run(() => robot.Forward());
+    public Task Forward() => Task.Run(() => _robot.Forward());
 
     /// <summary>
     /// Moves the robot backward at the default speed.
     /// </summary>
-    public Task Backward() => Task.Run(() => robot.Backward());
+    public Task Backward() => Task.Run(() => _robot.Backward());
 
     /// <summary>
     /// Turns the robot left in place at the default speed.
     /// </summary>
-    public Task TurnLeft() => Task.Run(() => robot.TurnLeft());
+    public Task TurnLeft() => Task.Run(() => _robot.TurnLeft());
 
     /// <summary>
     /// Turns the robot right in place at the default speed.
     /// </summary>
-    public Task TurnRight() => Task.Run(() => robot.TurnRight());
+    public Task TurnRight() => Task.Run(() => _robot.TurnRight());
 
     /// <summary>
     /// Stops the robot's motors.
     /// </summary>
-    public Task Stop() => Task.Run(robot.Stop);
+    public Task Stop() => Task.Run(_robot.Stop);
 
     #endregion
 
@@ -94,7 +142,7 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// <param name="savePath">The path to save the photo.</param>
     /// <returns>The full path to the saved photo.</returns>
     public async Task<string> TakePhoto(string savePath)
-        => await robot.TakePhotoAsync(savePath);
+        => await _robot.TakePhotoAsync(savePath);
 
     #endregion
 
@@ -106,81 +154,28 @@ public class TriloBotHub(TriloBot robot) : Hub
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task StartDistanceMonitoring()
-        => Task.Run(() => robot.StartDistanceMonitoring());
+        => Task.Run(() => _robot.StartDistanceMonitoring());
 
     /// <summary>
     /// Reads the distance from the ultrasonic sensor.
     /// </summary>
     /// <returns>The distance in centimeters.</returns>
     public Task<double> ReadDistance()
-        => Task.FromResult(robot.ReadDistance());
+        => Task.FromResult(_robot.ReadDistance());
 
     #endregion
 
-    #region RealTimeEvents
+    #region Life cycle 
 
     /// <summary>
-    /// Streams real-time distance sensor values to clients.
+    /// Closes the hub and disposes of all resources.
     /// </summary>
-    /// <param name="cancellationToken">A cancellation token to stop the stream.</param>
-    /// <returns>A channel reader for the distance stream.</returns>
-    public ChannelReader<double> DistanceStream(CancellationToken cancellationToken = default)
+    public void Close()
     {
-        var channel = Channel.CreateUnbounded<double>();
-        var subscription = robot.DistanceObservable
-            .Subscribe(async void (value) =>
-                {
-                    try
-                    {
-                        await channel.Writer.WriteAsync(value, cancellationToken);
-                    }
-                    catch (Exception e)
-                    {
-                        // If the channel is completed or if the writing fails, log the error
-                        Console.WriteLine($"Error writing to distance stream: {e.Message}");
-                        channel.Writer.TryComplete(e);
-                    }
-                },
-            ex => channel.Writer.TryComplete(ex),
-            () => channel.Writer.TryComplete());
-        cancellationToken.Register(() =>
-        {
-            subscription.Dispose();
-            channel.Writer.TryComplete();
-        });
-        return channel.Reader;
+        _distanceSubscription?.Dispose();
+        _objectTooNearSubscription?.Dispose();
+        _robot.Dispose();
     }
 
-    /// <summary>
-    /// Streams real-time proximity (object too near) events to clients.
-    /// </summary>
-    /// <param name="cancellationToken">A cancellation token to stop the stream.</param>
-    /// <returns>A channel reader for the proximity stream.</returns>
-    public ChannelReader<bool> ObjectTooNearStream(CancellationToken cancellationToken = default)
-    {
-        var channel = Channel.CreateUnbounded<bool>();
-        var subscription = robot.ObjectTooNearObservable
-            .Subscribe(async void (value) =>
-                {
-                    try
-                    {
-                        await channel.Writer.WriteAsync(value, cancellationToken);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Error writing to channel: {e.Message}");
-                        channel.Writer.TryComplete(e);
-                    }
-                },
-            ex => channel.Writer.TryComplete(ex),
-            () => channel.Writer.TryComplete());
-        cancellationToken.Register(() =>
-        {
-            subscription.Dispose();
-            channel.Writer.TryComplete();
-        });
-        return channel.Reader;
-    }
-    
     #endregion
 }

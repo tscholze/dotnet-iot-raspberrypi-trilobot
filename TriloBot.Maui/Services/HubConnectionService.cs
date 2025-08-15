@@ -14,7 +14,7 @@ public class HubConnectionService : IDisposable
     /// <summary>
     /// Gets a value indicating whether the SignalR connection is established.
     /// </summary>
-    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+    public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
 
     /// <summary>
     /// Emits true if the SignalR connection is established, false otherwise.
@@ -27,7 +27,7 @@ public class HubConnectionService : IDisposable
     public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
 
     /// <summary>
-    /// Emits real-time proximity alerts (true if an object is detected too near by the robot's sensor).
+    /// Emits real-time proximity alerts (true if an object is detected too nearby the robot's sensor).
     /// </summary>
     public IObservable<bool> ObjectTooNearObservable => _objectTooNearObserver.AsObservable();
 
@@ -38,7 +38,7 @@ public class HubConnectionService : IDisposable
     /// <summary>
     /// Hub connection service for managing SignalR connections.
     /// </summary>  
-    private readonly HubConnection hubConnection;
+    private readonly HubConnection _hubConnection;
 
     /// <summary>
     /// Observable for the latest distance readings.
@@ -74,24 +74,26 @@ public class HubConnectionService : IDisposable
     /// </summary>
     public HubConnectionService()
     {
-        hubConnection = new HubConnectionBuilder()
+        _hubConnection = new HubConnectionBuilder()
             .WithUrl("http://pi5:6969/trilobotHub") // Replace with your server address if needed
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.Closed += (error) =>
+        _hubConnection.Closed += (error) =>
         {
-            _isConnectedObserver.OnNext(false);
-            Console.WriteLine("Connection closed. Waiting for automatic reconnect...");
+            Application.Current?.Dispatcher.Dispatch(() => _isConnectedObserver.OnNext(false));
+            Console.WriteLine("Connection closed with error: " + (error?.Message ?? "No error"));
             return Task.CompletedTask;
         };
 
-        hubConnection.Reconnected += (connectionId) =>
+        _hubConnection.Reconnected += (connectionId) =>
         {
-            _isConnectedObserver.OnNext(true);
+            Application.Current?.Dispatcher.Dispatch(() => _isConnectedObserver.OnNext(true));
             Console.WriteLine($"Reconnected to SignalR Hub with connection ID: {connectionId}");
             return Task.CompletedTask;
         };
+
+
 
         Task.Run(StartConnection);
     }
@@ -110,7 +112,7 @@ public class HubConnectionService : IDisposable
     {
         try
         {
-            await hubConnection.InvokeAsync("Move", horizontal, vertical);
+            await _hubConnection.InvokeAsync("Move", horizontal, vertical);
         }
         catch (Exception e)
         {
@@ -128,7 +130,7 @@ public class HubConnectionService : IDisposable
     {
         try
         {
-            await hubConnection.InvokeAsync(methodName, args);
+            await _hubConnection.InvokeAsync(methodName, args);
         }
         catch (Exception e)
         {
@@ -148,16 +150,15 @@ public class HubConnectionService : IDisposable
     {
         try
         {
-            await hubConnection.StartAsync();
+            await _hubConnection.StartAsync();
             await StartDistanceUpdates();
-            await StartCollisionUpdates();
 
-            _isConnectedObserver.OnNext(hubConnection.State == HubConnectionState.Connected);
+            Application.Current?.Dispatcher.Dispatch(() => _isConnectedObserver.OnNext(_hubConnection.State == HubConnectionState.Connected));
             Console.WriteLine("Connected to SignalR Hub");
         }
         catch (Exception ex)
         {
-            _isConnectedObserver.OnNext(false);
+            Application.Current?.Dispatcher.Dispatch(() => _isConnectedObserver.OnNext(false));
             Console.WriteLine($"Error connecting to SignalR Hub: {ex.Message}");
         }
     }
@@ -173,28 +174,13 @@ public class HubConnectionService : IDisposable
     {
         try
         {
-            _distanceSubscription =hubConnection.On<double>("DistanceUpdate", _distanceObserver.OnNext);
-            await hubConnection.InvokeAsync("StartDistanceMonitoring");
+            _distanceSubscription = _hubConnection.On<double>("DistanceUpdate", d => Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d)));
+            _objectTooNearSubscription = _hubConnection.On<bool>("ObjectTooNearUpdated", b => Application.Current?.Dispatcher.Dispatch(() => _objectTooNearObserver.OnNext(b)));
+            await _hubConnection.InvokeAsync("StartDistanceMonitoring");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error subscribing to distance updates: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Starts receiving collision warning updates from the SignalR hub.
-    /// </summary>
-    private async Task StartCollisionUpdates()
-    {
-        try
-        {
-            await hubConnection.InvokeAsync("StartCollisionMonitoring");
-            _objectTooNearSubscription = hubConnection.On<bool>("ObjectTooNear", _objectTooNearObserver.OnNext);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error subscribing to collision updates: {ex.Message}");
         }
     }
 
@@ -209,7 +195,7 @@ public class HubConnectionService : IDisposable
     {
         _distanceSubscription?.Dispose();
         _objectTooNearSubscription?.Dispose();
-        Task.Run(async () => await hubConnection.DisposeAsync());
+        Task.Run(async () => await _hubConnection.DisposeAsync());
         GC.SuppressFinalize(this);
     }
 
