@@ -85,6 +85,13 @@ public class HubConnectionService : IDisposable
             Console.WriteLine("Connection closed with error: " + (error?.Message ?? "No error"));
             return Task.CompletedTask;
         };
+        
+        _hubConnection.Reconnecting += (error) =>
+        {
+            Application.Current?.Dispatcher.Dispatch(() => _isConnectedObserver.OnNext(false));
+            Console.WriteLine("Reconnecting to SignalR Hub...");
+            return Task.CompletedTask;
+        };
 
         _hubConnection.Reconnected += (connectionId) =>
         {
@@ -92,9 +99,7 @@ public class HubConnectionService : IDisposable
             Console.WriteLine($"Reconnected to SignalR Hub with connection ID: {connectionId}");
             return Task.CompletedTask;
         };
-
         
-
         Task.Run(StartConnection);
     }
 
@@ -176,13 +181,10 @@ public class HubConnectionService : IDisposable
         
         try
         {
+            // Subscribe to value updates from the hub
             _distanceSubscription = _hubConnection.On<double>(
                 "DistanceUpdated",
-                d =>
-                {
-                    Console.WriteLine($"Distance updated: {d}");
-                    Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d));
-                }
+                d => Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d))
             );
             
             _objectTooNearSubscription = _hubConnection.On<bool>(
