@@ -178,7 +178,11 @@ public class HubConnectionService : IDisposable
         {
             _distanceSubscription = _hubConnection.On<double>(
                 "DistanceUpdated",
-                d => Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d))
+                d =>
+                {
+                    Console.WriteLine($"Distance updated: {d}");
+                    Application.Current?.Dispatcher.Dispatch(() => _distanceObserver.OnNext(d));
+                }
             );
             
             _objectTooNearSubscription = _hubConnection.On<bool>(

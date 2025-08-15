@@ -52,11 +52,11 @@ public class TriloBotHub : Hub
         _distanceSubscription = robot.DistanceObservable.Subscribe(value =>
         {
             Console.WriteLine("Value received from robot: " + value);
-            _ = Clients.All.SendAsync("DistanceUpdated", value);
+            Task.Run(async () => await Clients.All.SendAsync("DistanceUpdated", value));
         });
         _objectTooNearSubscription = robot.ObjectTooNearObservable.Subscribe(value =>
         {
-            _ = Clients.All.SendAsync("ObjectTooNearUpdated", value);
+            Task.Run(async () => await Clients.All.SendAsync("ObjectTooNearUpdated", value));
         });
     }
 
