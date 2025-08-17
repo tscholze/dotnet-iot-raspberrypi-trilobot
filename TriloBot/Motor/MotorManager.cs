@@ -117,9 +117,9 @@ namespace TriloBot.Motor
             }
         }
 
-        /// <summary>Drives both motors forward at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void Forward(double speed = 1) => SetMotorSpeeds(speed, -speed);
+    /// <summary>Drives both motors forward at the specified speed.</summary>
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
 
         /// <summary>Drives both motors backward at the specified speed.</summary>
         /// <param name="speed">Speed value (default 0.25).</param>
