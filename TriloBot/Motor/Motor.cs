@@ -39,4 +39,11 @@ public static class MotorExtensions
         Motor.MotorRight => 9,
         _ => throw new ArgumentOutOfRangeException(nameof(motor), motor, null)
     };
+
+    public static int CorrectionFactor(this Motor motor) => motor switch
+    {
+        Motor.MotorLeft => -1,
+        Motor.MotorRight => 1,
+        _ => throw new ArgumentOutOfRangeException(nameof(motor), motor, null)
+    };
 }

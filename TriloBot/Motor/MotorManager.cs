@@ -80,10 +80,10 @@ namespace TriloBot.Motor
             {
                 case > 0.0:
                     pwmP.ChangeDutyCycle(100);
-                    pwmN.ChangeDutyCycle(100 - (speed * 100));
+                    pwmN.ChangeDutyCycle(100 - speed * 100 * motor.CorrectionFactor());
                     break;
                 case < 0.0:
-                    pwmP.ChangeDutyCycle(100 - (-speed * 100));
+                    pwmP.ChangeDutyCycle(100 - (-speed * 100) * motor.CorrectionFactor());
                     pwmN.ChangeDutyCycle(100);
                     break;
                 default:
@@ -117,9 +117,9 @@ namespace TriloBot.Motor
             }
         }
 
-        /// <summary>Drives both motors forward at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
+    /// <summary>Drives both motors forward at the specified speed.</summary>
+    /// <param name="speed">Speed value (default 0.25).</param>
+    public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
 
         /// <summary>Drives both motors backward at the specified speed.</summary>
         /// <param name="speed">Speed value (default 0.25).</param>
