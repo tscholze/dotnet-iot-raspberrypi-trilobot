@@ -61,11 +61,15 @@ namespace TriloBot.Motor
         /// <exception cref="ArgumentOutOfRangeException">Thrown if the motor index is out of range.</exception>
         public void SetMotorSpeed(Motor motor, double speed)
         {
-            // Clamp speed to valid range
-            speed = Math.Clamp(speed, -1.0, 1.0);
+            // Validate speed range.
+            if (Math.Abs(speed) > 1.0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between -1.0 and 1.0");
+            }
 
             Console.WriteLine($"Setting motor {motor} speed to {speed}");
 
+            // Clamp speed to valid range
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
             // Left motor inverted, positive speed drives forward
