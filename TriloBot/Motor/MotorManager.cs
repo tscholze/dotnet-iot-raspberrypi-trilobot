@@ -67,8 +67,6 @@ namespace TriloBot.Motor
                 throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between -1.0 and 1.0");
             }
 
-            Console.WriteLine($"Setting motor {motor} speed to {speed}");
-
             // Clamp speed to valid range
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
