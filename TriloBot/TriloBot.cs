@@ -163,7 +163,7 @@ public class TriloBot : IDisposable
             throw new ArgumentOutOfRangeException(nameof(vertical), "Value must be between -1 and 1.");
         }
 
-        // Step 4: If vertical is below movement threshold, stop motors and exit
+        // Step 4: If vertical is below a movement threshold, stop motors and exit
         if (verticalAbs < MovementChangedThreshold)
         {
             Stop();
@@ -312,6 +312,7 @@ public class TriloBot : IDisposable
         // Setup ultrasound manager
         _ultrasoundManager = new UltrasoundManager(_gpio);
 
+        // Setup camera manager
         _cameraManager = new CameraManager();
 
         // Register cancellation token to handle graceful shutdown
@@ -320,8 +321,11 @@ public class TriloBot : IDisposable
         cancellationToken.Register(() =>
         {
             // Cancel any ongoing effects or operations
-            DisableUnderlighting();
-            DisableMotors();
+            StopUnderlighting();
+            StopDistanceMonitoring();
+            Stop();
+            
+            // Caution:
             // Do not call Dispose() here; handled by using statement
         });
 
@@ -332,13 +336,6 @@ public class TriloBot : IDisposable
     #endregion
 
     #region Button methods
-
-    /// <summary>
-    /// Reads the state of a button.
-    /// </summary>
-    /// <param name="button">The button enum value.</param>
-    /// <returns>True if the button is pressed, otherwise false.</returns>
-    public bool ReadButton(Buttons button) => _buttonManager.ReadButton(button);
 
     /// <summary>
     /// Sets the brightness of a button LED.
@@ -409,22 +406,10 @@ public class TriloBot : IDisposable
 
     #region Motor methods
 
-    // Motor control methods are now delegated to MotorManager
-
-    /// <summary>
-    /// Sets the speed and direction of a single motor.
-    /// </summary>
-    /// <param name="motor">The motor index (0 for left motor, 1 for right).</param>
-    /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
-    public void SetMotorSpeed(int motor, double speed) => _motorManager.SetMotorSpeed(motor, speed);
-
     /// <summary>Sets the speed and direction of both motors.</summary>
     /// <param name="leftSpeed">Speed for the left motor (-1.0 to 1.0).</param>
     /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
     public void SetMotorSpeeds(double leftSpeed, double rightSpeed) => _motorManager.SetMotorSpeeds(leftSpeed, rightSpeed);
-
-    /// <summary>Disables both motors and sets their PWM to 0.</summary>
-    public void DisableMotors() => _motorManager.DisableMotors();
 
     /// <summary>Drives both motors forward at the specified speed.</summary>
     /// <param name="speed">Speed value.</param>
@@ -461,9 +446,6 @@ public class TriloBot : IDisposable
     /// <summary>Stops both motors (brake mode).</summary>
     public void Stop() => _motorManager.Stop();
 
-    /// <summary>Disables both motors (coast mode).</summary>
-    public void Coast() => _motorManager.Coast();
-
     #endregion
 
     #region Light methods
@@ -472,7 +454,7 @@ public class TriloBot : IDisposable
     public void ShowUnderlighting() => _lightManager.ShowUnderlighting();
 
     /// <summary>Disables the underlighting.</summary>
-    public void DisableUnderlighting() => _lightManager.DisableUnderlighting();
+    public void StopUnderlighting() => _lightManager.DisableUnderlighting();
 
     /// <summary>Sets the RGB value of a single underlight.</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
@@ -587,8 +569,7 @@ public class TriloBot : IDisposable
         {
             StopDistanceMonitoring();
             StopButtonMonitoring();
-            DisableUnderlighting();
-            DisableMotors();
+            StopUnderlighting();
             _motorManager.Dispose();
             _buttonManager.Dispose();
             _lightManager.Dispose();

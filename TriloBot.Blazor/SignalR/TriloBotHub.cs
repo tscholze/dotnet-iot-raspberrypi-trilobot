@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using TriloBot.Light;
+using TriloBot.Motor;
 
 namespace TriloBot.Blazor.SignalR;
 
