@@ -16,11 +16,6 @@ namespace TriloBot;
 public class TriloBot : IDisposable
 {
     /// <summary>
-    /// The minimum change in distance required to trigger an update.
-    /// </summary>
-    private const double DistanceChangeThreshold = 1.0;
-
-    /// <summary>
     /// Exposes the distance observer as an IObservable (read-only).
     /// </summary>
     public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
@@ -123,14 +118,19 @@ public class TriloBot : IDisposable
     #region Private constants
 
     /// <summary>
-    /// The minimum movement threshold for the robot.
-    /// </summary>
-    private const double MovementThreshold = 0.1;
-
-    /// <summary>
     /// The default speed for the robot.
     /// </summary>
-    private const double DefaultSpeed = 0.75;
+    private const double DefaultSpeed = 0.35;
+
+    /// <summary>
+    /// The minimum movement threshold for the robot.
+    /// </summary>
+    private const double MovementChangedThreshold = 0.1;
+
+    /// <summary>
+    /// The minimum change in distance required to trigger an update.
+    /// </summary>
+    private const double DistanceChangeThreshold = 1.0;
 
     #endregion
 
@@ -164,7 +164,7 @@ public class TriloBot : IDisposable
         }
 
         // Step 4: If vertical is below movement threshold, stop motors and exit
-        if (verticalAbs < MovementThreshold)
+        if (verticalAbs < MovementChangedThreshold)
         {
             Stop();
             return;
@@ -176,7 +176,7 @@ public class TriloBot : IDisposable
 
         // Step 6: Apply turning logic
         // If horizontal is below threshold, skip turning logic
-        if (horizontalAbs < MovementThreshold)
+        if (horizontalAbs < MovementChangedThreshold)
         {
             // No significant turn requested, continue with equal speeds
             // Motors will move straight
