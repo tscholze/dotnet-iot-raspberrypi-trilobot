@@ -80,10 +80,10 @@ namespace TriloBot.Motor
             {
                 case > 0.0:
                     pwmP.ChangeDutyCycle(100);
-                    pwmN.ChangeDutyCycle(100 - speed * 100 * motor.CorrectionFactor());
+                    pwmN.ChangeDutyCycle(100 - speed * 100);
                     break;
                 case < 0.0:
-                    pwmP.ChangeDutyCycle(100 - (-speed * 100) * motor.CorrectionFactor());
+                    pwmP.ChangeDutyCycle(100 - (-speed * 100));
                     pwmN.ChangeDutyCycle(100);
                     break;
                 default:
