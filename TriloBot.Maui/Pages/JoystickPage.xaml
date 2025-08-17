@@ -41,10 +41,6 @@
                          VerticalOptions="End"
                          Spacing="12"
                          Padding="12,20">
-                <Label Text="Status"
-                       FontSize="Small"
-                       FontAttributes="Bold"
-                       HorizontalTextAlignment="Center"/>
 
                 <Label x:Name="IsConnectedLabel"
                        Text="Disconnected"

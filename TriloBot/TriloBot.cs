@@ -16,6 +16,11 @@ namespace TriloBot;
 public class TriloBot : IDisposable
 {
     /// <summary>
+    /// The minimum change in distance required to trigger an update.
+    /// </summary>
+    private const double DistanceChangeThreshold = 1.0;
+
+    /// <summary>
     /// Exposes the distance observer as an IObservable (read-only).
     /// </summary>
     public IObservable<double> DistanceObservable => _distanceObserver.AsObservable();
@@ -198,7 +203,7 @@ public class TriloBot : IDisposable
         {
             SetMotorSpeeds(leftSpeed, rightSpeed);
         }
-        else // vertical < 0
+        else
         {
             SetMotorSpeeds(-leftSpeed, -rightSpeed);
         }
@@ -231,7 +236,7 @@ public class TriloBot : IDisposable
 
                     // Only trigger if the value changes
                     // This prevents unnecessary updates and notifications.
-                    if (Math.Abs(_distanceObserver.Value - distance) > 0.1)
+                    if (Math.Abs(_distanceObserver.Value - distance) > DistanceChangeThreshold)
                     {
                         _distanceObserver.OnNext(distance);
                     }
