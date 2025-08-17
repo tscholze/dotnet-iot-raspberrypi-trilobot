@@ -120,7 +120,7 @@ public class TriloBot : IDisposable
     /// <summary>
     /// The default speed for the robot.
     /// </summary>
-    private const double DefaultSpeed = 0.35;
+    private const double DefaultSpeed = 0.5;
 
     /// <summary>
     /// The minimum movement threshold for the robot.
