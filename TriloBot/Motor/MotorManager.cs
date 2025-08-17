@@ -73,8 +73,8 @@ namespace TriloBot.Motor
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
             // Left motor inverted, positive speed drives forward
-            var pwmP = _motorPwmMapping[motor.GetPositivePin()];
-            var pwmN = _motorPwmMapping[motor.GetNegativePin()];
+            var pwmP = motor == Motor.MotorLeft ? _motorPwmMapping[Motor.MotorLeft.GetNegativePin()] : _motorPwmMapping[Motor.MotorRight.GetPositivePin()];
+            var pwmN = motor == Motor.MotorLeft ? _motorPwmMapping[Motor.MotorLeft.GetPositivePin()] : _motorPwmMapping[Motor.MotorRight.GetNegativePin()];
 
             switch (speed)
             {
@@ -117,9 +117,9 @@ namespace TriloBot.Motor
             }
         }
 
-    /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value (default 0.25).</param>
-    public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
+        /// <summary>Drives both motors forward at the specified speed.</summary>
+        /// <param name="speed">Speed value (default 0.25).</param>
+        public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
 
         /// <summary>Drives both motors backward at the specified speed.</summary>
         /// <param name="speed">Speed value (default 0.25).</param>
