@@ -59,15 +59,12 @@ namespace TriloBot.Motor
         /// <param name="motor">The motor index (0 for left motor, 1 for right).</param>
         /// <param name="speed">Speed value between -1.0 (full reverse) and 1.0 (full forward).</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if the motor index is out of range.</exception>
-        public void SetMotorSpeed(int motor, double speed)
+        public void SetMotorSpeed(Motor motor, double speed)
         {
-            if (!Enum.IsDefined(typeof(Motor), motor))
-            {
-                throw new ArgumentOutOfRangeException(nameof(motor), "Motor must be MotorLeft or MotorRight");
-            }
-
             // Clamp speed to valid range
             speed = Math.Clamp(speed, -1.0, 1.0);
+
+            Console.WriteLine($"Setting motor {motor} speed to {speed}");
 
             _gpio.Write(MotorExtensions.GetEnablePin(), PinValue.High);
 
@@ -83,7 +80,7 @@ namespace TriloBot.Motor
                     pwmN.ChangeDutyCycle(100 - (speed * 100));
                     break;
                 case < 0.0:
-                    pwmP.ChangeDutyCycle(100 - (-speed * 100));
+                    pwmP.ChangeDutyCycle(100 - (speed * 100));
                     pwmN.ChangeDutyCycle(100);
                     break;
                 default:
@@ -100,8 +97,8 @@ namespace TriloBot.Motor
         /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
         public void SetMotorSpeeds(double leftSpeed, double rightSpeed)
         {
-            SetMotorSpeed((int)Motor.MotorLeft, leftSpeed);
-            SetMotorSpeed((int)Motor.MotorRight, rightSpeed);
+            SetMotorSpeed(Motor.MotorLeft, leftSpeed);
+            SetMotorSpeed(Motor.MotorRight, rightSpeed);
         }
 
         /// <summary>
