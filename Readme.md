@@ -6,6 +6,11 @@
 
 A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
 
+## Status
+
+| Service | Project | Status |
+| ------- | ------- | ------ |
+| GitHub Action | TriloBot.Blazor | [![TriloBot.Blazor Build](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-trilobot-blazor.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-trilobot-blazor.yml) |
 
 ## 🚀 What Does It Do?
 

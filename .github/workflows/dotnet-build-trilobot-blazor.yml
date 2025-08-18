@@ -1,0 +1,36 @@
+# This workflow will build the TriloBot.Blazor project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: TriloBot.Blazor Build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'TriloBot.Blazor/**'
+      - 'TriloBot/**'
+      - '.github/workflows/dotnet-build-trilobot-blazor.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'TriloBot.Blazor/**'
+      - 'TriloBot/**'
+      - '.github/workflows/dotnet-build-trilobot-blazor.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore TriloBot.Blazor/TriloBot.Blazor.csproj
+      
+    - name: Build TriloBot.Blazor
+      run: dotnet build TriloBot.Blazor/TriloBot.Blazor.csproj --no-restore
