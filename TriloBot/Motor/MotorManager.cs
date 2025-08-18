@@ -115,42 +115,62 @@ namespace TriloBot.Motor
             }
         }
 
-        /// <summary>Drives both motors forward at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void Forward(double speed = 1) => SetMotorSpeeds(speed, speed);
+    /// <summary>
+    /// Drives both motors forward at the specified speed.
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void Forward(double speed) => SetMotorSpeeds(speed, speed);
 
-        /// <summary>Drives both motors backward at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void Backward(double speed = 0.25) => SetMotorSpeeds(-speed, -speed);
+    /// <summary>
+    /// Drives both motors backward at the specified speed.
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void Backward(double speed) => SetMotorSpeeds(-speed, -speed);
 
-        /// <summary>Turns the robot left in place at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void TurnLeft(double speed = 0.25) => SetMotorSpeeds(-speed, speed);
+    /// <summary>
+    /// Turns the robot left in place at the specified speed.
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void TurnLeft(double speed) => SetMotorSpeeds(-speed, speed);
 
-        /// <summary>Turns the robot right in place at the specified speed.</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void TurnRight(double speed = 0.25) => SetMotorSpeeds(speed, -speed);
+    /// <summary>
+    /// Turns the robot right in place at the specified speed.
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void TurnRight(double speed) => SetMotorSpeeds(speed, -speed);
 
-        /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void CurveForwardLeft(double speed = 0.25) => SetMotorSpeeds(0.0, speed);
+    /// <summary>
+    /// Curves forward left (left motor stopped, right motor forward).
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void CurveForwardLeft(double speed) => SetMotorSpeeds(0.0, speed);
 
-        /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void CurveForwardRight(double speed = 0.25) => SetMotorSpeeds(speed, 0.0);
+    /// <summary>
+    /// Curves forward right (right motor stopped, left motor forward).
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void CurveForwardRight(double speed) => SetMotorSpeeds(speed, 0.0);
 
-        /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void CurveBackwardLeft(double speed = 0.25) => SetMotorSpeeds(0.0, -speed);
+    /// <summary>
+    /// Curves backward left (left motor stopped, right motor backward).
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void CurveBackwardLeft(double speed) => SetMotorSpeeds(0.0, -speed);
 
-        /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-        /// <param name="speed">Speed value (default 0.25).</param>
-        public void CurveBackwardRight(double speed = 0.25) => SetMotorSpeeds(-speed, 0.0);
+    /// <summary>
+    /// Curves backward right (right motor stopped, left motor backward).
+    /// </summary>
+    /// <param name="speed">Speed value in range -1.0 to 1.0.</param>
+    public void CurveBackwardRight(double speed) => SetMotorSpeeds(-speed, 0.0);
 
-        /// <summary>Stops both motors (brake mode).</summary>
+        /// <summary>
+        /// Stops both motors (brake mode).
+        /// </summary>
         public void Stop() => SetMotorSpeeds(0.0, 0.0);
 
-        /// <summary>Disables both motors (coast mode).</summary>
+        /// <summary>
+        /// Disables both motors (coast mode).
+        /// </summary>
         public void Coast() => DisableMotors();
 
         #endregion
