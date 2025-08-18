@@ -2,12 +2,18 @@ using TriloBot.Button;
 
 namespace TriloBot;
 
-
+/// <summary>
+/// Main entry point for the TriloBot Demo application.
+/// For non-console based usage, consider using the SignalR / Blazor controls.
+/// </summary>
 public class Program
 {
     public static void Main(string[] args)
-    {      
-        Console.WriteLine("Starting TriloBot...");
+    {
+        // Start the demo.
+        // The actual intended usecase is to control the bot using 
+        // the SignalR / Blazor controls.
+        Console.WriteLine("Starting Demo of TriloBot...");
 
         var cancellationTokenSource = new CancellationTokenSource();
         using var robot = new TriloBot(cancellationTokenSource.Token);

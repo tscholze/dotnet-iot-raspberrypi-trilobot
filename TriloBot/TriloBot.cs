@@ -134,6 +134,270 @@ public class TriloBot : IDisposable
 
     #endregion
 
+
+    #region  Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TriloBot"/> class and sets up all subsystems.
+    /// </summary>
+    public TriloBot(CancellationToken cancellationToken = default)
+    {
+        // Check if the current platform is supported
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == false)
+        {
+            throw new PlatformNotSupportedException("TriloBot is only supported on Raspberry Pi platforms.");
+        }
+
+        // Set the cancellation token for this instance
+
+        // Initialize GPIO controller
+        // This is the main controller for all GPIO operations
+        _gpio = new GpioController();
+
+        // Setup button manager
+        _buttonManager = new ButtonManager(_gpio);
+
+        // Setup light manager
+        _lightManager = new LightManager(_gpio);
+
+        // Setup motor manager
+        _motorManager = new MotorManager(_gpio);
+
+        // Setup ultrasound manager
+        _ultrasoundManager = new UltrasoundManager(_gpio);
+
+        // Setup camera manager
+        _cameraManager = new CameraManager();
+
+        // Register cancellation token to handle graceful shutdown
+        // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
+        // It ensures that any ongoing effects or operations are properly terminated
+        cancellationToken.Register(() =>
+        {
+            // Cancel any ongoing effects or operations
+            StopUnderlighting();
+            StopDistanceMonitoring();
+            Stop();
+
+            // Caution:
+            // Do not call Dispose() here; handled by using statement
+        });
+
+        // Log successful initialization
+        Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
+    }
+
+    #endregion
+
+    #region Distance Monitoring
+
+    /// <summary>
+    /// Starts non-blocking background monitoring of the distance sensor every 500 ms.
+    /// </summary>
+    public void StartDistanceMonitoring(double minDistance = 30.0)
+    {
+        // If already running, do nothing
+        if (_distanceMonitoringTask is { IsCompleted: false })
+            return;
+
+        Console.WriteLine("Starting distance monitoring...");
+
+        _distanceMonitoringCts = new CancellationTokenSource();
+        var token = _distanceMonitoringCts.Token;
+
+        _distanceMonitoringTask = Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var distance = _ultrasoundManager.ReadDistance();
+                    var isTooNear = distance < minDistance;
+
+                    // Only trigger if the value changes
+                    // This prevents unnecessary updates and notifications.
+                    if (Math.Abs(_distanceObserver.Value - distance) > DistanceChangeThreshold)
+                    {
+                        _distanceObserver.OnNext(distance);
+                    }
+
+                    if (_objectTooNearObserver.Value != isTooNear)
+                    {
+                        _objectTooNearObserver.OnNext(isTooNear);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Distance monitoring error: {ex.Message}");
+                }
+                await Task.Delay(500, token).ConfigureAwait(false);
+            }
+        }, token);
+    }
+
+    /// <summary>
+    /// Stops the background distance monitoring task if running.
+    /// </summary>
+    public void StopDistanceMonitoring()
+    {
+        if (_distanceMonitoringCts != null)
+        {
+            _distanceMonitoringCts.Cancel();
+
+            try
+            {
+                _distanceMonitoringTask?.Wait(1000);
+            }
+            catch (AggregateException) { }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                _distanceMonitoringCts.Dispose();
+                _distanceMonitoringCts = null;
+                _distanceMonitoringTask = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Button methods
+
+    /// <summary>
+    /// Sets the brightness of a button LED.
+    /// </summary>
+    /// <param name="light">The light whose button LED to set.</param>
+    /// <param name="value">Brightness value between 0.0 and 1.0.</param>
+    public void SetButtonLed(Lights light, double value) => _lightManager.SetButtonLed(light, value);
+
+    /// <summary>
+    /// Starts non-blocking background monitoring of button presses every 100ms.
+    /// Emits the Buttons enum value to ButtonPressedObservable when a button is pressed.
+    /// </summary>
+    public void StartButtonMonitoring()
+    {
+        if (_buttonMonitoringTask is { IsCompleted: false })
+            return;
+
+        _buttonMonitoringCts ??= new CancellationTokenSource();
+        var token = _buttonMonitoringCts.Token;
+
+        // Cache the button enum values once for efficiency
+        var buttons = Enum.GetValues(typeof(Buttons)).Cast<Buttons>().ToArray();
+
+        _buttonMonitoringTask = Task.Run(async () =>
+        {
+            Buttons? lastPressed = null;
+
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    Buttons? pressed = null;
+                    foreach (var b in buttons)
+                    {
+                        if (_buttonManager.ReadButton(b))
+                        {
+                            pressed = b;
+                            break;
+                        }
+                    }
+
+                    if (pressed != null && lastPressed != pressed)
+                    {
+                        _buttonPressedObserver.OnNext(pressed);
+                        lastPressed = pressed;
+                    }
+                    else if (pressed == null)
+                    {
+                        lastPressed = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Button monitoring error: {ex.Message}");
+                }
+
+                try
+                {
+                    await Task.Delay(100, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore cancellation during delay
+                }
+            }
+        }, token);
+    }
+
+    /// <summary>
+    /// Stops the background button monitoring task if running.
+    /// </summary>
+    public void StopButtonMonitoring()
+    {
+        if (_buttonMonitoringCts != null)
+        {
+            _buttonMonitoringCts.Cancel();
+
+            try
+            {
+                _buttonMonitoringTask?.Wait(1000);
+            }
+            catch (AggregateException) { }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                _buttonMonitoringCts.Dispose();
+                _buttonMonitoringCts = null;
+                _buttonMonitoringTask = null;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Motor methods
+
+    /// <summary>Sets the speed and direction of both motors.</summary>
+    /// <param name="leftSpeed">Speed for the left motor (-1.0 to 1.0).</param>
+    /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
+    public void SetMotorSpeeds(double leftSpeed, double rightSpeed) => _motorManager.SetMotorSpeeds(leftSpeed, rightSpeed);
+
+    /// <summary>Drives both motors forward at the specified speed.</summary>
+    /// <param name="speed">Speed value.</param>
+    public void Forward(double speed = DefaultSpeed) => _motorManager.Forward(speed);
+
+    /// <summary>Drives both motors backward at the specified speed.</summary>
+    /// <param name="speed">Speed value.</param>
+    public void Backward(double speed = DefaultSpeed) => _motorManager.Backward(speed);
+
+    /// <summary>Turns the robot left in place at the specified speed.</summary>
+    /// <param name="speed">Speed value.</param>
+    public void TurnLeft(double speed = DefaultSpeed) => _motorManager.TurnLeft(speed);
+
+    /// <summary>Turns the robot right in place at the specified speed.</summary>
+    /// <param name="speed">Speed value.</param>
+    public void TurnRight(double speed = DefaultSpeed) => _motorManager.TurnRight(speed);
+
+    /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
+    /// <param name="speed">Speed value.</param>
+    public void CurveForwardLeft(double speed = DefaultSpeed) => _motorManager.CurveForwardLeft(speed);
+
+    /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
+    /// <param name="speed">Speed value.</param>
+    public void CurveForwardRight(double speed = DefaultSpeed) => _motorManager.CurveForwardRight(speed);
+
+    /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
+    /// <param name="speed">Speed value.</param>
+    public void CurveBackwardLeft(double speed = DefaultSpeed) => _motorManager.CurveBackwardLeft(speed);
+
+    /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
+    /// <param name="speed">Speed value.</param>
+    public void CurveBackwardRight(double speed = DefaultSpeed) => _motorManager.CurveBackwardRight(speed);
+
+    /// <summary>Stops both motors (brake mode).</summary>
+    public void Stop() => _motorManager.Stop();
+
     /// <summary>
     /// Controls the robot's movement using normalized horizontal and vertical values.
     /// Horizontal: -1 (left) to 1 (right), 0 = no turn.
@@ -208,243 +472,6 @@ public class TriloBot : IDisposable
             SetMotorSpeeds(-leftSpeed, -rightSpeed);
         }
     }
-
-    #region Distance Monitoring
-
-    /// <summary>
-    /// Starts non-blocking background monitoring of the distance sensor every 500 ms.
-    /// </summary>
-    public void StartDistanceMonitoring(double minDistance = 30.0)
-    {
-        // If already running, do nothing
-        if (_distanceMonitoringTask is { IsCompleted: false })
-            return;
-
-        Console.WriteLine("Starting distance monitoring...");
-
-        _distanceMonitoringCts = new CancellationTokenSource();
-        var token = _distanceMonitoringCts.Token;
-
-        _distanceMonitoringTask = Task.Run(async () =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    var distance = _ultrasoundManager.ReadDistance();
-                    var isTooNear = distance < minDistance;
-
-                    // Only trigger if the value changes
-                    // This prevents unnecessary updates and notifications.
-                    if (Math.Abs(_distanceObserver.Value - distance) > DistanceChangeThreshold)
-                    {
-                        _distanceObserver.OnNext(distance);
-                    }
-
-                    if (_objectTooNearObserver.Value != isTooNear)
-                    {
-                        _objectTooNearObserver.OnNext(isTooNear);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Distance monitoring error: {ex.Message}");
-                }
-                await Task.Delay(500, token).ConfigureAwait(false);
-            }
-        }, token);
-    }
-
-    /// <summary>
-    /// Stops the background distance monitoring task if running.
-    /// </summary>
-    public void StopDistanceMonitoring()
-    {
-        if (_distanceMonitoringCts != null)
-        {
-            _distanceMonitoringCts.Cancel();
-
-            try
-            {
-                _distanceMonitoringTask?.Wait(1000);
-            }
-            catch (AggregateException) { }
-            catch (OperationCanceledException) { }
-            finally
-            {
-                _distanceMonitoringCts.Dispose();
-                _distanceMonitoringCts = null;
-                _distanceMonitoringTask = null;
-            }
-        }
-    }
-
-    #endregion
-
-    #region  Constructor
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TriloBot"/> class and sets up all subsystems.
-    /// </summary>
-    public TriloBot(CancellationToken cancellationToken = default)
-    {
-        // Check if the current platform is supported
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == false)
-        {
-            throw new PlatformNotSupportedException("TriloBot is only supported on Raspberry Pi platforms.");
-        }
-
-        // Set the cancellation token for this instance
-
-        // Initialize GPIO controller
-        // This is the main controller for all GPIO operations
-        _gpio = new GpioController();
-
-        // Setup button manager
-        _buttonManager = new ButtonManager(_gpio);
-
-        // Setup light manager
-        _lightManager = new LightManager(_gpio);
-
-        // Setup motor manager
-        _motorManager = new MotorManager(_gpio);
-
-        // Setup ultrasound manager
-        _ultrasoundManager = new UltrasoundManager(_gpio);
-
-        // Setup camera manager
-        _cameraManager = new CameraManager();
-
-        // Register cancellation token to handle graceful shutdown
-        // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
-        // It ensures that any ongoing effects or operations are properly terminated
-        cancellationToken.Register(() =>
-        {
-            // Cancel any ongoing effects or operations
-            StopUnderlighting();
-            StopDistanceMonitoring();
-            Stop();
-            
-            // Caution:
-            // Do not call Dispose() here; handled by using statement
-        });
-
-        // Log successful initialization
-        Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
-    }
-
-    #endregion
-
-    #region Button methods
-
-    /// <summary>
-    /// Sets the brightness of a button LED.
-    /// </summary>
-    /// <param name="light">The light whose button LED to set.</param>
-    /// <param name="value">Brightness value between 0.0 and 1.0.</param>
-    public void SetButtonLed(Lights light, double value) => _lightManager.SetButtonLed(light, value);
-
-    /// <summary>
-    /// Starts non-blocking background monitoring of button presses every 100ms.
-    /// Emits the Buttons enum value to ButtonPressedObservable when a button is pressed.
-    /// </summary>
-    public void StartButtonMonitoring()
-    {
-        if (_buttonMonitoringTask is { IsCompleted: false })
-            return;
-
-        if (_buttonMonitoringCts == null || _buttonMonitoringCts.IsCancellationRequested)
-        {
-            _buttonMonitoringCts = new CancellationTokenSource();
-        }
-
-        _buttonMonitoringTask = Task.Run(async () =>
-        {
-            var lastPressed = (Buttons?)null;
-            while (!_buttonMonitoringCts.Token.IsCancellationRequested)
-            {
-                try
-                {
-                    var pressed = Enum.GetValues(typeof(Buttons))
-                        .Cast<Buttons?>()
-                        .FirstOrDefault(b => b.HasValue && _buttonManager.ReadButton(b.Value));
-
-                    if (pressed != null && lastPressed != pressed)
-                    {
-                        _buttonPressedObserver.OnNext(pressed);
-                        lastPressed = pressed;
-                    }
-                    else if (pressed == null)
-                    {
-                        lastPressed = null;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Button monitoring error: {ex.Message}");
-                }
-                finally
-                {
-                    await Task.Delay(100, _buttonMonitoringCts.Token).ConfigureAwait(false);
-                }
-            }
-        }, _buttonMonitoringCts.Token);
-    }
-
-    /// <summary>
-    /// Stops the background button monitoring task if running.
-    /// </summary>
-    public void StopButtonMonitoring()
-    {
-        if (_buttonMonitoringTask is { IsCompleted: false })
-        {
-            _buttonMonitoringTask = null;
-        }
-    }
-
-    #endregion
-
-    #region Motor methods
-
-    /// <summary>Sets the speed and direction of both motors.</summary>
-    /// <param name="leftSpeed">Speed for the left motor (-1.0 to 1.0).</param>
-    /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
-    public void SetMotorSpeeds(double leftSpeed, double rightSpeed) => _motorManager.SetMotorSpeeds(leftSpeed, rightSpeed);
-
-    /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void Forward(double speed = DefaultSpeed) => _motorManager.Forward(speed);
-
-    /// <summary>Drives both motors backward at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void Backward(double speed = DefaultSpeed) => _motorManager.Backward(speed);
-
-    /// <summary>Turns the robot left in place at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void TurnLeft(double speed = DefaultSpeed) => _motorManager.TurnLeft(speed);
-
-    /// <summary>Turns the robot right in place at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void TurnRight(double speed = DefaultSpeed) => _motorManager.TurnRight(speed);
-
-    /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveForwardLeft(double speed = DefaultSpeed) => _motorManager.CurveForwardLeft(speed);
-
-    /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveForwardRight(double speed = DefaultSpeed) => _motorManager.CurveForwardRight(speed);
-
-    /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveBackwardLeft(double speed = DefaultSpeed) => _motorManager.CurveBackwardLeft(speed);
-
-    /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveBackwardRight(double speed = DefaultSpeed) => _motorManager.CurveBackwardRight(speed);
-
-    /// <summary>Stops both motors (brake mode).</summary>
-    public void Stop() => _motorManager.Stop();
 
     #endregion
 
