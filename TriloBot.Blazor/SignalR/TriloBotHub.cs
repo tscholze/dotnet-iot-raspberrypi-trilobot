@@ -79,7 +79,14 @@ public class TriloBotHub : Hub
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
     public Task FillUnderlighting(int r, int g, int b)
-        => Task.Run(() => _robot.FillUnderlighting(r, g, b));
+    {
+        // Validate r, g and b that they are in range of 0-255
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+            throw new ArgumentOutOfRangeException("RGB values must be between 0 and 255.");
+
+        // Call function of TriloBot
+        Task.Run(() => _robot.FillUnderlighting((byte)r, (byte)g, (byte)b));
+    }
 
     /// <summary>
     /// Sets the RGB value of a single underlight.
