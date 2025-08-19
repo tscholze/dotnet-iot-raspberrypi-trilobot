@@ -108,22 +108,22 @@ public partial class JoystickPage
 
     private void AutoModeButton_OnClicked(object? sender, EventArgs e)
     {
-        Task.Run(async () => await _hubConnectionService.LightsOn());
+        Task.Run(_hubConnectionService.LightsOn);
     }
     
     private void LightOnButton_OnClicked(object? sender, EventArgs e)
     {
-        Task.Run(async () => await _hubConnectionService.LightsOn());
+        Task.Run(_hubConnectionService.LightsOn);
     }
     
     private void LightOffButton_OnClicked(object? sender, EventArgs e)
     {
-        Task.Run(async () => await _hubConnectionService.LightsOff());
+        Task.Run(_hubConnectionService.LightsOff);
     }
     
     private void LightSpecialButton_OnClicked(object? sender, EventArgs e)
     {
-        Task.Run(async () => await _hubConnectionService.StartSpecialLights());
+        Task.Run(_hubConnectionService.StartSpecialLights);
     }
 
     #endregion
