@@ -123,6 +123,11 @@ public class TriloBot : IDisposable
     private const double DefaultSpeed = 0.5;
 
     /// <summary>
+    /// The default critical distance for movements of the robot.
+    /// </summary>
+    private const double DefaultCriticalDistance = 30.0;
+
+    /// <summary>
     /// The minimum movement threshold for the robot.
     /// </summary>
     private const double MovementChangedThreshold = 0.1;
@@ -132,8 +137,12 @@ public class TriloBot : IDisposable
     /// </summary>
     private const double DistanceChangeThreshold = 1.0;
 
-    #endregion
+    /// <summary>
+    /// The default interval for sensor polling.
+    /// </summary>
+    private const int DefaultSensorPollingInterval = 250;
 
+    #endregion
 
     #region  Constructor
 
@@ -192,47 +201,41 @@ public class TriloBot : IDisposable
     #region Distance Monitoring
 
     /// <summary>
-    /// Starts non-blocking background monitoring of the distance sensor every 500 ms.
+    /// Starts non-blocking background monitoring of the distance sensor.
     /// </summary>
-    public void StartDistanceMonitoring(double minDistance = 30.0)
+    public void StartDistanceMonitoring(double minDistance = DefaultCriticalDistance)
     {
-        // If already running, do nothing
+        if (minDistance <= 0)
+            throw new ArgumentOutOfRangeException(nameof(minDistance), "Minimum distance must be greater than zero.");
+
         if (_distanceMonitoringTask is { IsCompleted: false })
             return;
 
-        Console.WriteLine("Starting distance monitoring...");
-
         _distanceMonitoringCts = new CancellationTokenSource();
-        var token = _distanceMonitoringCts.Token;
 
         _distanceMonitoringTask = Task.Run(async () =>
         {
-            while (!token.IsCancellationRequested)
+            while (!_distanceMonitoringCts.Token.IsCancellationRequested)
             {
                 try
                 {
                     var distance = _ultrasoundManager.ReadDistance();
                     var isTooNear = distance < minDistance;
 
-                    // Only trigger if the value changes
-                    // This prevents unnecessary updates and notifications.
                     if (Math.Abs(_distanceObserver.Value - distance) > DistanceChangeThreshold)
-                    {
                         _distanceObserver.OnNext(distance);
-                    }
 
                     if (_objectTooNearObserver.Value != isTooNear)
-                    {
                         _objectTooNearObserver.OnNext(isTooNear);
-                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Distance monitoring error: {ex.Message}");
                 }
-                await Task.Delay(500, token).ConfigureAwait(false);
+                
+                await Task.Delay(DefaultSensorPollingInterval, _distanceMonitoringCts.Token);
             }
-        }, token);
+        });
     }
 
     /// <summary>
@@ -280,54 +283,24 @@ public class TriloBot : IDisposable
             return;
 
         _buttonMonitoringCts ??= new CancellationTokenSource();
-        var token = _buttonMonitoringCts.Token;
-
-        // Cache the button enum values once for efficiency
-        var buttons = Enum.GetValues(typeof(Buttons)).Cast<Buttons>().ToArray();
 
         _buttonMonitoringTask = Task.Run(async () =>
         {
             Buttons? lastPressed = null;
 
-            while (!token.IsCancellationRequested)
+            while (!_buttonMonitoringCts.Token.IsCancellationRequested)
             {
-                try
-                {
-                    Buttons? pressed = null;
-                    foreach (var b in buttons)
-                    {
-                        if (_buttonManager.ReadButton(b))
-                        {
-                            pressed = b;
-                            break;
-                        }
-                    }
+                var pressed = Enum.GetValues<Buttons>().FirstOrDefault(_buttonManager.ReadButton);
 
-                    if (pressed != null && lastPressed != pressed)
-                    {
-                        _buttonPressedObserver.OnNext(pressed);
-                        lastPressed = pressed;
-                    }
-                    else if (pressed == null)
-                    {
-                        lastPressed = null;
-                    }
-                }
-                catch (Exception ex)
+                if (pressed != lastPressed)
                 {
-                    Console.WriteLine($"Button monitoring error: {ex.Message}");
+                    _buttonPressedObserver.OnNext(pressed);
+                    lastPressed = pressed;
                 }
 
-                try
-                {
-                    await Task.Delay(100, token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    // Ignore cancellation during delay
-                }
+                await Task.Delay(DefaultSensorPollingInterval, _buttonMonitoringCts.Token);
             }
-        }, token);
+        });
     }
 
     /// <summary>
