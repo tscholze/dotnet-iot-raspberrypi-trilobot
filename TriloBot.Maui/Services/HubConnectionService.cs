@@ -142,6 +142,36 @@ public class HubConnectionService : IDisposable
             Console.WriteLine($"Error invoking {methodName}: {e.Message}");
         }
     }
+    
+    /// <summary>
+    /// Switches the robot's lights on with white color.
+    /// </summary>
+    public async Task LightsOn()
+    {
+        await SafeInvokeAsync("FillUnderlighting", 255, 255, 255);
+    }
+    
+    /// <summary>
+    /// Switches the robot's lights off.
+    /// </summary>
+    public async Task LightsOff()
+    {
+        await SafeInvokeAsync("ClearUnderlighting");
+    }
+    
+    /// <summary>
+    /// Plays police lights effect on the robot.
+    /// This method is used to start the special lights effect, such as police lights.
+    /// </summary>
+    public async Task StartSpecialLights()
+    {
+        await SafeInvokeAsync("StartPoliceEffect");
+    }
+    
+    public async Task ToggleAutopilot()
+    {
+        await SafeInvokeAsync("StartAutopilot");
+    }
 
     #endregion
 

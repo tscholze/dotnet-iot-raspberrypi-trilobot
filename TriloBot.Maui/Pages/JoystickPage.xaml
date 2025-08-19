@@ -73,7 +73,8 @@
                     Grid.Column="0"
                     Style="{StaticResource TopLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="cd_on.png"/>
+                        Source="cd_on.png"
+                        Clicked="AutoModeButton_OnClicked"/>
                 </Border>
 
                 <Border
@@ -81,7 +82,8 @@
                     Grid.Column="1"
                     Style="{StaticResource TopRightRoundedBorderStyle}">
                     <ImageButton
-                        Source="horn_on.png"/>
+                        Source="horn_on.png"
+                        Clicked="LightSpecialButton_OnClicked"/>
                 </Border>
 
                 <Border
@@ -89,7 +91,8 @@
                     Grid.Column="0"
                     Style="{StaticResource BottomLeftRoundedBorderStyle}">
                     <ImageButton
-                        Source="light_on.png"/>
+                        Source="light_on.png"
+                        Clicked="LightOnButton_OnClicked"/>
                 </Border>
 
                 <Border
@@ -97,7 +100,8 @@
                     Grid.Column="1"
                     Style="{StaticResource BottomRightRoundedBorderStyle}">
                     <ImageButton
-                        Source="light_mode_2_off.png"/>
+                        Source="light_mode_2_off.png"
+                        Clicked="LightOffButton_OnClicked"/>
                 </Border>
             </Grid>
         </Grid>

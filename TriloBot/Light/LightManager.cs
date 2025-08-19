@@ -244,6 +244,8 @@ namespace TriloBot.Light
         /// </summary>
         public void Dispose()
         {
+            DisableUnderlighting();
+            
             foreach (var pwm in _ledPwmMapping.Values)
             {
                 pwm.Dispose();

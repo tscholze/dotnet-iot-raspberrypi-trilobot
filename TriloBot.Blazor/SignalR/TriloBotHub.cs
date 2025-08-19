@@ -90,6 +90,9 @@ public class TriloBotHub : Hub
     /// <param name="b">Blue value (0-255).</param>
     public Task SetUnderlight(string light, byte r, byte g, byte b)
         => Task.Run(() => _robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
+    
+    public Task ClearUnderlighting()
+        => Task.Run(() => _robot.ClearUnderlighting());
 
     #endregion
 

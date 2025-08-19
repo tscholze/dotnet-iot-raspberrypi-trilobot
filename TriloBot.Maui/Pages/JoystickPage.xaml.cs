@@ -105,6 +105,30 @@ public partial class JoystickPage
             Console.WriteLine($"Error sending joystick movement: {e.Message}");
         }
     }
+
+    private void AutoModeButton_OnClicked(object? sender, EventArgs e)
+    {
+        Task.Run(async () => await _hubConnectionService.LightsOn());
+    }
+    
+    private void LightOnButton_OnClicked(object? sender, EventArgs e)
+    {
+        Task.Run(async () => await _hubConnectionService.LightsOn());
+    }
+    
+    private void LightOffButton_OnClicked(object? sender, EventArgs e)
+    {
+        Task.Run(async () => await _hubConnectionService.LightsOff());
+    }
+    
+    private void LightSpecialButton_OnClicked(object? sender, EventArgs e)
+    {
+        Task.Run(async () => await _hubConnectionService.StartSpecialLights());
+    }
+
+    #endregion
+    
+    #region Life cycle -
     
     protected override void OnDisappearing()
     {
@@ -113,6 +137,6 @@ public partial class JoystickPage
         _objectTooNearSubscription?.Dispose();
         _distanceSubscription?.Dispose();
     }
-
+    
     #endregion
 }

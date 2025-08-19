@@ -7,6 +7,7 @@ using TriloBot.Motor;
 using TriloBot.Ultrasound;
 using TriloBot.Button;
 using TriloBot.Camera;
+using TriloBot.Light.Modes;
 
 namespace TriloBot;
 
@@ -184,7 +185,7 @@ public class TriloBot : IDisposable
         cancellationToken.Register(() =>
         {
             // Cancel any ongoing effects or operations
-            StopUnderlighting();
+            _lightManager.DisableUnderlighting();
             StopDistanceMonitoring();
             Stop();
 
@@ -450,12 +451,6 @@ public class TriloBot : IDisposable
 
     #region Light methods
 
-    /// <summary>Enables and displays the current underlighting values.</summary>
-    public void ShowUnderlighting() => _lightManager.ShowUnderlighting();
-
-    /// <summary>Disables the underlighting.</summary>
-    public void StopUnderlighting() => _lightManager.DisableUnderlighting();
-
     /// <summary>Sets the RGB value of a single underlight.</summary>
     /// <param name="light">The index of the underlight (0-5).</param>
     /// <param name="r">Red value (0-255).</param>
@@ -516,6 +511,13 @@ public class TriloBot : IDisposable
     /// <param name="show">Whether to immediately update the lights.</param>
     public void ClearUnderlights(Lights[] lights, bool show = true) => _lightManager.ClearUnderlights(lights, show);
 
+    /// <summary>
+    /// Starts the police lights effect, which alternates red and blue lights.
+    /// This method does not block and can be called multiple times to restart the effect.
+    /// </summary>
+    public void StartPoliceEffect()
+        => _lightManager.PoliceLightsEffect();
+
     #endregion
 
     #region Ultrasound methods
@@ -569,7 +571,6 @@ public class TriloBot : IDisposable
         {
             StopDistanceMonitoring();
             StopButtonMonitoring();
-            StopUnderlighting();
             _motorManager.Dispose();
             _buttonManager.Dispose();
             _lightManager.Dispose();
