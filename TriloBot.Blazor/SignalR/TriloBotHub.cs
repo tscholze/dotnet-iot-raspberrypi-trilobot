@@ -78,7 +78,7 @@ public class TriloBotHub : Hub
     /// <param name="r">Red value (0-255).</param>
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
-    public Task FillUnderlighting(byte r, byte g, byte b)
+    public Task FillUnderlighting(int r, int g, int b)
         => Task.Run(() => _robot.FillUnderlighting(r, g, b));
 
     /// <summary>
@@ -93,6 +93,9 @@ public class TriloBotHub : Hub
     
     public Task ClearUnderlighting()
         => Task.Run(() => _robot.ClearUnderlighting());
+    
+    public Task StartPoliceEffect()
+    => Task.Run(() => _robot.StartPoliceEffect());
 
     #endregion
 

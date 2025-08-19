@@ -57,10 +57,6 @@ public sealed class UltrasoundManager : IDisposable
     /// Initializes a new instance of the <see cref="UltrasoundManager"/> class and opens the trigger and echo pins.
     /// </summary>
     /// <param name="gpio">The GPIO controller to use for pin operations.</param>
-    /// <summary>
-    /// Initializes a new instance of the <see cref="UltrasoundManager"/> class and opens the trigger and echo pins.
-    /// </summary>
-    /// <param name="gpio">The GPIO controller to use for pin operations.</param>
     public UltrasoundManager(GpioController gpio)
     {
         _gpio = gpio;

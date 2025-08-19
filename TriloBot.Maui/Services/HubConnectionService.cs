@@ -148,7 +148,7 @@ public class HubConnectionService : IDisposable
     /// </summary>
     public async Task LightsOn()
     {
-        await SafeInvokeAsync("FillUnderlighting", 255, 255, 255);
+        await SafeInvokeAsync("FillUnderlighting", (byte)255, (byte)255, (byte)255);
     }
     
     /// <summary>

@@ -112,7 +112,7 @@ namespace TriloBot.Light
         /// <exception cref="ArgumentOutOfRangeException">Thrown if light is out of range.</exception>
         public void SetUnderlight(Lights light, byte r, byte g, byte b, bool show = true)
         {
-            int index = (int)light;
+            var index = (int)light;
             _underlight[index * 3] = r;
             _underlight[index * 3 + 1] = g;
             _underlight[index * 3 + 2] = b;
