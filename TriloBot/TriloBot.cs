@@ -179,8 +179,6 @@ public class TriloBot : IDisposable
             throw new PlatformNotSupportedException("TriloBot is only supported on Raspberry Pi platforms.");
         }
 
-        // Set the cancellation token for this instance
-
         // Initialize GPIO controller
         // This is the main controller for all GPIO operations
         _gpio = new GpioController();
@@ -204,7 +202,7 @@ public class TriloBot : IDisposable
         _remoteControllerManager = new RemoteControllerManager();
         _controllerVerticalMovementObservable = _remoteControllerManager.VerticalMovementObservable.Subscribe(OnVerticalMovementChanged);
         _controllerHorizontalMovementObservable = _remoteControllerManager.HorizontalMovementObservable.Subscribe(OnHorizontalMovementChanged);
-        _controllerButtonPressedObservable = _remoteControllerManager.ButtonPressedObservable.Subscribe(OnButtonPressed);
+        _controllerButtonPressedObservable = _remoteControllerManager.ButtonPressedObservable.Subscribe(OnControllerButtonPressed);
 
         // Register cancellation token to handle graceful shutdown
         // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
@@ -224,19 +222,44 @@ public class TriloBot : IDisposable
         Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
     }
 
-    private void OnButtonPressed(Buttons? buttons)
+    /// <summary>
+    /// Handles button press events from the remote controller.
+    /// </summary>
+    private void OnControllerButtonPressed(Buttons? buttons)
     {
-        Console.WriteLine($"Button pressed: {buttons}");
+        switch (buttons)
+        {
+            case Buttons.ButtonA:
+                _lightManager.FillUnderlighting(255, 0, 0);
+                break;
+            case Buttons.ButtonB:
+                _lightManager.FillUnderlighting(0, 0, 0);
+                break;
+            case Buttons.ButtonX:
+                Console.WriteLine("Button X pressed");
+                break;
+            case Buttons.ButtonY:
+                Console.WriteLine("Button Y pressed");
+                break;
+            default:
+                Console.WriteLine("Unknown button pressed");
+                break;
+        }
     }
 
     private void OnHorizontalMovementChanged(double horizontal)
     {
-        Console.WriteLine($"Horizontal movement changed: {horizontal}");
+        var vertical = _remoteControllerManager.VerticalMovementObservable.Latest().FirstOrDefault();
+        Console.WriteLine($"Horizontal movement changed: {horizontal} with computed v: {vertical}");
+        Move(horizontal, vertical);
     }
 
     private void OnVerticalMovementChanged(double vertical)
     {
-        Console.WriteLine($"Vertical movement changed: {vertical}");
+        var horizontal = _remoteControllerManager.HorizontalMovementObservable.Latest().FirstOrDefault();
+        Console.WriteLine($"Vertical movement changed: {vertical} with computed h: {horizontal}");
+
+        Move(horizontal, vertical);
     }
 
     #endregion
