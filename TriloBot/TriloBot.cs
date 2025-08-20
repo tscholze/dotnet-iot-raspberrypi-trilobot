@@ -374,76 +374,48 @@ public class TriloBot : IDisposable
 
     /// <summary>
     /// Controls the robot's movement using normalized horizontal and vertical values.
-    /// Horizontal: -1 (left) to 1 (right), 0 = no turn.
-    /// Vertical: -1 (backward) to 1 (forward), 0 = stop.
     /// </summary>
-    /// <param name="horizontal">-1 (left) to 1 (right)</param>
-    /// <param name="vertical">-1 (backward) to 1 (forward)</param>
+    /// <param name="horizontal">Horizontal movement: -1 (left) to 1 (right), 0 = no turn</param>
+    /// <param name="vertical">Vertical movement: -1 (backward) to 1 (forward), 0 = stop</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when horizontal or vertical values are outside the range [-1, 1]</exception>
     public void Move(double horizontal, double vertical)
     {
-        // Step 1: Get absolute values for easier range checks and calculations
-        var horizontalAbs = Math.Abs(horizontal);
-        var verticalAbs = Math.Abs(vertical);
-
-        // Step 2: Validate horizontal input range
-        // If horizontal is outside [-1, 1], stop and throw exception
-        if (horizontalAbs > 1)
+        // Validate input ranges
+        if (Math.Abs(horizontal) > 1.0 || Math.Abs(vertical) > 1.0)
         {
             Stop();
             throw new ArgumentOutOfRangeException(nameof(horizontal), "Value must be between -1 and 1.");
         }
 
-        // Step 3: Validate vertical input range
-        // If vertical is outside [-1, 1], stop and throw exception
-        if (verticalAbs > 1)
+        // Stop if movement is below threshold
+        if (Math.Abs(vertical) < MovementChangedThreshold && Math.Abs(horizontal) < MovementChangedThreshold)
         {
-            Stop();
-            throw new ArgumentOutOfRangeException(nameof(vertical), "Value must be between -1 and 1.");
-        }
-
-        // Step 4: If vertical is below a movement threshold, stop motors and exit
-        if (verticalAbs < MovementChangedThreshold && horizontalAbs < MovementChangedThreshold)
-        {
-            Console.WriteLine("Stopping motors due to low movement threshold.");
             Stop();
             return;
         }
 
-        Console.WriteLine($"Move: horizontal={horizontal}, vertical={vertical}");
-
-
-        // Step 5: Calculate base speed for both motors
-        // Step 5.1: If a "on the place" turn is detected (horizontal movement without vertical movement)
-        if (verticalAbs < MovementChangedThreshold || horizontalAbs > MovementChangedThreshold)
+        // Handle pure rotation (turn in place)
+        if (Math.Abs(vertical) < MovementChangedThreshold)
         {
             SetMotorSpeeds(-horizontal, horizontal);
             return;
         }
 
-        // Step 5.2: Apply smooth turning logic
-        // Reduce speed on one side for turning
-        // If horizontal is negative, turn left by reducing left motor speed
-        // If horizontal is positive, turn right by reducing right motor speed
-        double leftSpeed = verticalAbs;
-        double rightSpeed = verticalAbs;
+        // Calculate differential steering for smooth turning
+        var baseSpeed = Math.Abs(vertical);
+        var turnFactor = Math.Abs(horizontal);
 
-        if (horizontal < 0)
+        var leftSpeed = horizontal < 0 ? baseSpeed * (1.0 - turnFactor) : baseSpeed;
+        var rightSpeed = horizontal > 0 ? baseSpeed * (1.0 - turnFactor) : baseSpeed;
+
+        // Apply direction (forward/backward)
+        if (vertical < 0)
         {
-            leftSpeed *= 1.0 - Math.Abs(horizontal);
-        }
-        else
-        {
-            rightSpeed *= 1.0 - Math.Abs(horizontal);
+            leftSpeed = -leftSpeed;
+            rightSpeed = -rightSpeed;
         }
 
-        if (vertical >= 0)
-        {
-            SetMotorSpeeds(leftSpeed, rightSpeed);
-        }
-        else
-        {
-            SetMotorSpeeds(-leftSpeed, -rightSpeed);
-        }
+        SetMotorSpeeds(leftSpeed, rightSpeed);
     }
 
     #endregion
