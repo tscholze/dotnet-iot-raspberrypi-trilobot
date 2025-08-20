@@ -20,11 +20,11 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 
 ## Status
 
-|Service|Name|State|
-|-|-|-|
-|Action|Build TriloBot.Core|[![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml)|
-|Action|Build TriloBot.Blazor|[![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml)|
-|Action|Build TriloBot.Maui|-|
+| Service | Name                  | State                                                                                                                                                                                                                             |
+| ------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Action  | Build TriloBot.Core   | [![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml)     |
+| Action  | Build TriloBot.Blazor | [![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml) |
+| Action  | Build TriloBot.Maui   | -                                                                                                                                                                                                                                 |
 
 ## How it looks
 
@@ -35,9 +35,10 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 
 ### Android (Surface Duo)
 
-|                                         |     |
-| --------------------------------------- | --- |
-| ![](_docs/trilobot-android-surface.png) | ![](_docs/trilobot-maui-joystick.png)    |
+|                                         |
+| --------------------------------------- |
+| ![](_docs/trilobot-android-surface.png) |
+| ![](_docs/trilobot-maui-joystick.png)   |
 
 ### Windows
 |                                  |                            |
