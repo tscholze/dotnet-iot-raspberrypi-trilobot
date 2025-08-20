@@ -8,6 +8,7 @@ using TriloBot.Ultrasound;
 using TriloBot.Button;
 using TriloBot.Camera;
 using TriloBot.Light.Modes;
+using TriloBot.RemoteController;
 
 namespace TriloBot;
 
@@ -90,6 +91,11 @@ public class TriloBot : IDisposable
     private readonly CameraManager _cameraManager;
 
     /// <summary>
+    /// Manages remote controller operations.
+    /// </summary>
+    private readonly RemoteControllerManager _remoteControllerManager;
+
+    /// <summary>
     /// Subject for live video feed URL changes.
     /// </summary>
     private readonly BehaviorSubject<string> _liveVideoFeedSubject = new("");
@@ -113,6 +119,21 @@ public class TriloBot : IDisposable
     /// CancellationTokenSource for button monitoring.
     /// </summary>
     private CancellationTokenSource? _buttonMonitoringCts;
+
+    /// <summary>
+    /// Subscription for the controller button pressed observable.
+    /// </summary>
+    private IDisposable? _controllerButtonPressedObservable;
+
+    /// <summary>
+    /// Subscription for the controller horizontal movement observable.
+    /// </summary>
+    private IDisposable? _controllerHorizontalMovementObservable;
+
+    /// <summary>
+    /// Subscription for the controller vertical movement observable.
+    /// </summary>
+    private IDisposable? _controllerVerticalMovementObservable;
 
     #endregion
 
@@ -179,6 +200,12 @@ public class TriloBot : IDisposable
         // Setup camera manager
         _cameraManager = new CameraManager();
 
+        // Setup remote controller manager
+        _remoteControllerManager = new RemoteControllerManager();
+        _controllerVerticalMovementObservable = _remoteControllerManager.VerticalMovementObservable.Subscribe(OnVerticalMovementChanged);
+        _controllerHorizontalMovementObservable = _remoteControllerManager.HorizontalMovementObservable.Subscribe(OnHorizontalMovementChanged);
+        _controllerButtonPressedObservable = _remoteControllerManager.ButtonPressedObservable.Subscribe(OnButtonPressed);
+
         // Register cancellation token to handle graceful shutdown
         // This allows the TriloBot to clean up resources and stop ongoing operations when cancellation is requested
         // It ensures that any ongoing effects or operations are properly terminated
@@ -187,7 +214,7 @@ public class TriloBot : IDisposable
             // Cancel any ongoing effects or operations
             _lightManager.DisableUnderlighting();
             StopDistanceMonitoring();
-            Stop();
+            Move(0, 0);
 
             // Caution:
             // Do not call Dispose() here; handled by using statement
@@ -195,6 +222,21 @@ public class TriloBot : IDisposable
 
         // Log successful initialization
         Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
+    }
+
+    private void OnButtonPressed(Buttons? buttons)
+    {
+        Console.WriteLine($"Button pressed: {buttons}");
+    }
+
+    private void OnHorizontalMovementChanged(double horizontal)
+    {
+        Console.WriteLine($"Horizontal movement changed: {horizontal}");
+    }
+
+    private void OnVerticalMovementChanged(double vertical)
+    {
+        Console.WriteLine($"Vertical movement changed: {vertical}");
     }
 
     #endregion
@@ -332,46 +374,6 @@ public class TriloBot : IDisposable
 
     #region Motor methods
 
-    /// <summary>Sets the speed and direction of both motors.</summary>
-    /// <param name="leftSpeed">Speed for the left motor (-1.0 to 1.0).</param>
-    /// <param name="rightSpeed">Speed for the right motor (-1.0 to 1.0).</param>
-    public void SetMotorSpeeds(double leftSpeed, double rightSpeed) => _motorManager.SetMotorSpeeds(leftSpeed, rightSpeed);
-
-    /// <summary>Drives both motors forward at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void Forward(double speed = DefaultSpeed) => _motorManager.Forward(speed);
-
-    /// <summary>Drives both motors backward at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void Backward(double speed = DefaultSpeed) => _motorManager.Backward(speed);
-
-    /// <summary>Turns the robot left in place at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void TurnLeft(double speed = DefaultSpeed) => _motorManager.TurnLeft(speed);
-
-    /// <summary>Turns the robot right in place at the specified speed.</summary>
-    /// <param name="speed">Speed value.</param>
-    public void TurnRight(double speed = DefaultSpeed) => _motorManager.TurnRight(speed);
-
-    /// <summary>Curves forward left (left motor stopped, right motor forward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveForwardLeft(double speed = DefaultSpeed) => _motorManager.CurveForwardLeft(speed);
-
-    /// <summary>Curves forward right (right motor stopped, left motor forward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveForwardRight(double speed = DefaultSpeed) => _motorManager.CurveForwardRight(speed);
-
-    /// <summary>Curves backward left (left motor stopped, right motor backward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveBackwardLeft(double speed = DefaultSpeed) => _motorManager.CurveBackwardLeft(speed);
-
-    /// <summary>Curves backward right (right motor stopped, left motor backward).</summary>
-    /// <param name="speed">Speed value.</param>
-    public void CurveBackwardRight(double speed = DefaultSpeed) => _motorManager.CurveBackwardRight(speed);
-
-    /// <summary>Stops both motors (brake mode).</summary>
-    public void Stop() => _motorManager.Stop();
-
     /// <summary>
     /// Controls the robot's movement using normalized horizontal and vertical values.
     /// </summary>
@@ -383,21 +385,21 @@ public class TriloBot : IDisposable
         // Validate input ranges
         if (Math.Abs(horizontal) > 1.0 || Math.Abs(vertical) > 1.0)
         {
-            Stop();
+            Move(0, 0);
             throw new ArgumentOutOfRangeException(nameof(horizontal), "Value must be between -1 and 1.");
         }
 
         // Stop if movement is below threshold
         if (Math.Abs(vertical) < MovementChangedThreshold && Math.Abs(horizontal) < MovementChangedThreshold)
         {
-            Stop();
+            _motorManager.SetMotorSpeeds(0, 0);
             return;
         }
 
         // Handle pure rotation (turn in place)
         if (Math.Abs(vertical) < MovementChangedThreshold)
         {
-            SetMotorSpeeds(-horizontal, horizontal);
+            _motorManager.SetMotorSpeeds(-horizontal, horizontal);
             return;
         }
 
@@ -415,7 +417,7 @@ public class TriloBot : IDisposable
             rightSpeed = -rightSpeed;
         }
 
-        SetMotorSpeeds(leftSpeed, rightSpeed);
+        _motorManager.SetMotorSpeeds(leftSpeed, rightSpeed);
     }
 
     #endregion
@@ -542,6 +544,9 @@ public class TriloBot : IDisposable
         {
             StopDistanceMonitoring();
             StopButtonMonitoring();
+            _controllerButtonPressedObservable = null;
+            _controllerHorizontalMovementObservable = null;
+            _controllerVerticalMovementObservable = null;
             _motorManager.Dispose();
             _buttonManager.Dispose();
             _lightManager.Dispose();
