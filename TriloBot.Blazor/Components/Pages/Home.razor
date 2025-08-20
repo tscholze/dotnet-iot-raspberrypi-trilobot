@@ -165,6 +165,8 @@
     /// <param name="vertical"></param>
     private async Task CallMotor(double horizontal = 0.0, double vertical = 0.0)
     {
+        Console.WriteLine($"CallMotor: horizontal={horizontal}, vertical={vertical}");
+        
         if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected)
             return;
 
