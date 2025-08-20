@@ -713,19 +713,31 @@ public sealed class RemoteControllerManager : IDisposable
     /// <summary>
     /// Releases all resources used by the RemoteControllerManager.
     /// </summary>
+    /// <remarks>
+    /// Implements IDisposable pattern to properly clean up system resources:
+    /// - Stops background monitoring task and cancels operations
+    /// - Closes file stream to Xbox 360 controller device
+    /// - Disposes reactive subjects to prevent memory leaks
+    /// Safe to call multiple times.
+    /// </remarks>
     public void Dispose()
     {
+        // Prevent multiple disposal attempts
         if (_disposed) return;
 
+        // Stop background monitoring and cancel pending operations
         StopMonitoring();
         
+        // Close device file stream and release handle
         _controllerInputStream?.Dispose();
         _controllerInputStream = null;
         
+        // Dispose reactive subjects to complete observable chains
         _horizontalMovementSubject.Dispose();
         _verticalMovementSubject.Dispose();
         _buttonPressedSubject.Dispose();
 
+        // Mark as disposed to prevent further use
         _disposed = true;
     }
 
