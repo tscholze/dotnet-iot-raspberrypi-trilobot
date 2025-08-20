@@ -420,7 +420,7 @@ public class TriloBot : IDisposable
         // Reduce speed on one side for turning
         // If horizontal is negative, turn left by reducing left motor speed
         // If horizontal is positive, turn right by reducing right motor speed
-        if (horizontal < 0)
+        if (horizontal <= 0)
         {
             leftSpeed *= 1.0 - Math.Abs(horizontal);
         }
