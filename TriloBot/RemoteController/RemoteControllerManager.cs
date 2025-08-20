@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace TriloBot.RemoteController;
 
 /// <summary>
-/// Manages Xbox controller input for robot control using wired connection.
+/// Manages Xbox 360 controller input for robot control using wired connection.
 /// Right trigger controls vertical movement, left stick controls horizontal movement.
 /// </summary>
 public sealed class RemoteControllerManager : IDisposable
@@ -86,30 +86,30 @@ public sealed class RemoteControllerManager : IDisposable
     /// </summary>
     private const double TriggerDeadZone = 0.05;
 
-    // Linux input event constants for Xbox controller
+    // Linux input event constants for Xbox 360 controller
     private const ushort EV_KEY = 0x01;
     private const ushort EV_ABS = 0x03;
     
-    // Xbox controller button codes
-    private const ushort BTN_A = 304;
-    private const ushort BTN_B = 305;
-    private const ushort BTN_X = 307;
-    private const ushort BTN_Y = 308;
+    // Xbox 360 controller button codes
+    private const ushort BTN_A = 304;      // A button
+    private const ushort BTN_B = 305;      // B button  
+    private const ushort BTN_X = 307;      // X button
+    private const ushort BTN_Y = 308;      // Y button
     
-    // Xbox controller axis codes
-    private const ushort ABS_X = 0;      // Left stick X
-    private const ushort ABS_RZ = 5;     // Right trigger
+    // Xbox 360 controller axis codes
+    private const ushort ABS_X = 0;        // Left stick X-axis
+    private const ushort ABS_RZ = 5;       // Right trigger (RT)
 
     #endregion
 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the RemoteControllerManager class.
+    /// Initializes a new instance of the RemoteControllerManager class for Xbox 360 controller.
     /// </summary>
     public RemoteControllerManager()
     {
-        // Controller initialization will be handled in StartMonitoring
+        // Xbox 360 controller initialization will be handled in StartMonitoring
         StartMonitoring();
     }
 
@@ -118,13 +118,13 @@ public sealed class RemoteControllerManager : IDisposable
     #region Public Methods
 
     /// <summary>
-    /// Starts monitoring the Xbox controller for input.
+    /// Starts monitoring the Xbox 360 controller for input.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when controller monitoring is already active.</exception>
     public void StartMonitoring()
     {
         if (_controllerMonitoringTask is { IsCompleted: false })
-            throw new InvalidOperationException("Controller monitoring is already active.");
+            throw new InvalidOperationException("Xbox 360 controller monitoring is already active.");
 
         _controllerMonitoringCts = new CancellationTokenSource();
         _controllerMonitoringTask = Task.Run(async () =>
@@ -142,7 +142,7 @@ public sealed class RemoteControllerManager : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Controller monitoring error: {ex.Message}");
+                    Console.WriteLine($"Xbox 360 controller monitoring error: {ex.Message}");
                     _isControllerConnected = false;
                 }
             }
@@ -150,7 +150,7 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Stops monitoring the Xbox controller.
+    /// Stops monitoring the Xbox 360 controller.
     /// </summary>
     public void StopMonitoring()
     {
@@ -272,8 +272,8 @@ public sealed class RemoteControllerManager : IDisposable
             return true;
         }
 
-        // Try to find and connect to Xbox controller
-        _controllerDevicePath = FindXboxController();
+        // Try to find and connect to Xbox 360 controller
+        _controllerDevicePath = FindXbox360Controller();
         if (string.IsNullOrEmpty(_controllerDevicePath))
         {
             return false;
@@ -283,12 +283,12 @@ public sealed class RemoteControllerManager : IDisposable
         {
             // Open the controller input stream
             _controllerInputStream = new FileStream(_controllerDevicePath, FileMode.Open, FileAccess.Read);
-            Console.WriteLine($"Connected to Xbox controller: {_controllerDevicePath}");
+            Console.WriteLine($"Connected to Xbox 360 controller: {_controllerDevicePath}");
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to connect to controller: {ex.Message}");
+            Console.WriteLine($"Failed to connect to Xbox 360 controller: {ex.Message}");
             _controllerInputStream?.Dispose();
             _controllerInputStream = null;
             return false;
@@ -296,27 +296,52 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Finds the Xbox controller device path in the Linux input system.
+    /// Finds the Xbox 360 controller device path in the Linux input system.
     /// </summary>
     /// <returns>Device path or null if not found</returns>
-    private static string? FindXboxController()
+    private static string? FindXbox360Controller()
     {
         try
         {
-            // Look for Xbox controller in /dev/input/event*
+            // Look for Xbox 360 controller in /dev/input/event*
             var eventDevices = Directory.GetFiles("/dev/input", "event*");
             
             foreach (var device in eventDevices)
             {
                 try
                 {
-                    // Check if this is an Xbox controller by reading device name
+                    // Check if this is an Xbox 360 controller by reading device name
                     var nameFile = $"/sys/class/input/{Path.GetFileName(device)}/device/name";
                     if (File.Exists(nameFile))
                     {
                         var deviceName = File.ReadAllText(nameFile).Trim().ToLowerInvariant();
-                        if (deviceName.Contains("xbox") || deviceName.Contains("microsoft"))
+                        
+                        // Xbox 360 controller specific identifiers
+                        if (deviceName.Contains("xbox 360") || 
+                            deviceName.Contains("microsoft xbox 360") ||
+                            deviceName.Contains("xbox360") ||
+                            deviceName.Contains("gamepad"))
                         {
+                            Console.WriteLine($"Found Xbox 360 controller: {deviceName}");
+                            return device;
+                        }
+                    }
+                    
+                    // Alternative: Check by vendor/product ID for Xbox 360 controllers
+                    var vendorFile = $"/sys/class/input/{Path.GetFileName(device)}/device/id/vendor";
+                    var productFile = $"/sys/class/input/{Path.GetFileName(device)}/device/id/product";
+                    
+                    if (File.Exists(vendorFile) && File.Exists(productFile))
+                    {
+                        var vendorId = File.ReadAllText(vendorFile).Trim();
+                        var productId = File.ReadAllText(productFile).Trim();
+                        
+                        // Microsoft vendor ID (045e) and Xbox 360 controller product IDs
+                        if (vendorId.Equals("045e", StringComparison.OrdinalIgnoreCase) &&
+                            (productId.Equals("028e", StringComparison.OrdinalIgnoreCase) || // Wired Xbox 360
+                             productId.Equals("028f", StringComparison.OrdinalIgnoreCase)))   // Wireless Xbox 360
+                        {
+                            Console.WriteLine($"Found Xbox 360 controller by ID: vendor={vendorId}, product={productId}");
                             return device;
                         }
                     }
@@ -330,9 +355,10 @@ public sealed class RemoteControllerManager : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error searching for Xbox controller: {ex.Message}");
+            Console.WriteLine($"Error searching for Xbox 360 controller: {ex.Message}");
         }
 
+        Console.WriteLine("Xbox 360 controller not found. Make sure it's connected via USB.");
         return null;
     }
 
@@ -414,7 +440,7 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Processes analog stick and trigger events.
+    /// Processes analog stick and trigger events for Xbox 360 controller.
     /// </summary>
     /// <param name="code">Axis code</param>
     /// <param name="value">Raw axis value</param>
@@ -423,13 +449,13 @@ public sealed class RemoteControllerManager : IDisposable
         switch (code)
         {
             case ABS_X: // Left stick X-axis
-                // Normalize from typical Xbox range (-32768 to 32767) to (-1.0 to 1.0)
+                // Xbox 360: Normalize from range (-32768 to 32767) to (-1.0 to 1.0)
                 _currentState.LeftStickX = Math.Max(-1.0, Math.Min(1.0, value / 32767.0));
                 break;
                 
-            case ABS_RZ: // Right trigger
-                // Normalize from typical Xbox range (0 to 1023) to (0.0 to 1.0)
-                _currentState.RightTrigger = Math.Max(0.0, Math.Min(1.0, value / 1023.0));
+            case ABS_RZ: // Right trigger (RT)
+                // Xbox 360: Normalize from range (0 to 255) to (0.0 to 1.0)
+                _currentState.RightTrigger = Math.Max(0.0, Math.Min(1.0, value / 255.0));
                 break;
         }
     }
@@ -461,37 +487,37 @@ public sealed class RemoteControllerManager : IDisposable
 }
 
 /// <summary>
-/// Represents the current state of an Xbox controller.
+/// Represents the current state of an Xbox 360 controller.
 /// </summary>
 internal class ControllerState
 {
     /// <summary>
-    /// Left stick X-axis value (-1.0 to 1.0).
+    /// Left stick X-axis value (-1.0 to 1.0) from Xbox 360 controller.
     /// </summary>
     public double LeftStickX { get; set; }
 
     /// <summary>
-    /// Right trigger value (0.0 to 1.0).
+    /// Right trigger value (0.0 to 1.0) from Xbox 360 controller.
     /// </summary>
     public double RightTrigger { get; set; }
 
     /// <summary>
-    /// State of the A button.
+    /// State of the A button on Xbox 360 controller.
     /// </summary>
     public bool AButton { get; set; }
 
     /// <summary>
-    /// State of the B button.
+    /// State of the B button on Xbox 360 controller.
     /// </summary>
     public bool BButton { get; set; }
 
     /// <summary>
-    /// State of the X button.
+    /// State of the X button on Xbox 360 controller.
     /// </summary>
     public bool XButton { get; set; }
 
     /// <summary>
-    /// State of the Y button.
+    /// State of the Y button on Xbox 360 controller.
     /// </summary>
     public bool YButton { get; set; }
 }
