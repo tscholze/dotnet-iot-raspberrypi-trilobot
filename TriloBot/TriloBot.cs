@@ -433,6 +433,8 @@ public class TriloBot : IDisposable
         // If vertical is positive, move forward
         // If vertical is negative, move backward
         // Vertical 0 is required to only have sharp turns as a feature.
+
+Console.WriteLine($"Calculated speeds: left={leftSpeed}, right={rightSpeed} for vertical={vertical}");
         if (vertical >= 0)
         {
             SetMotorSpeeds(leftSpeed, rightSpeed);
