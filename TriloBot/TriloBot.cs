@@ -413,45 +413,29 @@ public class TriloBot : IDisposable
 
 
         // Step 5: Calculate base speed for both motors
+        // Step 5.1: If a "on the place" turn is detected (horizontal movement without vertical movement)
+        if (verticalAbs < MovementChangedThreshold || horizontalAbs > MovementChangedThreshold)
+        {
+            SetMotorSpeeds(-horizontal, horizontal);
+            return;
+        }
+
+        // Step 5.2: Apply smooth turning logic
+        // Reduce speed on one side for turning
+        // If horizontal is negative, turn left by reducing left motor speed
+        // If horizontal is positive, turn right by reducing right motor speed
         double leftSpeed = verticalAbs;
         double rightSpeed = verticalAbs;
 
-        // Step 6.1: If a "on the place" turn is detected (horizontal movement without vertical movement)
-        if (verticalAbs < MovementChangedThreshold || horizontalAbs > MovementChangedThreshold)
+        if (horizontal < 0)
         {
-            if (horizontal < 0)
-            {
-                leftSpeed = -horizontal;
-                rightSpeed = horizontal;
-            }
-            else
-            {
-                leftSpeed = horizontal;
-                rightSpeed = -horizontal;
-            }
+            leftSpeed *= 1.0 - Math.Abs(horizontal);
         }
         else
         {
-            // Step 6.2: Apply smooth turning logic
-            // Reduce speed on one side for turning
-            // If horizontal is negative, turn left by reducing left motor speed
-            // If horizontal is positive, turn right by reducing right motor speed
-            if (horizontal < 0)
-            {
-                leftSpeed *= 1.0 - Math.Abs(horizontal);
-            }
-            else
-            {
-                rightSpeed *= 1.0 - Math.Abs(horizontal);
-            }
+            rightSpeed *= 1.0 - Math.Abs(horizontal);
         }
 
-        // Step 7: Apply direction
-        // If vertical is positive, move forward
-        // If vertical is negative, move backward
-        // Vertical 0 is required to only have sharp turns as a feature.
-
-        Console.WriteLine($"Calculated speeds: left={leftSpeed}, right={rightSpeed} for vertical={vertical}");
         if (vertical >= 0)
         {
             SetMotorSpeeds(leftSpeed, rightSpeed);
