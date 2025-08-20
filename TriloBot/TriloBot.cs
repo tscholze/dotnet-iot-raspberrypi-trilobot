@@ -409,6 +409,9 @@ public class TriloBot : IDisposable
             return;
         }
 
+        Console.WriteLine($"Move: horizontal={horizontal}, vertical={vertical}");
+
+
         // Step 5: Calculate base speed for both motors
         double leftSpeed = verticalAbs;
         double rightSpeed = verticalAbs;
