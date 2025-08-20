@@ -8,7 +8,7 @@ namespace TriloBot.RemoteController;
 
 /// <summary>
 /// Manages Xbox 360 controller input for robot control using wired connection.
-/// Right trigger controls vertical movement, left stick controls horizontal movement.
+/// Right trigger controls forward movement, left trigger controls backward movement, left stick controls horizontal movement.
 /// </summary>
 public sealed class RemoteControllerManager : IDisposable
 {
@@ -20,7 +20,8 @@ public sealed class RemoteControllerManager : IDisposable
     public IObservable<double> HorizontalMovementObservable => _horizontalMovementSubject.AsObservable();
 
     /// <summary>
-    /// Observable that emits vertical movement values from the right trigger (0.0 to 1.0).
+    /// Observable that emits vertical movement values from triggers (-1.0 to 1.0).
+    /// Right trigger produces positive values (forward), left trigger produces negative values (backward).
     /// </summary>
     public IObservable<double> VerticalMovementObservable => _verticalMovementSubject.AsObservable();
 
@@ -98,6 +99,7 @@ public sealed class RemoteControllerManager : IDisposable
     
     // Xbox 360 controller axis codes
     private const ushort ABS_X = 0;        // Left stick X-axis
+    private const ushort ABS_Z = 2;        // Left trigger (LT)
     private const ushort ABS_RZ = 5;       // Right trigger (RT)
 
     #endregion
@@ -196,8 +198,11 @@ public sealed class RemoteControllerManager : IDisposable
             _previousHorizontal = horizontal;
         }
 
-        // Process vertical movement (right trigger)
-        var vertical = ApplyDeadZone(_currentState.RightTrigger, TriggerDeadZone);
+        // Process vertical movement (combine both triggers: RT positive, LT negative)
+        var rightTrigger = ApplyDeadZone(_currentState.RightTrigger, TriggerDeadZone);
+        var leftTrigger = ApplyDeadZone(_currentState.LeftTrigger, TriggerDeadZone);
+        var vertical = rightTrigger - leftTrigger; // RT gives positive, LT gives negative
+        
         if (Math.Abs(vertical - _previousVertical) > MovementThreshold)
         {
             _verticalMovementSubject.OnNext(vertical);
@@ -453,6 +458,11 @@ public sealed class RemoteControllerManager : IDisposable
                 _currentState.LeftStickX = Math.Max(-1.0, Math.Min(1.0, value / 32767.0));
                 break;
                 
+            case ABS_Z: // Left trigger (LT)
+                // Xbox 360: Normalize from range (0 to 255) to (0.0 to 1.0)
+                _currentState.LeftTrigger = Math.Max(0.0, Math.Min(1.0, value / 255.0));
+                break;
+                
             case ABS_RZ: // Right trigger (RT)
                 // Xbox 360: Normalize from range (0 to 255) to (0.0 to 1.0)
                 _currentState.RightTrigger = Math.Max(0.0, Math.Min(1.0, value / 255.0));
@@ -495,6 +505,11 @@ internal class ControllerState
     /// Left stick X-axis value (-1.0 to 1.0) from Xbox 360 controller.
     /// </summary>
     public double LeftStickX { get; set; }
+
+    /// <summary>
+    /// Left trigger value (0.0 to 1.0) from Xbox 360 controller.
+    /// </summary>
+    public double LeftTrigger { get; set; }
 
     /// <summary>
     /// Right trigger value (0.0 to 1.0) from Xbox 360 controller.
