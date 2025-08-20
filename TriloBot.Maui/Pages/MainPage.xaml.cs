@@ -107,7 +107,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnMoveForwardClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.SafeInvokeAsync("Forward");
+            await _hubConnectionService.InvokeMove(0, 1);
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnMoveBackwardClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.SafeInvokeAsync("Backward");
+            await _hubConnectionService.InvokeMove(0, -1);
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnTurnLeftClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.SafeInvokeAsync("TurnLeft");
+            await _hubConnectionService.InvokeMove(-1, 0);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnTurnRightClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.SafeInvokeAsync("TurnRight");
+            await _hubConnectionService.InvokeMove(-0, 0);
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnStopClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.SafeInvokeAsync("Stop");
+            await _hubConnectionService.InvokeMove(0, 0);
         }
 
         #endregion

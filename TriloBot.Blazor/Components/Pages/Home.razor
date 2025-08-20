@@ -11,19 +11,21 @@
         <p class="lead">Use the buttons below to control your TriloBot.</p>
     </div>
 
-    <div class="text-center mb-4" style="aspect-ratio:16/9;max-width:100%;max-height:480px;display:flex;justify-content:center;align-items:center;">
-         <iframe src="http://pi5:8889/cam/"  alt="TriloBot Live Stream" style="aspect-ratio:16/9;width:100%;max-width:100%;max-height:480px;object-fit:contain;background:black;" />
+    <div class="text-center mb-4"
+         style="aspect-ratio:16/9;max-width:100%;max-height:480px;display:flex;justify-content:center;align-items:center;">
+        <iframe src="http://pi5:8889/cam/" alt="TriloBot Live Stream"
+                style="aspect-ratio:16/9;width:100%;max-width:100%;max-height:480px;object-fit:contain;background:black;"/>
     </div>
 
     <!-- Optional: Display the live stream if available -->
     <div class="alert alert-info text-center">
-        @if (isObjectTooNear)
+        @if (_isObjectTooNear)
         {
-            <p class="mb-0">An object seems to be near.</p>
+            <p class="mb-0"><strong>@_distance</strong> - An object seems to be near.</p>
         }
         else
         {
-            <p class="mb-0">No objects in driving path.</p>
+            <p class="mb-0"><strong>@_distance</strong> - No objects in driving path.</p>
         }
     </div>
 
@@ -46,33 +48,45 @@
             <h5>Button LEDs</h5>
             <div class="d-flex flex-wrap mb-3">
                 <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(6, 1)'>Button A LED
-                    On</button>
+                    On
+                </button>
                 <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(6, 0)'>Button A LED
-                    Off</button>
+                    Off
+                </button>
                 <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(7, 1)'>Button B LED
-                    On</button>
+                    On
+                </button>
                 <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(7, 0)'>Button B LED
-                    Off</button>
+                    Off
+                </button>
                 <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(8, 1)'>Button X LED
-                    On</button>
+                    On
+                </button>
                 <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(8, 0)'>Button X LED
-                    Off</button>
+                    Off
+                </button>
                 <button class="btn btn-outline-primary m-1" @onclick='() => SetButtonLed(9, 1)'>Button Y LED
-                    On</button>
+                    On
+                </button>
                 <button class="btn btn-outline-secondary m-1" @onclick='() => SetButtonLed(9, 0)'>Button Y LED
-                    Off</button>
+                    Off
+                </button>
             </div>
 
             <h5>Underlighting</h5>
             <div class="d-flex flex-wrap">
                 <button class="btn btn-danger m-1" @onclick="() => FillUnderlighting(255, 0, 0)">Underlight Red</button>
                 <button class="btn btn-success m-1" @onclick="() => FillUnderlighting(0, 255, 0)">Underlight
-                    Green</button>
-                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0, 0, 255)">Underlight Blue</button>
+                    Green
+                </button>
+                <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(0, 0, 255)">Underlight Blue
+                </button>
                 <button class="btn btn-primary m-1" @onclick="() => FillUnderlighting(128, 0, 128)">Underlight
-                    Purple</button>
+                    Purple
+                </button>
                 <button class="btn btn-light m-1" @onclick="() => FillUnderlighting(255, 255, 255)">Underlight
-                    White</button>
+                    White
+                </button>
                 <button class="btn btn-dark m-1" @onclick="() => FillUnderlighting(0, 0, 0)">Underlight Off</button>
             </div>
         </div>
@@ -80,6 +94,7 @@
 </div>
 
 @code {
+
     /// <summary>
     /// Injected NavigationManager for handling navigation.
     /// </summary>
@@ -89,75 +104,109 @@
     /// <summary>
     /// SignalR hub connection for real-time communication.
     /// </summary>
-    private HubConnection? hubConnection;
+    private HubConnection? _hubConnection;
 
     /// <summary>
     /// Indicates whether an object is too near to the TriloBot.
     /// </summary>
-    private bool isObjectTooNear;
+    private bool _isObjectTooNear;
+
+    /// <summary>
+    /// Distance to the nearest object detected by the TriloBot.
+    /// This value is updated in real-time by the SignalR hub.
+    /// </summary>
+    private double _distance = 0.0;
+
+    /// <summary>
+    /// Subscription for the ObjectTooNear observable.
+    /// </summary>
+    private IDisposable? _objectTooNearSubscription;
+
+    /// <summary>
+    /// Subscription for the Distance observable.
+    /// </summary>
+    private IDisposable? _distanceSubscription;
 
     /// <summary>
     /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        hubConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
-        .WithAutomaticReconnect()
-        .Build();
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/trilobotHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _objectTooNearSubscription = _hubConnection.On<bool>(
+            "ObjectTooNearUpdated", newValue =>
+            {
+                _isObjectTooNear = newValue;
+                StateHasChanged();
+            });
+
+        _distanceSubscription = _hubConnection.On<double>(
+            "DistanceUpdated", newValue =>
+            {
+                _distance = newValue;
+                StateHasChanged();
+            });
 
         // Connect to SignalR hub
-        await hubConnection.StartAsync();
-
-        // Subscribe to ObjectTooNearStream
-        var objectTooNearStream = hubConnection.StreamAsync<bool>("ObjectTooNearStream");
-        _ = Task.Run(async () =>
-        {
-            await foreach (var isNear in objectTooNearStream)
-            {
-                isObjectTooNear = isNear;
-                await InvokeAsync(StateHasChanged);
-            }
-        });
+        await _hubConnection.StartAsync();
 
         // Start distance monitoring
-        await hubConnection.InvokeAsync("StartDistanceMonitoring");
+        await _hubConnection.InvokeAsync("StartDistanceMonitoring");
     }
 
     /// <summary>
     /// Invokes a motor control method on the SignalR hub.
     /// </summary>
-    /// <param name="method">The name of the motor control method to invoke.</param>
-    private async Task CallMotor(string method)
+    /// <param name="horizontal"></param>
+    /// <param name="vertical"></param>
+    private async Task CallMotor(double horizontal = 0.0, double vertical = 0.0)
     {
-        if (hubConnection is null) return;
-        await hubConnection.InvokeAsync(method);
+        if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected)
+            return;
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await _hubConnection.InvokeAsync("Move", horizontal, vertical, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            // Optional: timeout handling
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Move failed: {ex.Message}");
+        }
     }
 
     /// <summary>
     /// Moves the TriloBot forward.
     /// </summary>
-    private Task Forward() => CallMotor("Forward");
+    private Task Forward() => CallMotor(vertical: 1);
 
     /// <summary>
     /// Moves the TriloBot backward.
     /// </summary>
-    private Task Backward() => CallMotor("Backward");
+    private Task Backward() => CallMotor(vertical: -1);
 
     /// <summary>
     /// Turns the TriloBot to the left.
     /// </summary>
-    private Task TurnLeft() => CallMotor("TurnLeft");
+    private Task TurnLeft() => CallMotor(horizontal: 1);
 
     /// <summary>
     /// Turns the TriloBot to the right.
     /// </summary>
-    private Task TurnRight() => CallMotor("TurnRight");
+    private Task TurnRight() => CallMotor(horizontal: -1);
 
     /// <summary>
     /// Stops the TriloBot's movement.
     /// </summary>
-    private Task Stop() => CallMotor("Stop");
+    private Task Stop() => CallMotor(horizontal: 0, vertical: 0);
 
     /// <summary>
     /// Sets the LED state for a specific button.
@@ -166,8 +215,8 @@
     /// <param name="value">The LED state (1 for on, 0 for off).</param>
     private async Task SetButtonLed(int lightId, double value)
     {
-        if (hubConnection is null) return;
-        await hubConnection.InvokeAsync("SetButtonLed", lightId, value);
+        if (_hubConnection is null) return;
+        await _hubConnection.InvokeAsync("SetButtonLed", lightId, value);
     }
 
     /// <summary>
@@ -178,7 +227,8 @@
     /// <param name="b">Blue component (0-255).</param>
     private async Task FillUnderlighting(byte r, byte g, byte b)
     {
-        if (hubConnection is null) return;
-        await hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
+        if (_hubConnection is null) return;
+        await _hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
     }
+
 }

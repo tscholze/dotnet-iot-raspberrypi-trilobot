@@ -78,9 +78,9 @@ public class TriloBotHub : Hub
     /// <param name="r">Red value (0-255).</param>
     /// <param name="g">Green value (0-255).</param>
     /// <param name="b">Blue value (0-255).</param>
-    public Task FillUnderlighting(int r, int g, int b)
+    public Task FillUnderlighting(byte r, byte g, byte b)
     {
-        return Task.Run(() => _robot.FillUnderlighting((byte)r, (byte)g, (byte)b));
+        return Task.Run(() => _robot.FillUnderlighting(r, g, b));
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public class TriloBotHub : Hub
         => Task.Run(() => _robot.ClearUnderlighting());
     
     public Task StartPoliceEffect()
-    => Task.Run(() => _robot.StartPoliceEffect());
+        => Task.Run(() => _robot.StartPoliceEffect());
 
     #endregion
 
@@ -108,32 +108,8 @@ public class TriloBotHub : Hub
     /// </summary>
     /// <param name="horizontal">Horizontal movement (-1 to 1).</param>
     /// <param name="vertical">Vertical movement (-1 to 1).</param>
-    public Task Move(double horizontal, double vertical) => Task.Run(() => _robot.Move(horizontal, vertical));
-
-    /// <summary>
-    /// Moves the robot forward at the default speed.
-    /// </summary>
-    public Task Forward() => Task.Run(() => _robot.Forward());
-
-    /// <summary>
-    /// Moves the robot backward at the default speed.
-    /// </summary>
-    public Task Backward() => Task.Run(() => _robot.Backward());
-
-    /// <summary>
-    /// Turns the robot left in place at the default speed.
-    /// </summary>
-    public Task TurnLeft() => Task.Run(() => _robot.TurnLeft());
-
-    /// <summary>
-    /// Turns the robot right in place at the default speed.
-    /// </summary>
-    public Task TurnRight() => Task.Run(() => _robot.TurnRight());
-
-    /// <summary>
-    /// Stops the robot's motors.
-    /// </summary>
-    public Task Stop() => Task.Run(_robot.Stop);
+    public Task Move(double horizontal, double vertical) 
+        => Task.Run(() => _robot.Move(horizontal, vertical));
 
     #endregion
 
