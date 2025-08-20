@@ -416,17 +416,34 @@ public class TriloBot : IDisposable
         double leftSpeed = verticalAbs;
         double rightSpeed = verticalAbs;
 
-        // Step 6: Apply turning logic
-        // Reduce speed on one side for turning
-        // If horizontal is negative, turn left by reducing left motor speed
-        // If horizontal is positive, turn right by reducing right motor speed
-        if (horizontal < 0)
+        // Step 6.1: If a "on the place" turn is detected (horizontal movement without vertical movement)
+        if (verticalAbs < MovementChangedThreshold || horizontalAbs > MovementChangedThreshold)
         {
-            leftSpeed *= 1.0 - Math.Abs(horizontal);
+            if (horizontal < 0)
+            {
+                leftSpeed = -horizontal;
+                rightSpeed = horizontal;
+            }
+            else
+            {
+                leftSpeed = horizontal;
+                rightSpeed = -horizontal;
+            }
         }
         else
         {
-            rightSpeed *= 1.0 - Math.Abs(horizontal);
+            // Step 6.2: Apply smooth turning logic
+            // Reduce speed on one side for turning
+            // If horizontal is negative, turn left by reducing left motor speed
+            // If horizontal is positive, turn right by reducing right motor speed
+            if (horizontal < 0)
+            {
+                leftSpeed *= 1.0 - Math.Abs(horizontal);
+            }
+            else
+            {
+                rightSpeed *= 1.0 - Math.Abs(horizontal);
+            }
         }
 
         // Step 7: Apply direction
@@ -434,7 +451,7 @@ public class TriloBot : IDisposable
         // If vertical is negative, move backward
         // Vertical 0 is required to only have sharp turns as a feature.
 
-Console.WriteLine($"Calculated speeds: left={leftSpeed}, right={rightSpeed} for vertical={vertical}");
+        Console.WriteLine($"Calculated speeds: left={leftSpeed}, right={rightSpeed} for vertical={vertical}");
         if (vertical >= 0)
         {
             SetMotorSpeeds(leftSpeed, rightSpeed);
