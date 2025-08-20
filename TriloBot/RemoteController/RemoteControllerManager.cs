@@ -2,7 +2,8 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using TriloBot.Button;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace TriloBot.RemoteController;
 
@@ -119,43 +120,23 @@ public sealed class RemoteControllerManager : IDisposable
     private string? _controllerDevicePath;
 
     /// <summary>
-    /// Previous A button state for edge detection (press/release).
+    /// Previously pressed buttons for edge detection, replaces per-button booleans.
     /// </summary>
-    private bool _previousAButton;
-    
-    /// <summary>
-    /// Previous B button state for edge detection (press/release).
-    /// </summary>
-    private bool _previousBButton;
-    
-    /// <summary>
-    /// Previous X button state for edge detection (press/release).
-    /// </summary>
-    private bool _previousXButton;
-    
-    /// <summary>
-    /// Previous Y button state for edge detection (press/release).
-    /// </summary>
-    private bool _previousYButton;
-    
-    /// <summary>
-    /// Previous horizontal movement value for change detection and noise filtering.
-    /// </summary>
-    private double _previousHorizontal;
-    
-    /// <summary>
-    /// Previous vertical movement value for change detection and noise filtering.
-    /// </summary>
-    private double _previousVertical;
+    private HashSet<Buttons> _pressedButtonsPrev = new();
 
     /// <summary>
     /// Current controller state containing all analog and digital input values.
     /// </summary>
     private readonly ControllerState _currentState = new();
 
+    /// <summary>
+    /// Optional logger for diagnostics; falls back to Console if null.
+    /// </summary>
+    private readonly ILogger<RemoteControllerManager>? _logger;
+
     #endregion
 
-    #region Private Constants
+    #region Private Enums
 
     /// <summary>
     /// Minimum change threshold for movement values to reduce noise and prevent excessive updates.
@@ -182,49 +163,34 @@ public sealed class RemoteControllerManager : IDisposable
     private const double TriggerDeadZone = 0.05;
 
     /// <summary>
-    /// Linux input event type constant for keyboard/button events.
+    /// Linux input event types (subset).
     /// </summary>
-    private const ushort EV_KEY = 0x01;
-    
+    private enum EventType : ushort
+    {
+        Key = 0x01,
+        Abs = 0x03
+    }
+
     /// <summary>
-    /// Linux input event type constant for absolute axis events (sticks, triggers).
+    /// Linux ABS axis codes used by Xbox 360 controller.
     /// </summary>
-    private const ushort EV_ABS = 0x03;
-    
+    private enum AbsCode : ushort
+    {
+        X = 0,   // Left stick X
+        Z = 2,   // Left trigger (LT)
+        RZ = 5   // Right trigger (RT)
+    }
+
     /// <summary>
-    /// Linux input event code for Xbox 360 A button.
+    /// Linux button codes used by Xbox 360 controller.
     /// </summary>
-    private const ushort BTN_A = 304;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 B button.
-    /// </summary>
-    private const ushort BTN_B = 305;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 X button.
-    /// </summary>
-    private const ushort BTN_X = 307;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 Y button.
-    /// </summary>
-    private const ushort BTN_Y = 308;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 left stick X-axis.
-    /// </summary>
-    private const ushort ABS_X = 0;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 left trigger (LT).
-    /// </summary>
-    private const ushort ABS_Z = 2;
-    
-    /// <summary>
-    /// Linux input event code for Xbox 360 right trigger (RT).
-    /// </summary>
-    private const ushort ABS_RZ = 5;
+    private enum BtnCode : ushort
+    {
+        A = 304,
+        B = 305,
+        X = 307,
+        Y = 308
+    }
 
     #endregion
 
@@ -239,8 +205,15 @@ public sealed class RemoteControllerManager : IDisposable
     /// </remarks>
     public RemoteControllerManager()
     {
-        // Automatically begin monitoring for Xbox 360 controller input
-        // This enables immediate responsiveness when a controller becomes available
+        StartMonitoring();
+    }
+
+    /// <summary>
+    /// Initializes a new instance with an injected logger.
+    /// </summary>
+    public RemoteControllerManager(ILogger<RemoteControllerManager> logger)
+    {
+        _logger = logger;
         StartMonitoring();
     }
 
@@ -289,7 +262,7 @@ public sealed class RemoteControllerManager : IDisposable
                 catch (Exception ex)
                 {
                     // Log unexpected errors and mark controller as disconnected
-                    Console.WriteLine($"Xbox 360 controller monitoring error: {ex.Message}");
+                    LogWarn($"Xbox 360 controller monitoring error: {ex.Message}");
                     _isControllerConnected = false;
                 }
             }
@@ -358,10 +331,9 @@ public sealed class RemoteControllerManager : IDisposable
         var horizontal = ApplyDeadZone(_currentState.LeftStickX, StickDeadZone);
         
         // Only emit observable event if change exceeds movement threshold (reduces noise)
-        if (Math.Abs(horizontal - _previousHorizontal) > MovementThreshold)
+            if (Math.Abs(horizontal - _horizontalMovementSubject.Value) > MovementThreshold)
         {
             _horizontalMovementSubject.OnNext(horizontal);
-            _previousHorizontal = horizontal;  // Update tracking value for next comparison
         }
 
         // Process vertical movement by combining both trigger inputs
@@ -372,10 +344,9 @@ public sealed class RemoteControllerManager : IDisposable
         var vertical = rightTrigger - leftTrigger;
         
         // Only emit observable event if change exceeds movement threshold
-        if (Math.Abs(vertical - _previousVertical) > MovementThreshold)
+    if (Math.Abs(vertical - _verticalMovementSubject.Value) > MovementThreshold)
         {
             _verticalMovementSubject.OnNext(vertical);
-            _previousVertical = vertical;  // Update tracking value for next comparison
         }
 
         // Process button press/release state changes
@@ -393,33 +364,24 @@ public sealed class RemoteControllerManager : IDisposable
     /// </remarks>
     private void ProcessButtonChanges(ControllerState state)
     {
-        // Process A button: detect press edge (released → pressed transition)
-        if (state.AButton && !_previousAButton)
-        {
-            _buttonPressedSubject.OnNext(Buttons.ButtonA);
-        }
-        _previousAButton = state.AButton;  // Update state for next comparison
+        // Build current pressed set
+        var pressedNow = new HashSet<Buttons>();
+        if (state.AButton) pressedNow.Add(Buttons.ButtonA);
+        if (state.BButton) pressedNow.Add(Buttons.ButtonB);
+        if (state.XButton) pressedNow.Add(Buttons.ButtonX);
+        if (state.YButton) pressedNow.Add(Buttons.ButtonY);
 
-        // Process B button: detect press edge
-        if (state.BButton && !_previousBButton)
+        // Emit only newly pressed buttons (edge detection)
+        foreach (var newlyPressed in pressedNow)
         {
-            _buttonPressedSubject.OnNext(Buttons.ButtonB);
+            if (!_pressedButtonsPrev.Contains(newlyPressed))
+            {
+                _buttonPressedSubject.OnNext(newlyPressed);
+            }
         }
-        _previousBButton = state.BButton;  // Update state for next comparison
 
-        // Process X button: detect press edge
-        if (state.XButton && !_previousXButton)
-        {
-            _buttonPressedSubject.OnNext(Buttons.ButtonX);
-        }
-        _previousXButton = state.XButton;  // Update state for next comparison
-
-        // Process Y button: detect press edge
-        if (state.YButton && !_previousYButton)
-        {
-            _buttonPressedSubject.OnNext(Buttons.ButtonY);
-        }
-        _previousYButton = state.YButton;  // Update state for next comparison
+        // Update snapshot
+        _pressedButtonsPrev = pressedNow;
     }
 
     /// <summary>
@@ -439,7 +401,7 @@ public sealed class RemoteControllerManager : IDisposable
     private static double ApplyDeadZone(double value, double deadZone)
     {
         // If input magnitude is within dead zone, return zero (no movement)
-        if (Math.Abs(value) < deadZone)
+    if (Math.Abs(value) < deadZone)
             return 0.0;
 
         // Calculate scaling to compensate for dead zone reduction
@@ -479,13 +441,13 @@ public sealed class RemoteControllerManager : IDisposable
         {
             // Open file stream to Linux input event device for reading raw input events
             _controllerInputStream = new FileStream(_controllerDevicePath, FileMode.Open, FileAccess.Read);
-            Console.WriteLine($"Connected to Xbox 360 controller: {_controllerDevicePath}");
+            LogInfo($"Connected to Xbox 360 controller: {_controllerDevicePath}");
             return true;
         }
         catch (Exception ex)
         {
             // Handle connection failures (permissions, device busy, etc.)
-            Console.WriteLine($"Failed to connect to Xbox 360 controller: {ex.Message}");
+            LogWarn($"Failed to connect to Xbox 360 controller: {ex.Message}");
             
             // Clean up failed connection attempt
             _controllerInputStream?.Dispose();
@@ -529,7 +491,7 @@ public sealed class RemoteControllerManager : IDisposable
                             deviceName.Contains("xbox360") ||
                             deviceName.Contains("gamepad"))
                         {
-                            Console.WriteLine($"Found Xbox 360 controller: {deviceName}");
+                            // Note: logging occurs at higher level after connection
                             return device;
                         }
                     }
@@ -548,7 +510,7 @@ public sealed class RemoteControllerManager : IDisposable
                             (productId.Equals("028e", StringComparison.OrdinalIgnoreCase) ||  // Wired Xbox 360
                              productId.Equals("028f", StringComparison.OrdinalIgnoreCase)))   // Wireless Xbox 360
                         {
-                            Console.WriteLine($"Found Xbox 360 controller by ID: vendor={vendorId}, product={productId}");
+                            // Note: logging occurs at higher level after connection
                             return device;
                         }
                     }
@@ -560,13 +522,12 @@ public sealed class RemoteControllerManager : IDisposable
                 }
             }
         }
-        catch (Exception ex)
+    catch (Exception)
         {
-            Console.WriteLine($"Error searching for Xbox 360 controller: {ex.Message}");
+            // We cannot log here without an instance; leave to caller side
         }
 
         // No Xbox 360 controller detected
-        Console.WriteLine("Xbox 360 controller not found. Make sure it's connected via USB.");
         return null;
     }
 
@@ -587,7 +548,8 @@ public sealed class RemoteControllerManager : IDisposable
         {
             // Read Linux input_event structure: [time_sec, time_usec, type, code, value] = 24 bytes
             var buffer = new byte[24];  // input_event is 24 bytes on 64-bit Linux systems
-            var bytesRead = await _controllerInputStream.ReadAsync(buffer, 0, buffer.Length);
+            var token = _controllerMonitoringCts?.Token ?? CancellationToken.None;
+            var bytesRead = await _controllerInputStream.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
             
             // Verify complete event was read
             if (bytesRead == 24)
@@ -601,10 +563,14 @@ public sealed class RemoteControllerManager : IDisposable
                 ProcessInputEvent(type, code, value);
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Expected during shutdown; treat as clean exit from read
+        }
         catch (Exception ex)
         {
             // Handle device communication errors (device removed, permissions, etc.)
-            Console.WriteLine($"Error reading controller input: {ex.Message}");
+            LogWarn($"Error reading controller input: {ex.Message}");
             
             // Disconnect to allow reconnection attempts
             _controllerInputStream?.Dispose();
@@ -626,13 +592,13 @@ public sealed class RemoteControllerManager : IDisposable
     private void ProcessInputEvent(ushort type, ushort code, int value)
     {
         // Delegate to specific handlers based on Linux input event type
-        switch (type)
+        switch ((EventType)type)
         {
-            case EV_KEY: // Digital button press/release events
+            case EventType.Key: // Digital button press/release events
                 ProcessButtonEvent(code, value != 0);
                 break;
                 
-            case EV_ABS: // Analog axis/trigger movement events
+            case EventType.Abs: // Analog axis/trigger movement events
                 ProcessAxisEvent(code, value);
                 break;
                 
@@ -652,18 +618,18 @@ public sealed class RemoteControllerManager : IDisposable
     private void ProcessButtonEvent(ushort code, bool pressed)
     {
         // Map Linux input button codes to controller state
-        switch (code)
+        switch ((BtnCode)code)
         {
-            case BTN_A:  // Xbox A button (bottom face button)
+            case BtnCode.A:  // Xbox A button (bottom face button)
                 _currentState.AButton = pressed;
                 break;
-            case BTN_B:  // Xbox B button (right face button)
+            case BtnCode.B:  // Xbox B button (right face button)
                 _currentState.BButton = pressed;
                 break;
-            case BTN_X:  // Xbox X button (left face button)
+            case BtnCode.X:  // Xbox X button (left face button)
                 _currentState.XButton = pressed;
                 break;
-            case BTN_Y:  // Xbox Y button (top face button)
+            case BtnCode.Y:  // Xbox Y button (top face button)
                 _currentState.YButton = pressed;
                 break;
                 
@@ -685,21 +651,21 @@ public sealed class RemoteControllerManager : IDisposable
     private void ProcessAxisEvent(ushort code, int value)
     {
         // Process different Xbox 360 analog inputs with hardware-specific normalization
-        switch (code)
+        switch ((AbsCode)code)
         {
-            case ABS_X: // Left stick X-axis (horizontal movement control)
+            case AbsCode.X: // Left stick X-axis (horizontal movement control)
                 // Normalize from Xbox 360 range (-32768 to 32767) to standard range (-1.0 to 1.0)
-                _currentState.LeftStickX = Math.Max(-1.0, Math.Min(1.0, value / 32767.0));
+                _currentState.LeftStickX = Math.Clamp(value / 32767.0, -1.0, 1.0);
                 break;
                 
-            case ABS_Z: // Left trigger (LT) - backward movement control
+            case AbsCode.Z: // Left trigger (LT) - backward movement control
                 // Normalize from Xbox 360 range (0 to 255) to standard range (0.0 to 1.0)
-                _currentState.LeftTrigger = Math.Max(0.0, Math.Min(1.0, value / 255.0));
+                _currentState.LeftTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
                 break;
                 
-            case ABS_RZ: // Right trigger (RT) - forward movement control
+            case AbsCode.RZ: // Right trigger (RT) - forward movement control
                 // Normalize from Xbox 360 range (0 to 255) to standard range (0.0 to 1.0)
-                _currentState.RightTrigger = Math.Max(0.0, Math.Min(1.0, value / 255.0));
+                _currentState.RightTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
                 break;
                 
             // Ignore unmapped axes (right stick, d-pad, etc.)
@@ -741,6 +707,20 @@ public sealed class RemoteControllerManager : IDisposable
         _disposed = true;
     }
 
+    #endregion
+
+    #region Logging helpers
+    private void LogInfo(string message)
+    {
+        if (_logger != null) _logger.LogInformation(message);
+        else Console.WriteLine(message);
+    }
+
+    private void LogWarn(string message)
+    {
+        if (_logger != null) _logger.LogWarning(message);
+        else Console.WriteLine(message);
+    }
     #endregion
 }
 
