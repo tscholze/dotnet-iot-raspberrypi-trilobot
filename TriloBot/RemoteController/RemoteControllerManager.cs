@@ -333,7 +333,8 @@ public sealed class RemoteControllerManager : IDisposable
         // Only emit observable event if change exceeds movement threshold (reduces noise)
             if (Math.Abs(horizontal - _horizontalMovementSubject.Value) > MovementThreshold)
         {
-            _horizontalMovementSubject.OnNext(horizontal);
+            // Invert value to be in line with other components's coordinate system.
+            _horizontalMovementSubject.OnNext(-horizontal);
         }
 
         // Process vertical movement by combining both trigger inputs

@@ -250,15 +250,12 @@ public class TriloBot : IDisposable
     private void OnHorizontalMovementChanged(double horizontal)
     {
         var vertical = _remoteControllerManager.VerticalMovementObservable.Latest().FirstOrDefault();
-        Console.WriteLine($"Horizontal movement changed: {horizontal} with computed v: {vertical}");
         Move(horizontal, vertical);
     }
 
     private void OnVerticalMovementChanged(double vertical)
     {
         var horizontal = _remoteControllerManager.HorizontalMovementObservable.Latest().FirstOrDefault();
-        Console.WriteLine($"Vertical movement changed: {vertical} with computed h: {horizontal}");
-
         Move(horizontal, vertical);
     }
 
