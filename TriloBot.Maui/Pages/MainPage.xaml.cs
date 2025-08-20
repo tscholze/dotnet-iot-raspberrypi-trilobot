@@ -131,7 +131,7 @@ namespace TriloBot.Maui.Pages
         /// </summary>
         private async void OnTurnRightClicked(object sender, EventArgs e)
         {
-            await _hubConnectionService.InvokeMove(-0, 0);
+            await _hubConnectionService.InvokeMove(0, -1);
         }
 
         /// <summary>

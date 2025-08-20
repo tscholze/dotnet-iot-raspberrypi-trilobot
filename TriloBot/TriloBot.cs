@@ -402,7 +402,7 @@ public class TriloBot : IDisposable
         }
 
         // Step 4: If vertical is below a movement threshold, stop motors and exit
-        if (verticalAbs < MovementChangedThreshold)
+        if (verticalAbs < MovementChangedThreshold && horizontalAbs < MovementChangedThreshold)
         {
             Stop();
             return;
