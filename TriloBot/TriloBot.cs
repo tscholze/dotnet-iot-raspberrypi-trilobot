@@ -233,7 +233,7 @@ public class TriloBot : IDisposable
                 {
                     Console.WriteLine($"Distance monitoring error: {ex.Message}");
                 }
-                
+
                 await Task.Delay(DefaultSensorPollingInterval, _distanceMonitoringCts.Token);
             }
         });
@@ -404,6 +404,7 @@ public class TriloBot : IDisposable
         // Step 4: If vertical is below a movement threshold, stop motors and exit
         if (verticalAbs < MovementChangedThreshold && horizontalAbs < MovementChangedThreshold)
         {
+            Console.WriteLine("Stopping motors due to low movement threshold.");
             Stop();
             return;
         }
@@ -413,25 +414,16 @@ public class TriloBot : IDisposable
         double rightSpeed = verticalAbs;
 
         // Step 6: Apply turning logic
-        // If horizontal is below threshold, skip turning logic
-        if (horizontalAbs < MovementChangedThreshold)
+        // Reduce speed on one side for turning
+        // If horizontal is negative, turn left by reducing left motor speed
+        // If horizontal is positive, turn right by reducing right motor speed
+        if (horizontal < 0)
         {
-            // No significant turn requested, continue with equal speeds
-            // Motors will move straight
+            leftSpeed *= 1.0 - Math.Abs(horizontal);
         }
         else
         {
-            // Reduce speed on one side for turning
-            // If horizontal is negative, turn left by reducing left motor speed
-            // If horizontal is positive, turn right by reducing right motor speed
-            if (horizontal < 0)
-            {
-                leftSpeed *= 1.0 - Math.Abs(horizontal);
-            }
-            else
-            {
-                rightSpeed *= 1.0 - Math.Abs(horizontal);
-            }
+            rightSpeed *= 1.0 - Math.Abs(horizontal);
         }
 
         // Step 7: Apply direction
