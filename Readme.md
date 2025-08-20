@@ -16,6 +16,7 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 - 💡 **Lights, LEDs and more** – Control underlighting (RGB LEDs) and button LEDs, including color effects
 - 📏 **Keep distance** – Measure distance and proximity with the ultrasonic sensor, with observable events
 - 📸 **Live Feed** – Take photos and (optionally) stream live video (SignalR/MJPEG integration)
+- 🎮 **Xbox Controller (wired 360)** – Remote-drive the robot: left stick steers, RT forward, LT backward; A/B/X/Y mapped to actions
 
 ## Status
 
@@ -36,7 +37,7 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 
 |                                         |     |
 | --------------------------------------- | --- |
-| ![](_docs/trilobot-android-surface.png) |     |
+| ![](_docs/trilobot-android-surface.png) | ![](_docs/trilobot-maui-joystick.png)    |
 
 ### Windows
 |                                  |                            |
@@ -68,6 +69,80 @@ Each hardware subsystem is managed by its own class:
 | `CameraManager`     | Photo captures and other image related operations in |
 
 All managers are composed in the main `TriloBot` class, which exposes observables and high-level control methods. All hardware mappings use enums and extension methods for clarity and maintainability.
+
+## 🎮 Xbox Controller Support (wired Xbox 360)
+
+TriloBot.NET can be remote-controlled using a wired Xbox 360 controller on Linux (Raspberry Pi OS). The `RemoteControllerManager` reads raw Linux input events from `/dev/input/event*` and exposes clean observables you can react to.
+
+What’s supported:
+- Left stick X controls horizontal steering (−1.0 … 1.0)
+- Right Trigger (RT) drives forward (0.0 … 1.0)
+- Left Trigger (LT) drives backward (0.0 … 1.0)
+- A/B/X/Y buttons fire events (edge-triggered on press)
+
+How to use:
+
+```csharp
+using var robot = new TriloBot();
+using var manager = new TriloBot.RemoteController.RemoteControllerManager();
+
+// Horizontal: map left stick X to left/right turning
+controller.HorizontalMovementObservable.Subscribe(value =>
+{
+    roboter.move(...)
+});
+
+// Vertical: RT forward minus LT backward
+controller.VerticalMovementObservable.Subscribe(value =>
+{
+    roboter.move(...)
+});
+
+// Buttons: map A/B/X/Y to actions
+controller.ButtonPressedObservable.Subscribe(button =>
+{
+    switch(button) 
+    {
+        case A: ...
+    }
+});
+```
+
+Notes and requirements:
+- Linux only (uses the input subsystem at `/dev/input/event*`).
+- You may need permissions; if you get a permission error, run with `sudo` or add a udev rule to grant access.
+- Dead zones and a movement threshold are applied to avoid noise and stick drift.
+
+## 🕸️ SignalR architecture
+
+TriloBot uses SignalR for real-time communication between the robot runtime and client UIs (Blazor, .NET MAUI).
+
+High-level overview:
+- The robot process hosts a SignalR hub that exposes commands (e.g., drive, lights, camera) and streams events from hardware managers (buttons, distance, movement state).
+- The Blazor/web client and MAUI app connect to this hub to send commands and display live updates.
+- Video streaming is handled separately via MediaMTX; the UI consumes the stream URL while still using SignalR for control and telemetry.
+
+Conceptual flow:
+- Client → Hub (commands): drive operations, lighting changes, start/stop monitoring, take photo, etc.
+- Hub → Client (events): button pressed, distance changed/object too near, movement updates, light state, camera events.
+
+How to run:
+- Start the robot app (hosts the SignalR hub):
+    ```sh
+    dotnet run --project TriloBot
+    ```
+- Start the web UI (connects to the hub):
+    ```sh
+    dotnet run --project TriloBot.Blazor
+    ```
+- Optional: start the MediaMTX server for the camera feed:
+    ```sh
+    cd _thirdparty/webrtc && mediamtx
+    ```
+
+Notes:
+- The exact hub endpoints and schemas are internal implementation details; use the provided UI apps as references.
+- Ensure the robot host and clients can reach each other over the network (open firewall if needed).
 
 ## 🚀 Getting Started
 
