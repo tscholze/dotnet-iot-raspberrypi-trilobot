@@ -55,7 +55,7 @@ public sealed class RemoteControllerManager : IDisposable
     /// </value>
     /// <remarks>
     /// Only emits on button press (not release) to prevent duplicate events.
-    /// Maps Xbox 360 A/B/X/Y buttons to corresponding TriloBot button values.
+    /// Maps Xbox controller A/B/X/Y buttons to corresponding TriloBot button values.
     /// </remarks>
     public IObservable<Buttons?> ButtonPressedObservable => _buttonPressedSubject.AsObservable();
 
