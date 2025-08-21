@@ -135,6 +135,11 @@ public sealed class RemoteControllerManager : IDisposable
     private readonly ILogger<RemoteControllerManager>? _logger;
 
     /// <summary>
+    /// The type of Xbox controller being used, determining axis codes and value ranges.
+    /// </summary>
+    private readonly ControllerType _controllerType;
+
+    /// <summary>
     /// Observed maximum range for left trigger; defaults to 255 (USB Xbox 360) and adapts to 1023/65535 for Bluetooth.
     /// </summary>
     private int _ltMax = 255;
@@ -204,26 +209,54 @@ public sealed class RemoteControllerManager : IDisposable
 
     #endregion
 
+    #region Controller Type
+
+    /// <summary>
+    /// Xbox controller types with different input characteristics.
+    /// </summary>
+    public enum ControllerType
+    {
+        /// <summary>
+        /// Xbox 360 controller (wired/wireless) - 8-bit triggers (0-255), standard axis mapping.
+        /// </summary>
+        Xbox360,
+        
+        /// <summary>
+        /// Xbox Series/One controller (Bluetooth) - 10-bit triggers (0-1023), different axis codes.
+        /// </summary>
+        XboxSeries
+    }
+
+    #endregion
+
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RemoteControllerManager"/> class for Xbox controller integration (Xbox 360 USB and Xbox Wireless/Series via Bluetooth).
+    /// Initializes a new instance of the <see cref="RemoteControllerManager"/> class for Xbox controller integration.
     /// </summary>
+    /// <param name="controllerType">The type of Xbox controller (Xbox360 or XboxSeries) to configure input handling.</param>
     /// <remarks>
     /// The constructor automatically starts controller monitoring to begin processing input events.
     /// Controller detection and connection establishment occurs asynchronously in the background.
+    /// Different controller types use different axis codes and value ranges.
     /// </remarks>
-    public RemoteControllerManager()
+    public RemoteControllerManager(ControllerType controllerType)
     {
+        _controllerType = controllerType;
+        InitializeTriggerRanges();
         StartMonitoring();
     }
 
     /// <summary>
-    /// Initializes a new instance with an injected logger.
+    /// Initializes a new instance with an injected logger and specified controller type.
     /// </summary>
-    public RemoteControllerManager(ILogger<RemoteControllerManager> logger)
+    /// <param name="controllerType">The type of Xbox controller (Xbox360 or XboxSeries) to configure input handling.</param>
+    /// <param name="logger">Logger instance for diagnostics and debugging.</param>
+    public RemoteControllerManager(ControllerType controllerType, ILogger<RemoteControllerManager> logger)
     {
+        _controllerType = controllerType;
         _logger = logger;
+        InitializeTriggerRanges();
         StartMonitoring();
     }
 
@@ -674,14 +707,31 @@ public sealed class RemoteControllerManager : IDisposable
     /// <param name="code">The Linux input axis code (ABS_X, ABS_Z, ABS_RZ, etc.).</param>
     /// <param name="value">The raw axis value from the hardware device.</param>
     /// <remarks>
-    /// Xbox 360 analog inputs have different value ranges:
-    /// - Left stick X: -32768 to 32767 (signed 16-bit)
-    /// - Triggers: 0 to 255 (unsigned 8-bit)
+    /// Different Xbox controller types use different axis codes and value ranges:
+    /// - Xbox 360: ABS_X (stick), ABS_Z/ABS_RZ (triggers 0-255)
+    /// - Xbox Series: ABS_X (stick), ABS_BRAKE/ABS_GAS (triggers 0-1023)
     /// Values are normalized to standard ranges and clamped for safety.
     /// </remarks>
     private void ProcessAxisEvent(ushort code, int value)
     {
-        // Process different Xbox 360 analog inputs with hardware-specific normalization
+        // Process different Xbox controller inputs based on controller type
+        switch (_controllerType)
+        {
+            case ControllerType.Xbox360:
+                ProcessXbox360AxisEvent(code, value);
+                break;
+                
+            case ControllerType.XboxSeries:
+                ProcessXboxSeriesAxisEvent(code, value);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Processes Xbox 360 controller axis events with 360-specific codes and ranges.
+    /// </summary>
+    private void ProcessXbox360AxisEvent(ushort code, int value)
+    {
         switch ((AbsCode)code)
         {
             case AbsCode.X: // Left stick X-axis (horizontal movement control)
@@ -689,19 +739,59 @@ public sealed class RemoteControllerManager : IDisposable
                 _currentState.LeftStickX = Math.Clamp(value / 32767.0, -1.0, 1.0);
                 break;
                 
-            case AbsCode.Z: // Left trigger (LT) - backward movement control
-                // Normalize and adapt to observed Bluetooth ranges (255/1023/65535)
-                AdaptTriggerMax(ref _ltMax, value);
-                _currentState.LeftTrigger = Math.Clamp(value / (double)_ltMax, 0.0, 1.0);
+            case AbsCode.Z: // Left trigger (LT) - backward movement control (Xbox 360: 0-255)
+                _currentState.LeftTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
                 break;
                 
-            case AbsCode.RZ: // Right trigger (RT) - forward movement control
-                // Normalize and adapt to observed Bluetooth ranges (255/1023/65535)
-                AdaptTriggerMax(ref _rtMax, value);
-                _currentState.RightTrigger = Math.Clamp(value / (double)_rtMax, 0.0, 1.0);
+            case AbsCode.RZ: // Right trigger (RT) - forward movement control (Xbox 360: 0-255)
+                _currentState.RightTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
                 break;
                 
             // Ignore unmapped axes (right stick, d-pad, etc.)
+        }
+    }
+
+    /// <summary>
+    /// Processes Xbox Series controller axis events with Series-specific codes and ranges.
+    /// </summary>
+    private void ProcessXboxSeriesAxisEvent(ushort code, int value)
+    {
+        // Xbox Series controllers use different axis codes for triggers over Bluetooth
+        const ushort ABS_BRAKE = 10;  // Left trigger on Xbox Series (Bluetooth)
+        const ushort ABS_GAS = 9;     // Right trigger on Xbox Series (Bluetooth)
+        
+        switch (code)
+        {
+            case 0: // ABS_X - Left stick X-axis (same as Xbox 360)
+                // Normalize from standard range (-32768 to 32767) to (-1.0 to 1.0)
+                _currentState.LeftStickX = Math.Clamp(value / 32767.0, -1.0, 1.0);
+                break;
+                
+            case ABS_BRAKE: // Left trigger (LT) - backward movement control (Xbox Series: 0-1023)
+                _currentState.LeftTrigger = Math.Clamp(value / 1023.0, 0.0, 1.0);
+                break;
+                
+            case ABS_GAS: // Right trigger (RT) - forward movement control (Xbox Series: 0-1023)
+                _currentState.RightTrigger = Math.Clamp(value / 1023.0, 0.0, 1.0);
+                break;
+                
+            // Xbox Series may also report triggers on ABS_Z/ABS_RZ in some modes
+            case 2: // ABS_Z - fallback for left trigger
+            case 5: // ABS_RZ - fallback for right trigger
+                // Use adaptive scaling for compatibility
+                if (code == 2) // ABS_Z
+                {
+                    AdaptTriggerMax(ref _ltMax, value);
+                    _currentState.LeftTrigger = Math.Clamp(value / (double)_ltMax, 0.0, 1.0);
+                }
+                else // ABS_RZ
+                {
+                    AdaptTriggerMax(ref _rtMax, value);
+                    _currentState.RightTrigger = Math.Clamp(value / (double)_rtMax, 0.0, 1.0);
+                }
+                break;
+                
+            // Ignore unmapped axes
         }
     }
 
@@ -757,6 +847,25 @@ public sealed class RemoteControllerManager : IDisposable
     #endregion
 
     #region Helpers
+    /// <summary>
+    /// Initializes trigger value ranges based on the controller type.
+    /// </summary>
+    private void InitializeTriggerRanges()
+    {
+        switch (_controllerType)
+        {
+            case ControllerType.Xbox360:
+                _ltMax = 255;   // Xbox 360 uses 8-bit trigger values
+                _rtMax = 255;
+                break;
+                
+            case ControllerType.XboxSeries:
+                _ltMax = 1023;  // Xbox Series uses 10-bit trigger values over Bluetooth
+                _rtMax = 1023;
+                break;
+        }
+    }
+
     /// <summary>
     /// Adaptively updates the observed maximum trigger value (handles USB 255 and Bluetooth 1023/65535 variants).
     /// </summary>
