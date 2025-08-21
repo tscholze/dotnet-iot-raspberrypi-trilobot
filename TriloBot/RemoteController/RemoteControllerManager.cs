@@ -134,6 +134,16 @@ public sealed class RemoteControllerManager : IDisposable
     /// </summary>
     private readonly ILogger<RemoteControllerManager>? _logger;
 
+    /// <summary>
+    /// Observed maximum range for left trigger; defaults to 255 (USB Xbox 360) and adapts to 1023/65535 for Bluetooth.
+    /// </summary>
+    private int _ltMax = 255;
+
+    /// <summary>
+    /// Observed maximum range for right trigger; defaults to 255 (USB Xbox 360) and adapts to 1023/65535 for Bluetooth.
+    /// </summary>
+    private int _rtMax = 255;
+
     #endregion
 
     #region Private Enums
@@ -197,7 +207,7 @@ public sealed class RemoteControllerManager : IDisposable
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RemoteControllerManager"/> class for Xbox 360 controller integration.
+    /// Initializes a new instance of the <see cref="RemoteControllerManager"/> class for Xbox controller integration (Xbox 360 USB and Xbox Wireless/Series via Bluetooth).
     /// </summary>
     /// <remarks>
     /// The constructor automatically starts controller monitoring to begin processing input events.
@@ -222,7 +232,7 @@ public sealed class RemoteControllerManager : IDisposable
     #region Public Methods
 
     /// <summary>
-    /// Starts monitoring the Xbox 360 controller for input events in a background task.
+    /// Starts monitoring the Xbox controller for input events in a background task.
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when controller monitoring is already active and running.
@@ -262,7 +272,7 @@ public sealed class RemoteControllerManager : IDisposable
                 catch (Exception ex)
                 {
                     // Log unexpected errors and mark controller as disconnected
-                    LogWarn($"Xbox 360 controller monitoring error: {ex.Message}");
+                    LogWarn($"Xbox controller monitoring error: {ex.Message}");
                     _isControllerConnected = false;
                 }
             }
@@ -414,7 +424,7 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Ensures that an Xbox 360 controller connection is established and ready for input.
+    /// Ensures that an Xbox controller connection is established and ready for input.
     /// </summary>
     /// <returns>
     /// <c>true</c> if controller is connected and communication stream is active; otherwise, <c>false</c>.
@@ -431,8 +441,8 @@ public sealed class RemoteControllerManager : IDisposable
             return true;
         }
 
-        // Discover Xbox 360 controller device path in Linux input system
-        _controllerDevicePath = FindXbox360Controller();
+    // Discover Xbox controller device path in Linux input system
+    _controllerDevicePath = FindXboxController();
         if (string.IsNullOrEmpty(_controllerDevicePath))
         {
             return false;  // No controller found
@@ -442,13 +452,13 @@ public sealed class RemoteControllerManager : IDisposable
         {
             // Open file stream to Linux input event device for reading raw input events
             _controllerInputStream = new FileStream(_controllerDevicePath, FileMode.Open, FileAccess.Read);
-            LogInfo($"Connected to Xbox 360 controller: {_controllerDevicePath}");
+            LogInfo($"Connected to Xbox controller: {_controllerDevicePath}");
             return true;
         }
         catch (Exception ex)
         {
             // Handle connection failures (permissions, device busy, etc.)
-            LogWarn($"Failed to connect to Xbox 360 controller: {ex.Message}");
+            LogWarn($"Failed to connect to Xbox controller: {ex.Message}");
             
             // Clean up failed connection attempt
             _controllerInputStream?.Dispose();
@@ -458,7 +468,7 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Finds the Xbox 360 controller device path within the Linux input subsystem.
+    /// Finds the Xbox controller device path within the Linux input subsystem (supports Xbox 360 USB and Xbox Wireless/Series over Bluetooth).
     /// </summary>
     /// <returns>
     /// Device path string (e.g., "/dev/input/event2") if Xbox 360 controller is found; otherwise, <c>null</c>.
@@ -469,10 +479,25 @@ public sealed class RemoteControllerManager : IDisposable
     /// 2. Hardware vendor/product ID verification (Microsoft 045e:028e/028f)
     /// Scans all available input event devices in /dev/input/event* sequence.
     /// </remarks>
-    private static string? FindXbox360Controller()
+    private static string? FindXboxController()
     {
         try
         {
+            // Prefer stable by-id joystick symlinks when available
+            var byIdPath = "/dev/input/by-id";
+            if (Directory.Exists(byIdPath))
+            {
+                var byIdDevices = Directory.GetFiles(byIdPath, "*-event-joystick*");
+                foreach (var dev in byIdDevices)
+                {
+                    var nameLower = Path.GetFileName(dev).ToLowerInvariant();
+                    if (nameLower.Contains("xbox") || nameLower.Contains("microsoft") || nameLower.Contains("gamepad"))
+                    {
+                        return dev; // symlink path is fine to open
+                    }
+                }
+            }
+
             // Enumerate all Linux input event devices
             var eventDevices = Directory.GetFiles("/dev/input", "event*");
             
@@ -480,15 +505,18 @@ public sealed class RemoteControllerManager : IDisposable
             {
                 try
                 {
-                    // Method 1: Check device name for Xbox 360 controller identifiers
+                    // Method 1: Check device name for Xbox controller identifiers (360, One, Series, Wireless)
                     var nameFile = $"/sys/class/input/{Path.GetFileName(device)}/device/name";
                     if (File.Exists(nameFile))
                     {
                         var deviceName = File.ReadAllText(nameFile).Trim().ToLowerInvariant();
                         
                         // Match common Xbox 360 controller device name patterns
-                        if (deviceName.Contains("xbox 360") || 
-                            deviceName.Contains("microsoft xbox 360") ||
+                        if (deviceName.Contains("xbox") ||
+                            deviceName.Contains("xbox 360") ||
+                            deviceName.Contains("xbox one") ||
+                            deviceName.Contains("xbox series") ||
+                            deviceName.Contains("xbox wireless controller") ||
                             deviceName.Contains("xbox360") ||
                             deviceName.Contains("gamepad"))
                         {
@@ -506,10 +534,12 @@ public sealed class RemoteControllerManager : IDisposable
                         var vendorId = File.ReadAllText(vendorFile).Trim();
                         var productId = File.ReadAllText(productFile).Trim();
                         
-                        // Verify Microsoft vendor ID and Xbox 360 product IDs
+                        // Verify Microsoft vendor ID for Xbox family devices
+                        // Accept common 360 PIDs (028e/028f) and allow other Microsoft PIDs—Bluetooth Series/One IDs vary by firmware
                         if (vendorId.Equals("045e", StringComparison.OrdinalIgnoreCase) &&
                             (productId.Equals("028e", StringComparison.OrdinalIgnoreCase) ||  // Wired Xbox 360
-                             productId.Equals("028f", StringComparison.OrdinalIgnoreCase)))   // Wireless Xbox 360
+                             productId.Equals("028f", StringComparison.OrdinalIgnoreCase) ||  // Wireless Xbox 360
+                             true)) // Accept other Microsoft Xbox gamepad PIDs
                         {
                             // Note: logging occurs at higher level after connection
                             return device;
@@ -639,7 +669,7 @@ public sealed class RemoteControllerManager : IDisposable
     }
 
     /// <summary>
-    /// Processes analog stick and trigger events from the Xbox 360 controller.
+    /// Processes analog stick and trigger events from the Xbox controller family.
     /// </summary>
     /// <param name="code">The Linux input axis code (ABS_X, ABS_Z, ABS_RZ, etc.).</param>
     /// <param name="value">The raw axis value from the hardware device.</param>
@@ -660,13 +690,15 @@ public sealed class RemoteControllerManager : IDisposable
                 break;
                 
             case AbsCode.Z: // Left trigger (LT) - backward movement control
-                // Normalize from Xbox 360 range (0 to 255) to standard range (0.0 to 1.0)
-                _currentState.LeftTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
+                // Normalize and adapt to observed Bluetooth ranges (255/1023/65535)
+                AdaptTriggerMax(ref _ltMax, value);
+                _currentState.LeftTrigger = Math.Clamp(value / (double)_ltMax, 0.0, 1.0);
                 break;
                 
             case AbsCode.RZ: // Right trigger (RT) - forward movement control
-                // Normalize from Xbox 360 range (0 to 255) to standard range (0.0 to 1.0)
-                _currentState.RightTrigger = Math.Clamp(value / 255.0, 0.0, 1.0);
+                // Normalize and adapt to observed Bluetooth ranges (255/1023/65535)
+                AdaptTriggerMax(ref _rtMax, value);
+                _currentState.RightTrigger = Math.Clamp(value / (double)_rtMax, 0.0, 1.0);
                 break;
                 
             // Ignore unmapped axes (right stick, d-pad, etc.)
@@ -721,6 +753,33 @@ public sealed class RemoteControllerManager : IDisposable
     {
         if (_logger != null) _logger.LogWarning(message);
         else Console.WriteLine(message);
+    }
+    #endregion
+
+    #region Helpers
+    /// <summary>
+    /// Adaptively updates the observed maximum trigger value (handles USB 255 and Bluetooth 1023/65535 variants).
+    /// </summary>
+    /// <param name="currentMax">Reference to the current max value to update.</param>
+    /// <param name="value">The latest raw trigger reading.</param>
+    private static void AdaptTriggerMax(ref int currentMax, int value)
+    {
+        // Heuristic: if we see values significantly above the current range, widen it to common maxima
+        if (value > currentMax)
+        {
+            if (value > 4096 && currentMax < 65535)
+            {
+                currentMax = 65535; // High-resolution Bluetooth HID
+            }
+            else if (value > 255 && currentMax < 1023)
+            {
+                currentMax = 1023; // Common Bluetooth HID
+            }
+            else
+            {
+                currentMax = value; // Incremental growth for unknown variants
+            }
+        }
     }
     #endregion
 }
