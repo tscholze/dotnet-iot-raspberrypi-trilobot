@@ -155,8 +155,8 @@
         margin-left: -30px;
         margin-top: -30px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        transition: box-shadow 0.1s ease;
         cursor: grab;
+        will-change: transform;
     }
     
     .joystick-knob:active {
@@ -234,6 +234,11 @@
     private Timer? _joystickTimer;
 
     /// <summary>
+    /// Last time joystick was updated to prevent excessive state changes.
+    /// </summary>
+    private DateTime _lastUpdate = DateTime.MinValue;
+
+    /// <summary>
     /// Maximum distance the joystick knob can move from center in pixels.
     /// </summary>
     private const double JoystickRadius = 70.0;
@@ -241,7 +246,7 @@
     /// <summary>
     /// Minimum change threshold to trigger movement updates (reduces noise).
     /// </summary>
-    private const double MovementThreshold = 0.1;
+    private const double MovementThreshold = 0.05;
 
     /// <summary>
     /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
@@ -290,7 +295,12 @@
     private void OnJoystickMouseMove(MouseEventArgs e)
     {
         if (!_isDragging) return;
-        UpdateJoystickPosition(e.OffsetX - 100, e.OffsetY - 100); // Center is at 100,100
+        
+        // Calculate relative position from joystick center (100, 100 is center of 200x200 joystick)
+        var deltaX = e.OffsetX - 100;
+        var deltaY = e.OffsetY - 100;
+        
+        UpdateJoystickPosition(deltaX, deltaY);
     }
 
     /// <summary>
@@ -324,9 +334,12 @@
         if (!_isDragging || e.Touches.Length == 0) return;
         
         var touch = e.Touches[0];
-        // Note: For touch events, we need to calculate relative position
-        // This is a simplified implementation - you might need more precise touch handling
-        UpdateJoystickPosition(touch.ClientX - 100, touch.ClientY - 100);
+        // Calculate relative position from joystick center
+        // Note: This is simplified - for production you'd want to get the actual element bounds
+        var deltaX = touch.ClientX - 100; // Approximate center calculation
+        var deltaY = touch.ClientY - 100;
+        
+        UpdateJoystickPosition(deltaX, deltaY);
     }
 
     /// <summary>
@@ -365,22 +378,24 @@
         var newHorizontal = Math.Max(-1.0, Math.Min(1.0, deltaX / JoystickRadius));
         var newVertical = Math.Max(-1.0, Math.Min(1.0, -deltaY / JoystickRadius)); // Negative Y for forward
 
-        // Apply movement threshold to reduce noise
+        // Apply movement threshold to reduce noise and prevent excessive updates
         if (Math.Abs(newHorizontal - _currentHorizontal) > MovementThreshold ||
             Math.Abs(newVertical - _currentVertical) > MovementThreshold)
         {
             _currentHorizontal = newHorizontal;
             _currentVertical = newVertical;
 
-            // Throttle movement updates using timer
-            _joystickTimer?.Dispose();
-            _joystickTimer = new Timer(async _ =>
-            {
-                await CallMotor(_currentHorizontal, _currentVertical);
-            }, null, TimeSpan.FromMilliseconds(50), Timeout.InfiniteTimeSpan);
+            // Send robot movement command
+            _ = Task.Run(async () => await CallMotor(_currentHorizontal, _currentVertical));
         }
 
-        StateHasChanged();
+        // Throttle UI updates to prevent excessive re-rendering
+        var now = DateTime.UtcNow;
+        if (now - _lastUpdate > TimeSpan.FromMilliseconds(16)) // ~60 FPS max
+        {
+            _lastUpdate = now;
+            StateHasChanged();
+        }
     }
 
     /// <summary>
@@ -393,9 +408,10 @@
         _currentHorizontal = 0.0;
         _currentVertical = 0.0;
         
-        // Stop robot movement
+        // Stop robot movement immediately
         _ = Task.Run(async () => await CallMotor(0, 0));
         
+        // Force immediate UI update for reset
         StateHasChanged();
     }
 
