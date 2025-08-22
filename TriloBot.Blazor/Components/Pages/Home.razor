@@ -1,5 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using Microsoft.AspNetCore.SignalR.Client
 
@@ -28,6 +29,30 @@
             <p class="mb-0"><strong>@_distance</strong> - No objects in driving path.</p>
         }
     </div>
+
+    <!-- Joystick controls -->
+    <div class="card mb-4"></div>
+        <div class="card-header">Joystick Control</div>
+        <div class="card-body text-center">
+            <div class="joystick-container" 
+                 @onmousedown="OnJoystickMouseDown" 
+                 @onmousemove="OnJoystickMouseMove" 
+                 @onmouseup="OnJoystickMouseUp" 
+                 @onmouseleave="OnJoystickMouseUp"
+                 @ontouchstart="OnJoystickTouchStart"
+                 @ontouchmove="OnJoystickTouchMove" 
+                 @ontouchend="OnJoystickTouchEnd">
+                <div class="joystick-base">
+                    <div class="joystick-knob" style="transform: translate(@(_knobX)px, @(_knobY)px)"></div>
+                </div>
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    H: @(_currentHorizontal.ToString("F2")) | V: @(_currentVertical.ToString("F2"))
+                </small>
+            </div>
+        </div>
+    ✔">
 
     <!-- Motor controls -->
     <div class="card mb-4">
@@ -93,6 +118,53 @@
     </div>
 </div>
 
+<style>
+    .joystick-container {
+        display: inline-block;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        cursor: grab;
+    }
+    
+    .joystick-container:active {
+        cursor: grabbing;
+    }
+    
+    .joystick-base {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #e6e6e6, #ffffff);
+        border: 3px solid #ddd;
+        position: relative;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+    }
+    
+    .joystick-knob {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #4CAF50, #45a049);
+        border: 2px solid #388E3C;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-left: -30px;
+        margin-top: -30px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: box-shadow 0.1s ease;
+        cursor: grab;
+    }
+    
+    .joystick-knob:active {
+        cursor: grabbing;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+</style>
+
 @code {
 
     /// <summary>
@@ -127,6 +199,50 @@
     /// </summary>
     private IDisposable? _distanceSubscription;
 
+    // Joystick state variables
+    
+    /// <summary>
+    /// Indicates whether the joystick is currently being dragged.
+    /// </summary>
+    private bool _isDragging = false;
+    
+    /// <summary>
+    /// Current X position of the joystick knob in pixels.
+    /// </summary>
+    private double _knobX = 0;
+    
+    /// <summary>
+    /// Current Y position of the joystick knob in pixels.
+    /// </summary>
+    private double _knobY = 0;
+    
+    /// <summary>
+    /// Current horizontal movement value (-1.0 to 1.0).
+    /// Negative values indicate left movement, positive values indicate right movement.
+    /// </summary>
+    private double _currentHorizontal = 0.0;
+    
+    /// <summary>
+    /// Current vertical movement value (-1.0 to 1.0).
+    /// Negative values indicate backward movement, positive values indicate forward movement.
+    /// </summary>
+    private double _currentVertical = 0.0;
+
+    /// <summary>
+    /// Timer for throttling joystick movement updates to prevent excessive SignalR calls.
+    /// </summary>
+    private Timer? _joystickTimer;
+
+    /// <summary>
+    /// Maximum distance the joystick knob can move from center in pixels.
+    /// </summary>
+    private const double JoystickRadius = 70.0;
+
+    /// <summary>
+    /// Minimum change threshold to trigger movement updates (reduces noise).
+    /// </summary>
+    private const double MovementThreshold = 0.1;
+
     /// <summary>
     /// Initializes the SignalR hub connection and subscribes to the ObjectTooNearStream.
     /// </summary>
@@ -156,6 +272,131 @@
 
         // Start distance monitoring
         await _hubConnection.InvokeAsync("StartDistanceMonitoring");
+    }
+
+    /// <summary>
+    /// Handles mouse down events on the joystick for desktop interaction.
+    /// </summary>
+    /// <param name="e">Mouse event arguments</param>
+    private void OnJoystickMouseDown(MouseEventArgs e)
+    {
+        _isDragging = true;
+    }
+
+    /// <summary>
+    /// Handles mouse move events for joystick dragging on desktop.
+    /// </summary>
+    /// <param name="e">Mouse event arguments</param>
+    private void OnJoystickMouseMove(MouseEventArgs e)
+    {
+        if (!_isDragging) return;
+        UpdateJoystickPosition(e.OffsetX - 100, e.OffsetY - 100); // Center is at 100,100
+    }
+
+    /// <summary>
+    /// Handles mouse up events to stop joystick dragging on desktop.
+    /// </summary>
+    /// <param name="e">Mouse event arguments</param>
+    private void OnJoystickMouseUp(MouseEventArgs e)
+    {
+        _isDragging = false;
+        ResetJoystick();
+    }
+
+    /// <summary>
+    /// Handles touch start events on the joystick for mobile interaction.
+    /// </summary>
+    /// <param name="e">Touch event arguments</param>
+    private void OnJoystickTouchStart(TouchEventArgs e)
+    {
+        if (e.Touches.Length > 0)
+        {
+            _isDragging = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles touch move events for joystick dragging on mobile devices.
+    /// </summary>
+    /// <param name="e">Touch event arguments</param>
+    private void OnJoystickTouchMove(TouchEventArgs e)
+    {
+        if (!_isDragging || e.Touches.Length == 0) return;
+        
+        var touch = e.Touches[0];
+        // Note: For touch events, we need to calculate relative position
+        // This is a simplified implementation - you might need more precise touch handling
+        UpdateJoystickPosition(touch.ClientX - 100, touch.ClientY - 100);
+    }
+
+    /// <summary>
+    /// Handles touch end events to stop joystick dragging on mobile.
+    /// </summary>
+    /// <param name="e">Touch event arguments</param>
+    private void OnJoystickTouchEnd(TouchEventArgs e)
+    {
+        _isDragging = false;
+        ResetJoystick();
+    }
+
+    /// <summary>
+    /// Updates the joystick knob position and calculates movement values.
+    /// </summary>
+    /// <param name="deltaX">X offset from joystick center</param>
+    /// <param name="deltaY">Y offset from joystick center</param>
+    private void UpdateJoystickPosition(double deltaX, double deltaY)
+    {
+        // Calculate distance from center
+        var distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        // Constrain to joystick radius
+        if (distance > JoystickRadius)
+        {
+            var angle = Math.Atan2(deltaY, deltaX);
+            deltaX = Math.Cos(angle) * JoystickRadius;
+            deltaY = Math.Sin(angle) * JoystickRadius;
+        }
+
+        // Update knob position
+        _knobX = deltaX;
+        _knobY = deltaY;
+
+        // Calculate normalized movement values (-1.0 to 1.0)
+        var newHorizontal = Math.Max(-1.0, Math.Min(1.0, deltaX / JoystickRadius));
+        var newVertical = Math.Max(-1.0, Math.Min(1.0, -deltaY / JoystickRadius)); // Negative Y for forward
+
+        // Apply movement threshold to reduce noise
+        if (Math.Abs(newHorizontal - _currentHorizontal) > MovementThreshold ||
+            Math.Abs(newVertical - _currentVertical) > MovementThreshold)
+        {
+            _currentHorizontal = newHorizontal;
+            _currentVertical = newVertical;
+
+            // Throttle movement updates using timer
+            _joystickTimer?.Dispose();
+            _joystickTimer = new Timer(async _ =>
+            {
+                await CallMotor(_currentHorizontal, _currentVertical);
+            }, null, TimeSpan.FromMilliseconds(50), Timeout.InfiniteTimeSpan);
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Resets the joystick to center position and stops robot movement.
+    /// </summary>
+    private void ResetJoystick()
+    {
+        _knobX = 0;
+        _knobY = 0;
+        _currentHorizontal = 0.0;
+        _currentVertical = 0.0;
+        
+        // Stop robot movement
+        _ = Task.Run(async () => await CallMotor(0, 0));
+        
+        StateHasChanged();
     }
 
     /// <summary>
@@ -229,6 +470,17 @@
     {
         if (_hubConnection is null) return;
         await _hubConnection.InvokeAsync("FillUnderlighting", r, g, b);
+    }
+
+    /// <summary>
+    /// Disposes resources when component is disposed.
+    /// </summary>
+    public void Dispose()
+    {
+        _joystickTimer?.Dispose();
+        _objectTooNearSubscription?.Dispose();
+        _distanceSubscription?.Dispose();
+        _ = _hubConnection?.DisposeAsync();
     }
 
 }
