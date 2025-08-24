@@ -114,36 +114,95 @@ Notes and requirements:
 - You may need permissions; if you get a permission error, run with `sudo` or add a udev rule to grant access.
 - Dead zones and a movement threshold are applied to avoid noise and stick drift.
 
-## 🕸️ SignalR architecture
+## 🕸️ SignalR Hub API
 
-TriloBot uses SignalR for real-time communication between the robot runtime and client UIs (Blazor, .NET MAUI).
+TriloBot hosts a SignalR hub to expose robot commands and stream telemetry to connected clients.
 
-High-level overview:
-- The robot process hosts a SignalR hub that exposes commands (e.g., drive, lights, camera) and streams events from hardware managers (buttons, distance, movement state).
-- The Blazor/web client and MAUI app connect to this hub to send commands and display live updates.
-- Video streaming is handled separately via MediaMTX; the UI consumes the stream URL while still using SignalR for control and telemetry.
+Full reference and examples: `_docs/signalr.md`
 
-Conceptual flow:
-- Client → Hub (commands): drive operations, lighting changes, start/stop monitoring, take photo, etc.
-- Hub → Client (events): button pressed, distance changed/object too near, movement updates, light state, camera events.
+Hub endpoint
+- URL: `/trilobotHub` (see `TriloBotHub.HubEndpoint`)
 
-How to run:
-- Start the robot app (hosts the SignalR hub):
-    ```sh
-    dotnet run --project TriloBot
-    ```
-- Start the web UI (connects to the hub):
-    ```sh
-    dotnet run --project TriloBot.Web
-    ```
-- Optional: start the MediaMTX server for the camera feed:
-    ```sh
-    cd _thirdparty/webrtc && mediamtx
-    ```
+Events (Hub -> Client)
+- `DistanceUpdated` (double) — broadcast when the ultrasonic distance reading changes.
+- `ObjectTooNearUpdated` (bool) — broadcast when proximity threshold is crossed.
 
-Notes:
-- The exact hub endpoints and schemas are internal implementation details; use the provided UI apps as references.
-- Ensure the robot host and clients can reach each other over the network (open firewall if needed).
+Callable methods (Client -> Hub)
+All method names below are available on the hub and match the server-side signatures:
+
+- SetButtonLed(int lightId, double value)
+    - Sets brightness of a button LED. `lightId` maps to `TriloBot.Light.Lights` enum values.
+    - Example: `SetButtonLed(6, 0.75)`
+
+- FillUnderlighting(byte r, byte g, byte b)
+    - Fill all underlighting LEDs with the supplied RGB color.
+    - Example: `FillUnderlighting(255, 0, 0)` (red)
+
+- SetUnderlight(string light, byte r, byte g, byte b)
+    - Set a single underlight by name (parsed to `Lights` enum).
+    - Example: `SetUnderlight("Light1", 0, 128, 255)`
+
+- ClearUnderlighting()
+    - Turn off all underlighting.
+
+- StartPoliceEffect()
+    - Start a prebuilt light effect on the underlighting LEDs.
+
+- Move(double horizontal, double vertical)
+    - Move the robot. `horizontal` and `vertical` are normalized in `[-1.0, 1.0]`.
+    - `horizontal`: left (-1) to right (+1), `vertical`: backward (-1) to forward (+1).
+    - Example: `Move(0.2, 1.0)` — slight right while moving forward.
+
+- Task<string> TakePhoto(string savePath)
+    - Take a photo and save it to `savePath`. Returns the saved file path.
+
+- StartDistanceMonitoring()
+    - Start background distance monitoring on the robot (server-side polling).
+
+- Task<double> ReadDistance()
+    - Synchronously read the current distance and return the value (centimeters).
+
+Notes on lifecycle methods
+- The hub also exposes a server-side `Close()` method used to dispose subscriptions and the underlying `TriloBot` instance — this is intended for host lifecycle management and typically not invoked by normal clients.
+
+Quick usage examples
+
+C# (Microsoft.AspNetCore.SignalR.Client)
+
+```csharp
+var connection = new HubConnectionBuilder()
+        .WithUrl("https://<robot-host>/trilobotHub")
+        .Build();
+
+connection.On<double>("DistanceUpdated", d => Console.WriteLine($"Distance: {d} cm"));
+connection.On<bool>("ObjectTooNearUpdated", near => Console.WriteLine($"Too near: {near}"));
+
+await connection.StartAsync();
+await connection.InvokeAsync("StartDistanceMonitoring");
+await connection.InvokeAsync("Move", 0.0, 1.0);
+```
+
+JavaScript (browser)
+
+```javascript
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl('/trilobotHub')
+    .build();
+
+connection.on('DistanceUpdated', d => console.log('distance', d));
+connection.on('ObjectTooNearUpdated', v => console.log('near', v));
+
+await connection.start();
+await connection.invoke('StartDistanceMonitoring');
+await connection.invoke('Move', 0.0, 1.0);
+```
+
+Security and networking
+- Make sure the robot host is reachable from the client (IP/hostname, firewall, TLS when needed).
+- Consider authentication/authorization for production deployments — the sample hub is intentionally simple for demos.
+
+Video streaming
+- Live video is provided separately via the MediaMTX pipeline; SignalR is only used for control and telemetry.
 
 ## 🚀 Getting Started
 
