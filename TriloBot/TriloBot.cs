@@ -223,7 +223,7 @@ public class TriloBot : IDisposable
         _systemManager = new TriloBotSystem.SystemManager();
 
         // Setup remote controller manager - defaulting to Xbox Series for compatibility
-        _remoteControllerManager = new RemoteControllerManager(RemoteControllerManager.ControllerType.XboxSeries);
+        _remoteControllerManager = new RemoteControllerManager(ControllerType.XboxSeries);
         _controllerVerticalMovementObservable = _remoteControllerManager.VerticalMovementObservable.Subscribe(OnVerticalMovementChanged);
         _controllerHorizontalMovementObservable = _remoteControllerManager.HorizontalMovementObservable.Subscribe(OnHorizontalMovementChanged);
         _controllerButtonPressedObservable = _remoteControllerManager.ButtonPressedObservable.Subscribe(OnControllerButtonPressed);

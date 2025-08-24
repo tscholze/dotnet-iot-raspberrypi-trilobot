@@ -8,7 +8,7 @@ public interface IControllerStrategy
     /// <summary>
     /// Processes axis events for the specific controller type.
     /// </summary>
-    void ProcessAxisEvent(ushort code, int value, SharedControllerState state, ref int ltMax, ref int rtMax);
+    void ProcessAxisEvent(ushort code, int value, ControllerState state, ref int ltMax, ref int rtMax);
     
     /// <summary>
     /// Gets the initial trigger maximum values for this controller type.
@@ -21,7 +21,7 @@ public interface IControllerStrategy
 /// </summary>
 public class Xbox360Strategy : IControllerStrategy
 {
-    public void ProcessAxisEvent(ushort code, int value, SharedControllerState state, ref int ltMax, ref int rtMax)
+    public void ProcessAxisEvent(ushort code, int value, ControllerState state, ref int ltMax, ref int rtMax)
     {
         switch ((LinuxInputConstants.AbsCode)code)
         {
@@ -47,7 +47,7 @@ public class Xbox360Strategy : IControllerStrategy
 /// </summary>
 public class XboxSeriesStrategy : IControllerStrategy
 {
-    public void ProcessAxisEvent(ushort code, int value, SharedControllerState state, ref int ltMax, ref int rtMax)
+    public void ProcessAxisEvent(ushort code, int value, ControllerState state, ref int ltMax, ref int rtMax)
     {
         switch (code)
         {
