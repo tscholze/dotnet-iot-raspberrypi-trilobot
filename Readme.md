@@ -68,6 +68,7 @@ Each hardware subsystem is managed by its own class:
 | `MotorManager`      | Abstracts motor control and movement                 |
 | `UltrasoundManager` | Provides distance readings and proximity events      |
 | `CameraManager`     | Photo captures and other image related operations in |
+| `SystemManager`     | System information and real-time monitoring (CPU, memory, temperature) |
 
 All managers are composed in the main `TriloBot` class, which exposes observables and high-level control methods. All hardware mappings use enums and extension methods for clarity and maintainability.
 
@@ -114,7 +115,45 @@ Notes and requirements:
 - You may need permissions; if you get a permission error, run with `sudo` or add a udev rule to grant access.
 - Dead zones and a movement threshold are applied to avoid noise and stick drift.
 
-## 🕸️ SignalR Hub API
+## � System Monitoring
+
+TriloBot.NET includes comprehensive system monitoring capabilities via the `SystemManager` class:
+
+**Static System Information:**
+- Hostname, IP addresses, network interfaces
+- CPU information (model, architecture, cores)
+- Memory information (total, available, used)
+- System uptime and load averages
+- Operating system details
+
+**Real-time Monitoring (via Observables):**
+- CPU usage percentage (updated every 2 seconds by default)
+- Memory usage percentage
+- CPU temperature (Raspberry Pi thermal sensor)
+
+Usage example:
+
+```csharp
+using var robot = new TriloBot();
+
+// Get static information
+Console.WriteLine($"Hostname: {robot.GetHostname()}");
+Console.WriteLine($"Primary IP: {robot.GetPrimaryIpAddress()}");
+Console.WriteLine($"CPU Temperature: {robot.GetCpuTemperature():F1}°C");
+
+// Start real-time monitoring
+robot.StartSystemMonitoring();
+
+// Subscribe to updates
+robot.CpuUsageObservable.Subscribe(cpu => 
+    Console.WriteLine($"CPU: {cpu:F1}%"));
+robot.MemoryUsageObservable.Subscribe(mem => 
+    Console.WriteLine($"Memory: {mem:F1}%"));
+robot.CpuTemperatureObservable.Subscribe(temp => 
+    Console.WriteLine($"Temperature: {temp:F1}°C"));
+```
+
+## �🕸️ SignalR Hub API
 
 TriloBot hosts a SignalR hub to expose robot commands and stream telemetry to connected clients.
 
@@ -268,6 +307,13 @@ robot.ButtonPressedObservable.Subscribe(button =>
 
 // Set underlighting to blue
 robot.FillUnderlighting(0, 0, 255);
+
+// Start system monitoring
+robot.StartSystemMonitoring();
+robot.CpuUsageObservable.Subscribe(cpu => 
+    Console.WriteLine($"CPU Usage: {cpu:F1}%"));
+robot.MemoryUsageObservable.Subscribe(memory => 
+    Console.WriteLine($"Memory Usage: {memory:F1}%"));
 
 // Take a photo (async)
 string photoPath = await robot.TakePhotoAsync("/home/pi/photos");

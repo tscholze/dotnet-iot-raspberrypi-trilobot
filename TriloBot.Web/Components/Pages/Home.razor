@@ -488,7 +488,6 @@
     /// </summary>
     public void Dispose()
     {
-        _joystickTimer?.Dispose();
         _objectTooNearSubscription?.Dispose();
         _distanceSubscription?.Dispose();
         _ = _hubConnection?.DisposeAsync();

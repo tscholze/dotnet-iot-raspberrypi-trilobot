@@ -9,6 +9,7 @@ using TriloBot.Button;
 using TriloBot.Camera;
 using TriloBot.Light.Modes;
 using TriloBot.RemoteController;
+using TriloBotSystem = TriloBot.SystemInfo;
 
 namespace TriloBot;
 
@@ -37,6 +38,21 @@ public class TriloBot : IDisposable
     /// Exposes the live video feed URL as an observable. Emits a new value when the stream URL changes.
     /// </summary>
     public IObservable<string> LiveVideoFeedObservable => _liveVideoFeedSubject.AsObservable();
+
+    /// <summary>
+    /// Exposes the CPU usage percentage as an observable (0.0 to 100.0).
+    /// </summary>
+    public IObservable<double> CpuUsageObservable => _systemManager.CpuUsageObservable;
+
+    /// <summary>
+    /// Exposes the memory usage percentage as an observable (0.0 to 100.0).
+    /// </summary>
+    public IObservable<double> MemoryUsageObservable => _systemManager.MemoryUsageObservable;
+
+    /// <summary>
+    /// Exposes the CPU temperature as an observable (in Celsius).
+    /// </summary>
+    public IObservable<double> CpuTemperatureObservable => _systemManager.CpuTemperatureObservable;
 
     /// <summary>
     /// Task for background button monitoring.
@@ -94,6 +110,11 @@ public class TriloBot : IDisposable
     /// Manages remote controller operations.
     /// </summary>
     private readonly RemoteControllerManager _remoteControllerManager;
+
+    /// <summary>
+    /// Manages system information and monitoring.
+    /// </summary>
+    private readonly TriloBotSystem.SystemManager _systemManager;
 
     /// <summary>
     /// Subject for live video feed URL changes.
@@ -197,6 +218,9 @@ public class TriloBot : IDisposable
 
         // Setup camera manager
         _cameraManager = new CameraManager();
+
+        // Setup system manager
+        _systemManager = new TriloBotSystem.SystemManager();
 
         // Setup remote controller manager - defaulting to Xbox Series for compatibility
         _remoteControllerManager = new RemoteControllerManager(RemoteControllerManager.ControllerType.XboxSeries);
@@ -550,6 +574,69 @@ public class TriloBot : IDisposable
 
     #endregion
 
+    #region System methods
+
+    /// <summary>
+    /// Gets the system hostname.
+    /// </summary>
+    /// <returns>The system hostname.</returns>
+    public string GetHostname() => _systemManager.Hostname;
+
+    /// <summary>
+    /// Gets the primary IP address of the system.
+    /// </summary>
+    /// <returns>The primary IP address.</returns>
+    public string GetPrimaryIpAddress() => _systemManager.GetPrimaryIpAddress();
+
+    /// <summary>
+    /// Gets all network interfaces and their IP addresses.
+    /// </summary>
+    /// <returns>A dictionary mapping interface names to their IP addresses.</returns>
+    public Dictionary<string, List<string>> GetNetworkInterfaces() => _systemManager.GetNetworkInterfaces();
+
+    /// <summary>
+    /// Gets CPU information.
+    /// </summary>
+    /// <returns>A dictionary containing CPU information.</returns>
+    public Dictionary<string, string> GetCpuInfo() => _systemManager.GetCpuInfo();
+
+    /// <summary>
+    /// Gets memory information.
+    /// </summary>
+    /// <returns>A dictionary containing memory information in KB.</returns>
+    public Dictionary<string, long> GetMemoryInfo() => _systemManager.GetMemoryInfo();
+
+    /// <summary>
+    /// Gets the current CPU temperature.
+    /// </summary>
+    /// <returns>CPU temperature in Celsius.</returns>
+    public double GetCpuTemperature() => _systemManager.GetCpuTemperature();
+
+    /// <summary>
+    /// Gets the system load averages.
+    /// </summary>
+    /// <returns>A tuple containing (load1min, load5min, load15min).</returns>
+    public (double load1min, double load5min, double load15min) GetLoadAverages() => _systemManager.GetLoadAverages();
+
+    /// <summary>
+    /// Gets the system uptime.
+    /// </summary>
+    /// <returns>System uptime as a TimeSpan.</returns>
+    public TimeSpan GetSystemUptime() => _systemManager.SystemUptime;
+
+    /// <summary>
+    /// Starts system monitoring for CPU usage, memory usage, and CPU temperature.
+    /// </summary>
+    /// <param name="intervalMs">Monitoring interval in milliseconds.</param>
+    public void StartSystemMonitoring(int intervalMs = 2000) => _systemManager.StartMonitoring(intervalMs);
+
+    /// <summary>
+    /// Stops system monitoring.
+    /// </summary>
+    public void StopSystemMonitoring() => _systemManager.StopMonitoring();
+
+    #endregion
+
     #region IDisposable Support
 
     /// <summary>
@@ -571,6 +658,7 @@ public class TriloBot : IDisposable
             _buttonManager.Dispose();
             _lightManager.Dispose();
             _ultrasoundManager.Dispose();
+            _systemManager.Dispose();
             _gpio.Dispose();
             _distanceObserver.Dispose();
             _objectTooNearObserver.Dispose();
