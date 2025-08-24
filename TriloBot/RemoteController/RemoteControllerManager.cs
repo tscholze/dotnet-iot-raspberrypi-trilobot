@@ -1,8 +1,6 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using TriloBot.Button;
-using System.IO;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 namespace TriloBot.RemoteController;

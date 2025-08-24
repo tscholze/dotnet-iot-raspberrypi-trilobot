@@ -229,11 +229,6 @@
     private double _currentVertical = 0.0;
 
     /// <summary>
-    /// Timer for throttling joystick movement updates to prevent excessive SignalR calls.
-    /// </summary>
-    private Timer? _joystickTimer;
-
-    /// <summary>
     /// Last time joystick was updated to prevent excessive state changes.
     /// </summary>
     private DateTime _lastUpdate = DateTime.MinValue;
