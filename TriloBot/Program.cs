@@ -24,7 +24,8 @@ public class Program
         Console.WriteLine($"Primary IP: {robot.GetPrimaryIpAddress()}");
         Console.WriteLine($"Uptime: {robot.GetSystemUptime()}");
         Console.WriteLine($"CPU Temperature: {robot.GetCpuTemperature():F1}°C");
-        
+        Console.WriteLine("");
+
         var loadAvg = robot.GetLoadAverages();
         Console.WriteLine($"Load Average: {loadAvg.load1min:F2} {loadAvg.load5min:F2} {loadAvg.load15min:F2}");
 
