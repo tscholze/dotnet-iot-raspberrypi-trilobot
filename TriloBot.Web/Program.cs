@@ -1,5 +1,5 @@
-using TriloBot.Blazor.Components;
-using TriloBot.Blazor.SignalR;
+using TriloBot.Web.Components;
+using TriloBot.Web.SignalR;
 using Microsoft.Extensions.FileProviders;
 using System.Net;
 

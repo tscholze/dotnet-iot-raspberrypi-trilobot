@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot", "TriloBot\TriloBot.csproj", "{F4AC2284-75B1-40BB-B583-A1D3F5B8CD2A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot.Blazor", "TriloBot.Blazor\TriloBot.Blazor.csproj", "{1E5895B7-65CF-4199-959B-EC92CC88A6CC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriloBot.Web", "TriloBot.Web\TriloBot.Web.csproj", "{1E5895B7-65CF-4199-959B-EC92CC88A6CC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trilobot.Maui", "Trilobot.Maui", "{130689C1-0B62-50E9-6DDC-9C77647F6813}"
 EndProject

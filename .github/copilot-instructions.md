@@ -33,7 +33,7 @@ TriloBot.NET is a C# .NET library designed to control the Pimoroni Trilobot robo
   ```
 - **Web Client**:
   ```sh
-  dotnet run --project TriloBot.Blazor
+  dotnet run --project TriloBot.Web
   ```
 - **Webcam Feed**:
   ```sh
@@ -62,7 +62,7 @@ TriloBot.NET is a C# .NET library designed to control the Pimoroni Trilobot robo
 ## Key Files and Directories
 - `TriloBot/`: Core library containing manager classes and the main `TriloBot` class.
 - `TriloBot.Maui/`: .NET MAUI app for cross-platform UI.
-- `TriloBot.Blazor/`: Blazor app for web-based control.
+- `TriloBot.Web/`: Web app with Blazor UI and SignalR hub for robot control.
 - `_thirdparty/webrtc/`: Contains the MediaMTX binary for video streaming.
 
 ## Examples

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using TriloBot.Light;
 using TriloBot.Motor;
 
-namespace TriloBot.Blazor.SignalR;
+namespace TriloBot.Web.SignalR;
 
 /// <summary>
 /// SignalR Hub for remote controlling the TriloBot.

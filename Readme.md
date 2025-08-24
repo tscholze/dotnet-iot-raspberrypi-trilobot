@@ -23,7 +23,7 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 | Service | Name                  | State                                                                                                                                                                                                                             |
 | ------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Action  | Build TriloBot.Core   | [![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-core.yml)     |
-| Action  | Build TriloBot.Blazor | [![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-blazor.yml) |
+| Action  | Build TriloBot.Web | [![.NET](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-web.yml/badge.svg)](https://github.com/tscholze/dotnet-iot-raspberrypi-trilobot/actions/workflows/dotnet-build-web.yml) |
 | Action  | Build TriloBot.Maui   | -                                                                                                                                                                                                                                 |
 
 ## How it looks
@@ -134,7 +134,7 @@ How to run:
     ```
 - Start the web UI (connects to the hub):
     ```sh
-    dotnet run --project TriloBot.Blazor
+    dotnet run --project TriloBot.Web
     ```
 - Optional: start the MediaMTX server for the camera feed:
     ```sh
@@ -167,7 +167,7 @@ Notes:
    ```
 3. To run for example the web client:
     ```sh
-    dotnet run --project TriloBot.Blazor
+    dotnet run --project TriloBot.Web
     ```
 4. To start the web cam feed:
    ```sh
