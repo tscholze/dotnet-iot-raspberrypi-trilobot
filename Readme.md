@@ -3,9 +3,21 @@
   <img src="_docs/image.png" height="200" alt="Image of the project" />
 </p>
 
+> A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
 
-A C# .NET library for controlling the [Pimoroni Trilobot](https://shop.pimoroni.com/products/trilobot) robot platform on a Raspberry Pi using .NET IoT. This project aims to provide a SignalR C# API for all TriloBot features. With a Blazor and a .NET MAUI app.
+**Unleash the Full Power of the .NET Ecosystem with One Robot!** 🚀
 
+TriloBot.NET is more than just a robot controller library - it's a **comprehensive demonstration of what the modern .NET ecosystem can achieve**. From hardcore low-level sensor interactions using .NET IoT, to real-time web applications with Blazor and SignalR, to native mobile apps with .NET MAUI - **all from the same unified codebase**.
+
+This project showcases how .NET spans the entire technology stack:
+- 🔌 **Hardware Integration**: Direct GPIO, I2C, SPI, and camera control on Raspberry Pi
+- 🌐 **Web Technologies**: Real-time Blazor Server apps with SignalR for live telemetry
+- 📱 **Mobile Development**: Native iOS and Android apps using .NET MAUI
+- 🎮 **System Programming**: Low-level Linux input event processing for Xbox controllers
+- 📊 **Real-time Monitoring**: System telemetry with reactive programming patterns
+- 🏗️ **Clean Architecture**: Modern C# with dependency injection, observables, and SOLID principles
+
+**One Language. One Platform. Infinite Possibilities.**
 
 ## 🚀 What Does It Do?
 
@@ -57,20 +69,301 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 - 1 x Camera (Raspberry Pi Camera Module, optional)
 
 
-## 🛠️ Architecture
+## 🛠️ Architecture & Core Components
 
-Each hardware subsystem is managed by its own class:
+TriloBot.NET is built around specialized manager classes that handle each hardware subsystem. This modular approach demonstrates clean architecture principles and makes the codebase maintainable and testable.
 
-| Manager Class       | Responsibility                                       |
-| ------------------- | ---------------------------------------------------- |
-| `ButtonManager`     | Handles button state, debouncing, and events         |
-| `LightManager`      | Controls all LEDs and underlighting                  |
-| `MotorManager`      | Abstracts motor control and movement                 |
-| `UltrasoundManager` | Provides distance readings and proximity events      |
-| `CameraManager`     | Photo captures and other image related operations in |
-| `SystemManager`     | System information and real-time monitoring (CPU, memory, temperature) |
+### 🕹️ ButtonManager
+**Physical Button Control & Event Processing**
 
-All managers are composed in the main `TriloBot` class, which exposes observables and high-level control methods. All hardware mappings use enums and extension methods for clarity and maintainability.
+Manages the four programmable buttons (A, B, X, Y) on the TriloBot with sophisticated debouncing and event handling.
+
+**Key Features:**
+- Hardware debouncing to prevent false triggers
+- Reactive programming with observables for button press events
+- Thread-safe button state management
+- Edge detection (press/release events)
+
+**Usage Example:**
+```csharp
+robot.StartButtonMonitoring();
+robot.ButtonPressedObservable.Subscribe(button =>
+{
+    Console.WriteLine($"Button {button} pressed!");
+    // React to specific buttons
+    switch (button)
+    {
+        case Buttons.ButtonA: robot.Forward(); break;
+        case Buttons.ButtonB: robot.Backward(); break;
+        case Buttons.ButtonX: robot.TurnLeft(); break;
+        case Buttons.ButtonY: robot.TurnRight(); break;
+    }
+});
+```
+
+---
+
+### 💡 LightManager
+**RGB LED Control & Visual Effects**
+
+Controls all lighting systems including button LEDs and underlighting with support for color effects and animations.
+
+**Key Features:**
+- Individual button LED brightness control
+- 6 RGB underlighting LEDs with full color spectrum
+- Pre-built effects (police lights, color cycling)
+- Hardware abstraction for different LED types (SN3218 chip)
+
+**Usage Example:**
+```csharp
+// Set button LED brightness
+robot.SetButtonLed(Lights.ButtonA, 0.8);
+
+// Fill all underlights with color
+robot.FillUnderlighting(255, 0, 128); // Pink
+
+// Start animated effects
+robot.StartPoliceEffect();
+
+// Individual underlight control
+robot.SetUnderlight(Lights.Light1, 0, 255, 0); // Green
+```
+
+---
+
+### 🦾 MotorManager  
+**Precision Motor Control & Movement**
+
+Handles dual-motor control for robot movement with PWM speed control and directional logic.
+
+**Key Features:**
+- Independent left/right motor control
+- PWM-based speed regulation (0-100%)
+- High-level movement abstractions (forward, backward, turn)
+- Smooth acceleration/deceleration curves
+- Motor safety and overcurrent protection
+
+**Usage Example:**
+```csharp
+// High-level movement
+robot.Forward();
+robot.Backward();
+robot.TurnLeft();
+robot.TurnRight();
+
+// Precise control with speed
+robot.Move(horizontal: 0.3, vertical: 0.8); // Slight right, fast forward
+
+// Direct motor control
+robot.SetMotorSpeed(MotorSide.Left, 75);   // 75% speed
+robot.SetMotorSpeed(MotorSide.Right, 60);  // 60% speed
+```
+
+---
+
+### 📏 UltrasoundManager
+**Distance Sensing & Proximity Detection**
+
+Manages the ultrasonic distance sensor with real-time monitoring and proximity alerting.
+
+**Key Features:**
+- Accurate distance measurements in centimeters
+- Configurable proximity thresholds
+- Real-time monitoring with observables
+- Noise filtering and measurement averaging
+- Object detection events
+
+**Usage Example:**
+```csharp
+// Start distance monitoring
+robot.StartDistanceMonitoring();
+
+// React to distance changes
+robot.DistanceObservable.Subscribe(distance =>
+{
+    Console.WriteLine($"Distance: {distance:F1} cm");
+});
+
+// Proximity alerts
+robot.ObjectTooNearObservable.Subscribe(tooNear =>
+{
+    if (tooNear)
+    {
+        robot.FillUnderlighting(255, 0, 0); // Red warning
+        robot.Stop(); // Emergency stop
+    }
+    else
+    {
+        robot.FillUnderlighting(0, 255, 0); // Green all-clear
+    }
+});
+
+// Manual distance reading
+double currentDistance = await robot.ReadDistanceAsync();
+```
+
+---
+
+### 📸 CameraManager
+**Image Capture & Video Processing**
+
+Handles Raspberry Pi camera operations for photo capture and video streaming integration.
+
+**Key Features:**
+- High-quality photo capture with customizable settings
+- Async/await support for non-blocking operations
+- Integration with MediaMTX for live video streaming
+- Configurable image formats and quality
+- File system management for captured images
+
+**Usage Example:**
+```csharp
+// Take a photo
+string photoPath = await robot.TakePhotoAsync("/home/pi/photos");
+Console.WriteLine($"Photo saved to: {photoPath}");
+
+// Capture with custom settings
+var settings = new CameraSettings 
+{ 
+    Width = 1920, 
+    Height = 1080, 
+    Quality = 95 
+};
+string hqPhoto = await robot.TakePhotoAsync("/tmp", settings);
+```
+
+---
+
+### 🖥️ SystemManager
+**System Monitoring & Telemetry**
+
+Provides comprehensive Raspberry Pi system monitoring with real-time performance metrics.
+
+**Key Features:**
+- CPU usage monitoring with real-time updates
+- Memory usage tracking (total, available, used)
+- Temperature monitoring (CPU thermal sensor)
+- Network information (hostname, IP addresses)
+- System uptime and load averages
+- Reactive observables for real-time telemetry
+
+**Usage Example:**
+```csharp
+// Static system information
+Console.WriteLine($"Hostname: {robot.GetHostname()}");
+Console.WriteLine($"Primary IP: {robot.GetPrimaryIpAddress()}");
+Console.WriteLine($"Total Memory: {robot.GetTotalMemoryMb()} MB");
+
+// Start real-time monitoring
+robot.StartSystemMonitoring();
+
+// Subscribe to live updates
+robot.CpuUsageObservable.Subscribe(cpu => 
+    Console.WriteLine($"CPU: {cpu:F1}%"));
+    
+robot.MemoryUsageObservable.Subscribe(memory => 
+    Console.WriteLine($"Memory: {memory:F1}%"));
+    
+robot.CpuTemperatureObservable.Subscribe(temp => 
+    Console.WriteLine($"Temperature: {temp:F1}°C"));
+```
+
+---
+
+### 🎮 RemoteControllerManager
+**Xbox Controller Integration**
+
+Advanced Xbox 360/Series controller support with low-level Linux input event processing.
+
+**Key Features:**
+- Direct Linux input subsystem integration (`/dev/input/event*`)
+- Support for Xbox 360 (USB) and Xbox Series (Bluetooth) controllers
+- Strategy pattern for different controller types
+- Dead zone processing and input filtering
+- Reactive observables for movement and button events
+- Hardware auto-detection and connection management
+
+**Usage Example:**
+```csharp
+// Controller setup with auto-detection
+var controller = new RemoteControllerManager(ControllerType.Xbox360);
+
+// Movement control
+controller.HorizontalMovementObservable.Subscribe(horizontal =>
+{
+    // Left stick X controls steering (-1.0 to 1.0)
+    robot.Steer(horizontal);
+});
+
+controller.VerticalMovementObservable.Subscribe(vertical =>
+{
+    // Triggers control forward/backward (RT - LT)
+    robot.Drive(vertical);
+});
+
+// Button mapping
+controller.ButtonPressedObservable.Subscribe(button =>
+{
+    switch (button)
+    {
+        case Buttons.ButtonA: robot.StartPoliceEffect(); break;
+        case Buttons.ButtonB: robot.ClearUnderlighting(); break;
+        case Buttons.ButtonX: robot.TakePhotoAsync("/tmp"); break;
+        case Buttons.ButtonY: robot.Stop(); break;
+    }
+});
+
+// Check connection status
+if (controller.IsControllerConnected)
+    Console.WriteLine("Controller ready!");
+```
+
+---
+
+---
+
+## 🏗️ Unified Architecture
+
+All managers are composed in the main `TriloBot` class, which provides a unified API and coordinates between subsystems. The architecture demonstrates:
+
+- **🎯 Single Responsibility Principle**: Each manager handles one hardware subsystem
+- **🔄 Reactive Programming**: Extensive use of observables for event-driven architecture  
+- **🏷️ Type Safety**: Enums and extension methods for hardware mappings
+- **🧪 Testability**: Clean interfaces and dependency injection
+- **📦 Modularity**: Components can be used independently or together
+- **⚡ Performance**: Efficient resource management with proper disposal patterns
+
+**Example of the Unified API:**
+```csharp
+using var robot = new TriloBot();
+
+// All managers work together seamlessly
+robot.StartButtonMonitoring();
+robot.StartDistanceMonitoring();  
+robot.StartSystemMonitoring();
+
+// Coordinated responses across multiple subsystems
+robot.ButtonPressedObservable.Subscribe(button =>
+{
+    if (button == Buttons.ButtonA)
+    {
+        robot.FillUnderlighting(0, 255, 0);        // Light manager
+        robot.Forward();                           // Motor manager
+        robot.TakePhotoAsync("/tmp");              // Camera manager
+    }
+});
+
+// System-wide proximity safety
+robot.ObjectTooNearObservable.Subscribe(tooNear =>
+{
+    if (tooNear)
+    {
+        robot.Stop();                              // Motor manager
+        robot.FillUnderlighting(255, 0, 0);        // Light manager  
+        robot.SetButtonLed(Lights.ButtonA, 1.0);  // Light manager
+    }
+});
+```
 
 ## 🎮 Xbox Controller Support (wired Xbox 360)
 
@@ -276,49 +569,90 @@ Video streaming
 
 Each manager class is fully documented with XML comments. See the source code for API details.
 
-### Basic Usage
+### 🚀 Complete Integration Example
+
+This example showcases how multiple managers work together to create intelligent robot behavior:
 
 ```csharp
 using var robot = new TriloBot();
 
-// Start distance monitoring and react to proximity
+// Initialize all systems
+robot.StartButtonMonitoring();
 robot.StartDistanceMonitoring();
+robot.StartSystemMonitoring();
+
+// Multi-system proximity safety
 robot.ObjectTooNearObservable.Subscribe(tooNear =>
 {
     if (tooNear)
-        robot.FillUnderlighting(255, 0, 0); // Red if too close
+    {
+        robot.Stop();                              // Motor: Emergency stop
+        robot.FillUnderlighting(255, 0, 0);        // Lights: Red alert
+        Console.WriteLine("⚠️ Obstacle detected!"); 
+    }
     else
-        robot.FillUnderlighting(0, 255, 0); // Green otherwise
+    {
+        robot.FillUnderlighting(0, 255, 0);        // Lights: Green all-clear
+        Console.WriteLine("✅ Path clear");
+    }
 });
 
-// Listen for button presses
-robot.StartButtonMonitoring();
-robot.ButtonPressedObservable.Subscribe(button =>
+// Interactive button control
+robot.ButtonPressedObservable.Subscribe(async button =>
 {
-    if (button == Buttons.ButtonA)
-        robot.Forward();
-    else if (button == Buttons.ButtonB)
-        robot.Backward();
-    else if (button == Buttons.ButtonX)
-        robot.TurnLeft();
-    else if (button == Buttons.ButtonY)
-        robot.TurnRight();
+    switch (button)
+    {
+        case Buttons.ButtonA:
+            robot.Forward();
+            robot.SetButtonLed(Lights.ButtonA, 1.0);
+            break;
+            
+        case Buttons.ButtonB:
+            robot.Backward();  
+            robot.SetButtonLed(Lights.ButtonB, 1.0);
+            break;
+            
+        case Buttons.ButtonX:
+            robot.TurnLeft();
+            robot.StartPoliceEffect(); // Visual feedback
+            break;
+            
+        case Buttons.ButtonY:
+            var photoPath = await robot.TakePhotoAsync("/tmp");
+            robot.FillUnderlighting(255, 255, 0); // Yellow camera flash
+            Console.WriteLine($"📸 Photo saved: {photoPath}");
+            break;
+    }
 });
 
-// Set underlighting to blue
-robot.FillUnderlighting(0, 0, 255);
-
-// Start system monitoring
-robot.StartSystemMonitoring();
+// System performance monitoring
 robot.CpuUsageObservable.Subscribe(cpu => 
-    Console.WriteLine($"CPU Usage: {cpu:F1}%"));
-robot.MemoryUsageObservable.Subscribe(memory => 
-    Console.WriteLine($"Memory Usage: {memory:F1}%"));
+{
+    // Visual CPU load indicator using button LEDs
+    robot.SetButtonLed(Lights.ButtonA, cpu / 100.0);
+});
 
-// Take a photo (async)
-string photoPath = await robot.TakePhotoAsync("/home/pi/photos");
-Console.WriteLine($"Photo saved to: {photoPath}");
+robot.CpuTemperatureObservable.Subscribe(temp => 
+{
+    if (temp > 70) // Temperature warning
+    {
+        robot.FillUnderlighting(255, 165, 0); // Orange warning
+        Console.WriteLine($"🌡️ High temperature: {temp:F1}°C");
+    }
+});
+
+// Keep the program running
+Console.WriteLine("🤖 TriloBot.NET is ready! Press any key to exit...");
+Console.ReadKey();
 ```
+
+This example demonstrates:
+- **🔄 Cross-system coordination**: Proximity detection affects motors and lights
+- **🎮 Interactive control**: Buttons trigger complex multi-system responses  
+- **📊 Real-time monitoring**: System metrics drive visual feedback
+- **🧠 Intelligent behavior**: Autonomous safety responses
+- **📸 Async operations**: Non-blocking photo capture
+- **✨ Visual effects**: Dynamic lighting based on system state
 
 
 ## 🙏 Acknowledgments
