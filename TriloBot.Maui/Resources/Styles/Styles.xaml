@@ -191,4 +191,20 @@
         <Setter Property="Padding" Value="0" />
     </Style>
 
+    <!-- Navigation Button Style -->
+    <Style x:Key="NavigationButtonBorderStyle"
+           TargetType="Border">
+        <Setter Property="Stroke" Value="#444444" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="BackgroundColor" Value="#2a2a2a" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="8" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="HeightRequest" Value="50" />
+        <Setter Property="WidthRequest" Value="50" />
+        <Setter Property="Padding" Value="8" />
+    </Style>
+
 </ResourceDictionary>

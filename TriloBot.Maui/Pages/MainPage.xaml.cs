@@ -174,5 +174,25 @@ namespace TriloBot.Maui.Pages
         {
             _hubConnectionService.SafeInvokeAsync("FillUnderlighting", 128, 0, 128).ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Event handler to navigate to the joystick page.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        private async void OnNavigateToJoystickClicked(object? sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("JoystickPage");
+        }
+
+        /// <summary>
+        /// Event handler to navigate to the joystick page via tap gesture.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments.</param>
+        private async void OnNavigateToJoystickTapped(object? sender, TappedEventArgs e)
+        {
+            await Shell.Current.GoToAsync("JoystickPage");
+        }
     }
 }

@@ -125,6 +125,26 @@ public partial class JoystickPage
         Task.Run(_hubConnectionService.StartSpecialLights);
     }
 
+    /// <summary>
+    /// Event handler to navigate back to the main page.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">Event arguments.</param>
+    private async void OnNavigateToMainClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("..");
+    }
+
+    /// <summary>
+    /// Event handler to navigate back to the main page via tap gesture.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">Event arguments.</param>
+    private async void OnNavigateToMainTapped(object? sender, TappedEventArgs e)
+    {
+        await Shell.Current.GoToAsync("..");
+    }
+
     #endregion
     
     #region Life cycle -

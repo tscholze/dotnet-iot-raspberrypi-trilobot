@@ -34,7 +34,7 @@
             <controls:JoystickControl x:Name="Joystick"
                                       Grid.Column="0"/>
 
-            <!-- Status -->
+            <!-- Status and Navigation -->
             <StackLayout Grid.Column="1"
                          Orientation="Horizontal"
                          HorizontalOptions="Center"
@@ -49,6 +49,21 @@
                 <Label x:Name="DistanceLabel"
                        Text="Distance: 0"
                        HorizontalTextAlignment="Center"/>
+                       
+                <!-- Remote Control Navigation Button -->
+                <Border Style="{StaticResource NavigationButtonBorderStyle}"
+                        HeightRequest="40"
+                        WidthRequest="40"
+                        Padding="6">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNavigateToMainTapped" />
+                    </Border.GestureRecognizers>
+                    <Image Source="remote_white.png"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           WidthRequest="20"
+                           HeightRequest="20"/>
+                </Border>
             </StackLayout>
 
             <!-- Circular Buttons on the right -->

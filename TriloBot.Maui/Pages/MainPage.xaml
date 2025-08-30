@@ -63,10 +63,32 @@
                 </Border>
             </Grid>
             
-            <Label Text="Controller" 
-                   FontSize="24"
-                   FontAttributes="Bold"
-            />
+            <!-- Navigation Section -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <Label Grid.Column="0" 
+                       Text="Controller" 
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"/>
+                
+                <!-- Joystick Navigation Button -->
+                <Border Grid.Column="1" 
+                        Style="{StaticResource NavigationButtonBorderStyle}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNavigateToJoystickTapped" />
+                    </Border.GestureRecognizers>
+                    <Image Source="joystick_white.png"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           WidthRequest="24"
+                           HeightRequest="24"/>
+                </Border>
+            </Grid>
             
             <!-- Control Buttons Section -->
             <Grid RowDefinitions="Auto,Auto,Auto"
