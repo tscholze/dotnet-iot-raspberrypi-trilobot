@@ -17,6 +17,10 @@ public static class MauiProgram
 
 		   // Register HubConnectionService as singleton
 		   builder.Services.AddSingleton<Services.HubConnectionService>();
+		   
+		   // Register pages for dependency injection
+		   builder.Services.AddTransient<Pages.MainPage>();
+		   builder.Services.AddTransient<Pages.JoystickPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

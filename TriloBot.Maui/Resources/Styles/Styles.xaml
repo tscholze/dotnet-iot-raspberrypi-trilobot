@@ -155,6 +155,15 @@
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="#FF8A2BE2" />
+                            <Setter Property="BorderColor" Value="#FFDA70D6" />
+                            <Setter Property="BorderWidth" Value="4" />
+                            <Setter Property="Scale" Value="0.95" />
+                            <Setter Property="TextColor" Value="#FFFFFFFF" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor"
@@ -163,7 +172,12 @@
                                     Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
                         </VisualState.Setters>
                     </VisualState>
-                    <VisualState x:Name="PointerOver" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="#FF6A1B9A" />
+                            <Setter Property="BorderColor" Value="#FFBA68C8" />
+                        </VisualState.Setters>
+                    </VisualState>
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
