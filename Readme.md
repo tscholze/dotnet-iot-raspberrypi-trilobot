@@ -19,6 +19,43 @@ This project showcases how .NET spans the entire technology stack:
 
 **One Language. One Platform. Infinite Possibilities.**
 
+## 📋 Table of Contents
+
+- [🤖 Trilobot.NET](#-trilobotnet)
+  - [📋 Table of Contents](#-table-of-contents)
+  - [🚀 What Does It Do?](#-what-does-it-do)
+  - [Status](#status)
+  - [How it looks](#how-it-looks)
+    - [Outside](#outside)
+    - [Android (Surface Duo)](#android-surface-duo)
+    - [Windows](#windows)
+  - [🔧 Hardware Components (Pimoroni Trilobot)](#-hardware-components-pimoroni-trilobot)
+  - [🛠️ Architecture \& Core Components](#️-architecture--core-components)
+    - [🕹️ ButtonManager](#️-buttonmanager)
+    - [💡 LightManager](#-lightmanager)
+    - [🦾 MotorManager](#-motormanager)
+    - [📏 UltrasoundManager](#-ultrasoundmanager)
+    - [📸 CameraManager](#-cameramanager)
+    - [🖥️ SystemManager](#️-systemmanager)
+    - [🎮 RemoteControllerManager](#-remotecontrollermanager)
+  - [🏗️ Unified Architecture](#️-unified-architecture)
+  - [🎮 Xbox Controller Support (wired Xbox 360)](#-xbox-controller-support-wired-xbox-360)
+  - [� System Monitoring](#-system-monitoring)
+  - [�🕸️ SignalR Hub API](#️-signalr-hub-api)
+  - [🚀 Getting Started](#-getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+  - [📖 Documentation \& Usage Examples](#-documentation--usage-examples)
+    - [🚀 Complete Integration Example](#-complete-integration-example)
+  - [🙏 Acknowledgments](#-acknowledgments)
+  - [📜 License](#-license)
+  - [🤝 Contributing](#-contributing)
+  - [❤️ More IoT projects of mine](#️-more-iot-projects-of-mine)
+    - [.NET on Raspberry Pi](#net-on-raspberry-pi)
+    - [Windows 10 IoT Core apps](#windows-10-iot-core-apps)
+    - [Android Things apps](#android-things-apps)
+    - [Python scripts](#python-scripts)
+
 ## 🚀 What Does It Do?
 
 This library provides easy-to-use manager classes for all major Trilobot hardware components:
