@@ -251,6 +251,8 @@ public class TriloBot : IDisposable
             // Do not call Dispose() here; handled by using statement
         });
 
+        _soundManager.PlayHorn();
+
         // Log successful initialization
         Console.WriteLine("Successfully initialized TriloBot manager. Start observer listing or triggering other methods.");
     }

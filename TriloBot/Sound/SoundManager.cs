@@ -35,7 +35,7 @@ public class SoundManager : IDisposable
     /// </summary>
     /// <param name="soundDirectory">The directory path where sound files are stored. If null, uses current directory.</param>
     /// <exception cref="PlatformNotSupportedException">Thrown when running on non-Linux platforms.</exception>
-    public SoundManager(string? soundDirectory = null)
+    public SoundManager(string soundDirectory = "~/Music/")
     {
         // Validate platform support - sound playback is only supported on Linux (Raspberry Pi)
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -43,8 +43,7 @@ public class SoundManager : IDisposable
             throw new PlatformNotSupportedException("SoundManager is only supported on Linux platforms with ALSA.");
         }
 
-        // Set default sound directory to current directory if not specified
-        _soundDirectory = soundDirectory ?? Directory.GetCurrentDirectory();
+        _soundDirectory = soundDirectory;
 
         // Ensure the sound directory exists
         if (!Directory.Exists(_soundDirectory))
