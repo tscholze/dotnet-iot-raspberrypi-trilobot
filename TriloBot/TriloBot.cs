@@ -9,6 +9,7 @@ using TriloBot.Button;
 using TriloBot.Camera;
 using TriloBot.Light.Modes;
 using TriloBot.RemoteController;
+using TriloBot.Sound;
 using TriloBotSystem = TriloBot.SystemInfo;
 
 namespace TriloBot;
@@ -117,6 +118,11 @@ public class TriloBot : IDisposable
     private readonly TriloBotSystem.SystemManager _systemManager;
 
     /// <summary>
+    /// Manages sound operations and audio playback.
+    /// </summary>
+    private readonly SoundManager _soundManager;
+
+    /// <summary>
     /// Subject for live video feed URL changes.
     /// </summary>
     private readonly BehaviorSubject<string> _liveVideoFeedSubject = new("");
@@ -221,6 +227,9 @@ public class TriloBot : IDisposable
 
         // Setup system manager
         _systemManager = new TriloBotSystem.SystemManager();
+
+        // Setup sound manager
+        _soundManager = new SoundManager();
 
         // Setup remote controller manager - defaulting to Xbox Series for compatibility
         _remoteControllerManager = new RemoteControllerManager(ControllerType.XboxSeries);
@@ -637,6 +646,186 @@ public class TriloBot : IDisposable
 
     #endregion
 
+    #region Sound methods
+
+    /// <summary>
+    /// Plays the horn sound effect asynchronously.
+    /// This is a convenience method for the most common robot sound.
+    /// </summary>
+    /// <returns>A task representing the asynchronous sound playback operation.</returns>
+    /// <exception cref="FileNotFoundException">Thrown when horn.wav file is not found in the sound directory.</exception>
+    public async Task PlayHornAsync()
+    {
+        try
+        {
+            await _soundManager.PlayHornAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing horn sound: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Plays the horn sound effect synchronously.
+    /// This method blocks until playback is complete.
+    /// </summary>
+    /// <exception cref="FileNotFoundException">Thrown when horn.wav file is not found in the sound directory.</exception>
+    public void PlayHorn()
+    {
+        try
+        {
+            _soundManager.PlayHorn();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing horn sound: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Plays a specified sound file asynchronously using the default volume.
+    /// </summary>
+    /// <param name="fileName">The name of the sound file to play (with extension).</param>
+    /// <returns>A task representing the asynchronous sound playback operation.</returns>
+    /// <exception cref="ArgumentException">Thrown when fileName is null or empty.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the specified sound file is not found.</exception>
+    public async Task PlaySoundAsync(string fileName)
+    {
+        try
+        {
+            await _soundManager.PlaySoundAsync(fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing sound '{fileName}': {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Plays a specified sound file asynchronously with a custom volume level.
+    /// </summary>
+    /// <param name="fileName">The name of the sound file to play (with extension).</param>
+    /// <param name="volume">Volume level between 0.0 (mute) and 1.0 (maximum volume).</param>
+    /// <returns>A task representing the asynchronous sound playback operation.</returns>
+    /// <exception cref="ArgumentException">Thrown when fileName is null or empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when volume is outside the range [0.0, 1.0].</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the specified sound file is not found.</exception>
+    public async Task PlaySoundAsync(string fileName, double volume)
+    {
+        try
+        {
+            await _soundManager.PlaySoundAsync(fileName, volume);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing sound '{fileName}': {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Plays a specified sound file synchronously using the default volume.
+    /// This method blocks until playback is complete.
+    /// </summary>
+    /// <param name="fileName">The name of the sound file to play (with extension).</param>
+    /// <exception cref="ArgumentException">Thrown when fileName is null or empty.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the specified sound file is not found.</exception>
+    public void PlaySound(string fileName)
+    {
+        try
+        {
+            _soundManager.PlaySound(fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing sound '{fileName}': {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Plays a specified sound file synchronously with a custom volume level.
+    /// This method blocks until playback is complete.
+    /// </summary>
+    /// <param name="fileName">The name of the sound file to play (with extension).</param>
+    /// <param name="volume">Volume level between 0.0 (mute) and 1.0 (maximum volume).</param>
+    /// <exception cref="ArgumentException">Thrown when fileName is null or empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when volume is outside the range [0.0, 1.0].</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the specified sound file is not found.</exception>
+    public void PlaySound(string fileName, double volume)
+    {
+        try
+        {
+            _soundManager.PlaySound(fileName, volume);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing sound '{fileName}': {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a specified sound file exists in the sound directory.
+    /// </summary>
+    /// <param name="fileName">The name of the sound file to check (with extension).</param>
+    /// <returns>True if the file exists, false otherwise.</returns>
+    /// <exception cref="ArgumentException">Thrown when fileName is null or empty.</exception>
+    public bool SoundFileExists(string fileName)
+    {
+        return _soundManager.SoundFileExists(fileName);
+    }
+
+    /// <summary>
+    /// Gets a list of all available sound files in the sound directory.
+    /// </summary>
+    /// <returns>An array of sound file names (with extensions).</returns>
+    public string[] GetAvailableSoundFiles()
+    {
+        return _soundManager.GetAvailableSoundFiles();
+    }
+
+    /// <summary>
+    /// Sets the system volume level (master volume).
+    /// This affects the overall system audio output.
+    /// </summary>
+    /// <param name="volume">Volume level between 0.0 (mute) and 1.0 (maximum volume).</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when volume is outside the range [0.0, 1.0].</exception>
+    public async Task SetSystemVolumeAsync(double volume)
+    {
+        try
+        {
+            await _soundManager.SetSystemVolumeAsync(volume);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting system volume: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the default volume level for sound playback.
+    /// </summary>
+    /// <value>Volume level between 0.0 (mute) and 1.0 (maximum volume).</value>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when volume is outside the range [0.0, 1.0].</exception>
+    public double DefaultSoundVolume
+    {
+        get => _soundManager.DefaultVolume;
+        set => _soundManager.DefaultVolume = value;
+    }
+
+    /// <summary>
+    /// Gets the current sound directory path where sound files are stored.
+    /// </summary>
+    public string SoundDirectory => _soundManager.SoundDirectory;
+
+    #endregion
+
     #region IDisposable Support
 
     /// <summary>
@@ -659,6 +848,7 @@ public class TriloBot : IDisposable
             _lightManager.Dispose();
             _ultrasoundManager.Dispose();
             _systemManager.Dispose();
+            _soundManager.Dispose();
             _gpio.Dispose();
             _distanceObserver.Dispose();
             _objectTooNearObserver.Dispose();

@@ -36,6 +36,7 @@ This project showcases how .NET spans the entire technology stack:
     - [🦾 MotorManager](#-motormanager)
     - [📏 UltrasoundManager](#-ultrasoundmanager)
     - [📸 CameraManager](#-cameramanager)
+    - [🔊 SoundManager](#-soundmanager)
     - [🖥️ SystemManager](#️-systemmanager)
     - [🎮 RemoteControllerManager](#-remotecontrollermanager)
   - [🏗️ Unified Architecture](#️-unified-architecture)
@@ -65,6 +66,7 @@ This library provides easy-to-use manager classes for all major Trilobot hardwar
 - 💡 **Lights, LEDs and more** – Control underlighting (RGB LEDs) and button LEDs, including color effects
 - 📏 **Keep distance** – Measure distance and proximity with the ultrasonic sensor, with observable events
 - 📸 **Live Feed** – Take photos and (optionally) stream live video (SignalR/MJPEG integration)
+- 🔊 **Sound Effects** – Play audio files including horn sounds using ALSA audio system with volume control
 - 🎮 **Xbox Controller (wired 360)** – Remote-drive the robot: left stick steers, RT forward, LT backward; A/B/X/Y mapped to actions
 
 ## Status
@@ -267,6 +269,49 @@ var settings = new CameraSettings
     Quality = 95 
 };
 string hqPhoto = await robot.TakePhotoAsync("/tmp", settings);
+```
+
+---
+
+### 🔊 SoundManager
+**Audio Playback & Sound Effects**
+
+Manages sound operations for the TriloBot robot, providing audio playback capabilities using ALSA (Advanced Linux Sound Architecture).
+
+**Key Features:**
+- High-quality audio playback with support for multiple formats (WAV, MP3, OGG, FLAC, AAC)
+- Horn sound effect with dedicated convenience methods
+- Volume control for individual sounds and system-wide audio
+- Async/await support for non-blocking sound playback
+- Sound file existence checking and discovery
+- Integration with ALSA audio subsystem
+
+**Usage Example:**
+```csharp
+// Play the horn sound effect
+await robot.PlayHornAsync();
+
+// Play a custom sound file
+await robot.PlaySoundAsync("beep.wav");
+
+// Play with custom volume
+await robot.PlaySoundAsync("alarm.wav", 0.5); // 50% volume
+
+// Check if sound file exists
+if (robot.SoundFileExists("horn.wav"))
+{
+    robot.PlayHorn(); // Synchronous version
+}
+
+// Get all available sound files
+string[] soundFiles = robot.GetAvailableSoundFiles();
+Console.WriteLine($"Found {soundFiles.Length} sound files");
+
+// Set system volume
+await robot.SetSystemVolumeAsync(0.8); // 80% volume
+
+// Configure default volume for all sounds
+robot.DefaultSoundVolume = 0.7;
 ```
 
 ---
@@ -619,17 +664,19 @@ robot.StartDistanceMonitoring();
 robot.StartSystemMonitoring();
 
 // Multi-system proximity safety
-robot.ObjectTooNearObservable.Subscribe(tooNear =>
+robot.ObjectTooNearObservable.Subscribe(async tooNear =>
 {
     if (tooNear)
     {
         robot.Stop();                              // Motor: Emergency stop
         robot.FillUnderlighting(255, 0, 0);        // Lights: Red alert
+        await robot.PlaySoundAsync("warning.wav"); // Audio: Warning sound
         Console.WriteLine("⚠️ Obstacle detected!"); 
     }
     else
     {
         robot.FillUnderlighting(0, 255, 0);        // Lights: Green all-clear
+        await robot.PlaySoundAsync("clear.wav");   // Audio: All clear sound
         Console.WriteLine("✅ Path clear");
     }
 });
@@ -642,21 +689,25 @@ robot.ButtonPressedObservable.Subscribe(async button =>
         case Buttons.ButtonA:
             robot.Forward();
             robot.SetButtonLed(Lights.ButtonA, 1.0);
+            await robot.PlaySoundAsync("move.wav"); // Sound effect for movement
             break;
             
         case Buttons.ButtonB:
             robot.Backward();  
             robot.SetButtonLed(Lights.ButtonB, 1.0);
+            await robot.PlaySoundAsync("reverse.wav"); // Reverse sound
             break;
             
         case Buttons.ButtonX:
             robot.TurnLeft();
             robot.StartPoliceEffect(); // Visual feedback
+            await robot.PlayHornAsync(); // Horn sound for attention
             break;
             
         case Buttons.ButtonY:
             var photoPath = await robot.TakePhotoAsync("/tmp");
             robot.FillUnderlighting(255, 255, 0); // Yellow camera flash
+            await robot.PlaySoundAsync("camera.wav"); // Camera shutter sound
             Console.WriteLine($"📸 Photo saved: {photoPath}");
             break;
     }
