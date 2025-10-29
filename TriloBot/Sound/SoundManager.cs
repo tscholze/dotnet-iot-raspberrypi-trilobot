@@ -35,7 +35,7 @@ public class SoundManager : IDisposable
     /// </summary>
     /// <param name="soundDirectory">The directory path where sound files are stored. If null, uses current directory.</param>
     /// <exception cref="PlatformNotSupportedException">Thrown when running on non-Linux platforms.</exception>
-    public SoundManager(string soundDirectory = "~/Music/")
+    public SoundManager(string soundDirectory = "/home/pi/Music/")
     {
         // Validate platform support - sound playback is only supported on Linux (Raspberry Pi)
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

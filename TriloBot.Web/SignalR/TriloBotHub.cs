@@ -185,6 +185,8 @@ public class TriloBotHub : Hub
         }
     }
 
+    #endregion
+
     #region Life cycle 
 
     /// <summary>
