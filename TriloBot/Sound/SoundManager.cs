@@ -7,7 +7,7 @@ namespace TriloBot.Sound;
 /// Manages sound operations for the TriloBot robot, providing audio playback capabilities
 /// on Raspberry Pi using ALSA (Advanced Linux Sound Architecture).
 /// </summary>
-public class SoundManager : IDisposable
+public class SoundManager : IDisposable 
 {
     #region Private Fields
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using TriloBot.Button;
 using TriloBot.Light;
 using TriloBot.Motor;
 
@@ -25,7 +26,7 @@ public class TriloBotHub : Hub
     /// Instance of the TriloBot that this hub controls.
     /// </summary>
     private readonly TriloBot _robot;
-    
+
     /// <summary>
     /// Subscription for distance updates.
     /// </summary>
@@ -35,6 +36,11 @@ public class TriloBotHub : Hub
     /// Subscription for object proximity updates.
     /// </summary>
     private readonly IDisposable? _objectTooNearSubscription;
+
+    /// <summary>
+    /// Subscription for button press updates.
+    /// </summary>
+    private readonly IDisposable? _buttonPressSubscription;
 
     #endregion
 
@@ -48,12 +54,20 @@ public class TriloBotHub : Hub
     {
         // Ensure the robot is not null
         _robot = robot ?? throw new ArgumentNullException(nameof(robot), "TriloBot cannot be null.");
+        _robot.StartButtonMonitoring();
 
-        // Forward observers
+        // Handle observers
+        _buttonPressSubscription = _robot.ButtonPressedObservable.Subscribe(value =>
+        {
+            Task.Run(async () => await Clients.All.SendAsync("ButtonPressUpdated", value));
+            HandleButtonPress(value);
+        });
+
         _distanceSubscription = robot.DistanceObservable.Subscribe(value =>
         {
             Task.Run(async () => await Clients.All.SendAsync("DistanceUpdated", value));
         });
+
         _objectTooNearSubscription = robot.ObjectTooNearObservable.Subscribe(value =>
         {
             Task.Run(async () => await Clients.All.SendAsync("ObjectTooNearUpdated", value));
@@ -92,10 +106,10 @@ public class TriloBotHub : Hub
     /// <param name="b">Blue value (0-255).</param>
     public Task SetUnderlight(string light, byte r, byte g, byte b)
         => Task.Run(() => _robot.SetUnderlight(Enum.Parse<Lights>(light), r, g, b));
-    
+
     public Task ClearUnderlighting()
         => Task.Run(() => _robot.ClearUnderlighting());
-    
+
     public Task StartPoliceEffect()
         => Task.Run(() => _robot.StartPoliceEffect());
 
@@ -108,7 +122,7 @@ public class TriloBotHub : Hub
     /// </summary>
     /// <param name="horizontal">Horizontal movement (-1 to 1).</param>
     /// <param name="vertical">Vertical movement (-1 to 1).</param>
-    public Task Move(double horizontal, double vertical) 
+    public Task Move(double horizontal, double vertical)
         => Task.Run(() => _robot.Move(horizontal, vertical));
 
     #endregion
@@ -143,6 +157,33 @@ public class TriloBotHub : Hub
         => Task.FromResult(_robot.ReadDistance());
 
     #endregion
+
+    #region Buttons
+
+    /// <summary>
+    /// Handles button press events to change underlighting colors.
+    /// </summary>
+    /// <param name="button">Pressed button.</param>
+    public void HandleButtonPress(Buttons? button)
+    {
+        switch (button)
+        {
+            case Buttons.ButtonA:
+                _robot.FillUnderlighting(255, 255, 0);
+                break;
+            case Buttons.ButtonB:
+                _robot.FillUnderlighting(0, 255, 0);
+                break;
+            case Buttons.ButtonX:
+                _robot.FillUnderlighting(0, 0, 255);
+                break;
+            case Buttons.ButtonY:
+                _robot.FillUnderlighting(255, 0, 255);
+                break;
+            default:
+                break;
+        }
+    }
 
     #region Life cycle 
 
