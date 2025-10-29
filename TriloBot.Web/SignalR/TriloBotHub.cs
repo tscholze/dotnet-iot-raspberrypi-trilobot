@@ -181,6 +181,7 @@ public class TriloBotHub : Hub
                 _robot.FillUnderlighting(255, 0, 255);
                 break;
             default:
+                _robot.FillUnderlighting(255, 255, 255);
                 break;
         }
     }
@@ -196,6 +197,7 @@ public class TriloBotHub : Hub
     {
         _distanceSubscription?.Dispose();
         _objectTooNearSubscription?.Dispose();
+        _buttonPressSubscription?.Dispose();
         _robot.Dispose();
     }
 
