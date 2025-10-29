@@ -60,7 +60,7 @@ public class TriloBotHub : Hub
         _buttonPressSubscription = _robot.ButtonPressedObservable.Subscribe(value =>
         {
             Task.Run(async () => await Clients.All.SendAsync("ButtonPressUpdated", value));
-            HandleButtonPress(value);
+            Task.Run(() => HandleButtonPress(value));
         });
 
         _distanceSubscription = robot.DistanceObservable.Subscribe(value =>
