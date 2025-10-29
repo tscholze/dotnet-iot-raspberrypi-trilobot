@@ -265,10 +265,10 @@ public class TriloBot : IDisposable
         switch (buttons)
         {
             case Buttons.ButtonA:
-                _lightManager.FillUnderlighting(255, 0, 0);
+                _lightManager.FillUnderlighting(0, 255, 0);
                 break;
             case Buttons.ButtonB:
-                _lightManager.FillUnderlighting(0, 0, 0);
+                _lightManager.FillUnderlighting(0, 255, 0);
                 break;
             case Buttons.ButtonX:
                 Console.WriteLine("Button X pressed");

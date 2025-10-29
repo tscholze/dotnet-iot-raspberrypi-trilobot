@@ -169,16 +169,16 @@ public class TriloBotHub : Hub
         switch (button)
         {
             case Buttons.ButtonA:
-                _robot.FillUnderlighting(255, 255, 0);
+                _robot.FillUnderlighting(255, 0, 0);
                 break;
             case Buttons.ButtonB:
-                _robot.FillUnderlighting(0, 255, 0);
+                _robot.FillUnderlighting(255, 0, 0);
                 break;
             case Buttons.ButtonX:
-                _robot.FillUnderlighting(0, 0, 255);
+                _robot.FillUnderlighting(255, 0, 0);
                 break;
             case Buttons.ButtonY:
-                _robot.FillUnderlighting(255, 0, 255);
+                _robot.FillUnderlighting(255, 0, 0);
                 break;
             default:
                 break;
